@@ -60,5 +60,28 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  .bg-pattern {
+    background-color: #EDF2F7;
+    background: url('/bg.jpeg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.bg-pattern2 {
+  background-color: #EDF2F7;
+  background: url('/bg2.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+.custom-gradient{
+  mask-image: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+.hebrew-side{
+  direction: rtl;
+  text-align: right;
+}
 }
 

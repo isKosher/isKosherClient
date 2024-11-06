@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  images: {
+    domains: ["www.google.com", "www.allrecipes.com", "images.squarespace-cdn.com", "cdn.britannica.com"],
+    remotePatterns:[
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ]
+  },
 };
 
 export default nextConfig;

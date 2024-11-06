@@ -2,40 +2,133 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, MapPin, Star, Clock, Phone } from "lucide-react";
+
+import { Search } from "lucide-react";
+import FilterDropdown from "./filterDropdown";
+import RestaurantCard from "./restaurantCard";
 
 const KosherFinder = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCertification, setSelectedCertification] = useState("");
-  const [selectedCuisine, setSelectedCuisine] = useState("");
   const [loading, setLoading] = useState(false);
+  const [restaurants] = useState([
+    {
+      id: 1,
+      name: "גריל ירושלים",
+      type: "מזרח תיכוני",
+      rating: 4.5,
+      certification: "בד״ץ",
+      address: "המלך ג'ורג' 32, ירושלים",
+      isOpen: true,
+      image:
+        "https://images.squarespace-cdn.com/content/v1/5091bda5e4b0979eac787995/1593700026088-RQT825FSDMZJ8AAAH7K6/Israeli-grilling-main.jpg?format=1500w",
+    },
+    {
+      id: 2,
+      name: "חלב ודבש",
+      type: "מסעדה חלבית",
+      rating: 4.8,
+      certification: "מהדרין",
+      address: "דיזנגוף 123, תל אביב",
+      isOpen: false,
+      image:
+        "https://www.allrecipes.com/thmb/aefJMDXKqs42oAP71dQuYf_-Qdc=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/6776_Pizza-Dough_ddmfs_4x3_1724-fd91f26e0bd6400a9e89c6866336532b.jpg",
+    },
+    {
+      id: 3,
+      name: "קפה 11",
+      type: "ישראלי",
+      rating: 4.2,
+      certification: "רבנות",
+      address: "הנביאים 45, חיפה",
+      isOpen: true,
+      image:
+        "https://cdn.britannica.com/17/234017-050-F665E64D/cappuccino-Rome-Italy.jpg",
+    },
+    {
+      id: 4,
+      name: "סושי דילייט",
+      type: "סושי",
+      rating: 4.6,
+      certification: "סטאר-קיי",
+      address: "רוטשילד 78, ראשון לציון",
+      isOpen: true,
+      image:
+        "https://www.yummymummykitchen.com/wp-content/uploads/2021/10/sashimi-vs-nigiri-1.jpg",
+    },
+    {
+      id: 5,
+      name: "פיצה פאלאס",
+      type: "פיצה",
+      rating: 4.9,
+      certification: "או-יו כשר",
+      address: "בן גוריון 15, רמת גן",
+      isOpen: true,
+      image:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJYqXs_eYTVeNtugtP2q7zV_ROewS7r5-Gkg&s",
+    },
+    {
+      id: 6,
+      name: "המבורגר שף",
+      type: "אמריקאי",
+      rating: 4.7,
+      certification: "או-יו כשר",
+      address: "הרצל 55, נתניה",
+      isOpen: true,
+      image: "https://cdn.jwplayer.com/v2/media/Ra8WKsWU/poster.jpg?width=720",
+    },
+    {
+      id: 7,
+      name: "מזרח מערב",
+      type: "ים תיכוני",
+      rating: 4.4,
+      certification: "רבנות",
+      address: "אלנבי 88, תל אביב",
+      isOpen: true,
+      image:
+        "https://tastythriftytimely.com/wp-content/uploads/2023/06/Falafel-FEATURED.jpg",
+    },
+    {
+      id: 8,
+      name: "דלי שף",
+      type: "מעדניה",
+      rating: 4.8,
+      certification: "בד״ץ",
+      address: "ויצמן 23, רחובות",
+      isOpen: false,
+      image: "https://eatintlv.com/wp-content/uploads/2017/09/New-Deli3.jpg",
+    },
+    {
+      id: 9,
+      name: "סושי מאסטר",
+      type: "סושי",
+      rating: 4.3,
+      certification: "סי-אר-סי",
+      address: "סוקולוב 45, הרצליה",
+      isOpen: true,
+      image:
+        "https://everydayglutenfreegourmet.ca/wp-content/uploads/2023/07/handmade-sushi-rolls.jpg",
+    },
+  ]);
 
   const certifications = [
-    "All Certifications",
-    "OU Kosher",
-    "OK Kosher",
-    "Star-K",
-    "CRC",
-    "Kof-K",
+    "או יו כשר",
+    "אוקיי כשר",
+    "סטאר-קיי",
+    "סי-אר-סי",
+    "קוף-קיי",
+    "רבנות",
+    "מהדרין",
+    "בד״ץ",
   ];
 
   const cuisineTypes = [
-    "All Cuisines",
-    "Israeli",
-    "Middle Eastern",
-    "American",
-    "Deli",
-    "Pizza",
-    "Sushi",
-    "Mediterranean",
+    "ישראלי",
+    "מזרח תיכוני",
+    "אמריקאי",
+    "מעדניה",
+    "פיצה",
+    "סושי",
+    "ים תיכוני",
   ];
 
   const handleSearch = () => {
@@ -49,41 +142,16 @@ const KosherFinder = () => {
 
   return (
     <div className="min-h-screen bg-[#EDF2F7]">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-serif text-[#1A365D] font-bold">
-              isKosher
-            </h1>
-            <div className="space-x-6">
-              <Button variant="ghost" className="text-[#1A365D]">
-                HOME
-              </Button>
-              <Button variant="ghost" className="text-[#1A365D]">
-                ABOUT
-              </Button>
-              <Button variant="ghost" className="text-[#1A365D]">
-                RESTAURANTS
-              </Button>
-              <Button variant="ghost" className="text-[#1A365D]">
-                CONTACT
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <div className="min-h-screen bg-cover bg-center ">
-        <div className="mx-auto px-4 py-16 bg-pattern">
+        <div className="mx-auto px-4 py-20 bg-pattern text-sm">
           <div className="max-w-3xl mx-auto bg-white/95 rounded-lg shadow-xl p-8 backdrop-blur-sm">
             <div className="text-center mb-8">
               <h2 className="text-4xl font-serif text-[#1A365D] font-bold mb-2">
                 isKosher
               </h2>
-              <p className="text-[#2D4A6D] text-lg">
-                PROFESSIONAL KOSHER RESTAURANTS
+              <p className="text-[#2D4A6D] text-md lg:text-lg">
+                מצא מסעדות כשרות בסביבתך
               </p>
             </div>
 
@@ -91,8 +159,8 @@ const KosherFinder = () => {
             <div className="space-y-4">
               {/* Location Search */}
               <Input
-                className="w-full p-4 text-lg border-2 border-[#1A365D]/20 rounded-lg"
-                placeholder="Enter Location..."
+                className="w-full p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg hebrew-side"
+                placeholder="חפש לפי מיקום או שם מסעדה"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={loading}
@@ -100,69 +168,43 @@ const KosherFinder = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Certification Filter */}
-                <Select
-                  onValueChange={setSelectedCertification}
-                  disabled={loading}
-                >
-                  <SelectTrigger className="w-full p-4 text-lg border-2 border-[#1A365D]/20 rounded-lg">
-                    <SelectValue placeholder="Select Certification" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {certifications.map((cert) => (
-                      <SelectItem key={cert} value={cert}>
-                        {cert}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
+                <FilterDropdown
+                  filterOptions={certifications}
+                  loading={loading}
+                  filterPlaceholder="תבחר תעודת כשרות"
+                />
                 {/* Cuisine Filter */}
-                <Select onValueChange={setSelectedCuisine} disabled={loading}>
-                  <SelectTrigger className="w-full p-4 text-lg border-2 border-[#1A365D]/20 rounded-lg">
-                    <SelectValue placeholder="Select Cuisine" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cuisineTypes.map((cuisine) => (
-                      <SelectItem key={cuisine} value={cuisine}>
-                        {cuisine}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FilterDropdown
+                  filterOptions={cuisineTypes}
+                  loading={loading}
+                  filterPlaceholder="תבחר סוג מטבח"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Buttons */}
+              <div className="flex items-center justify-center">
+                {/* Buttons*/}
                 <Button
-                  className="w-full bg-[#1A365D] hover:bg-[#2D4A6D] text-white text-lg py-6"
-                  onClick={() => alert("Go to background")}
-                >
-                  BACKGROUND
-                </Button>
-                <Button
-                  className="w-full bg-[#1A365D] hover:bg-[#2D4A6D] text-white text-lg py-6"
+                  className="w-full bg-[#1A365D] hover:bg-[#2D4A6D] text-white text-md lg:text-lg py-6"
                   onClick={handleSearch}
                   disabled={loading}
                 >
-                  {loading ? "Searching..." : "BEGIN"}
+                  <Search className="w-6 h-6 " />
+                  {loading ? "Searching..." : "Search"}
                 </Button>
               </div>
             </div>
           </div>
         </div>
+        {/* Results Section */}
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {restaurants.map((restaurant) => (
+              <RestaurantCard restaurant={restaurant} key={restaurant.id} />
+            ))}
+          </div>
+        </div>
       </div>
-
-      {/* Background Pattern (optional for styling purposes) import bg.jpeg from public folder */}
-      <style jsx global>{`
-        .bg-pattern {
-          background-color: #EDF2F7;
-          background: url('/bg.jpeg');
-          background-size: cover;
-          background-repeat: no-repeat;
-          background-position: center center;
-      `}</style>
     </div>
   );
 };
-
 export default KosherFinder;
