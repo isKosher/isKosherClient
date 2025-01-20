@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -7,24 +8,29 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star } from "lucide-react";
-type RestaurantCardProps = {
+import { Link, MapPin, Star } from "lucide-react";
+interface RestaurantCardProps {
   restaurant: {
+    id: string;
     name: string;
     type: string;
-    rating: number;
     certification: string;
     address: string;
-    bessari: boolean;
     halavi: boolean;
+    bessari: boolean;
     parve: boolean;
     image: string;
   };
-};
+}
 
-export default function RestaurantCard(props: RestaurantCardProps) {
+export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
+  const router = useRouter();
+
   return (
-    <Card className="hover:shadow-lg transition-shadow rounded-lg">
+    <Card
+      className="hover:shadow-lg transition-shadow rounded-lg cursor-pointer"
+      onClick={() => router.push(`/business/${restaurant.id}`)}
+    >
       {/* <Image
         src={props.restaurant.image}
         alt={props.restaurant.name}
@@ -35,11 +41,11 @@ export default function RestaurantCard(props: RestaurantCardProps) {
       <CardHeader>
         <div className="flex justify-between items-start flex-row-reverse">
           <div>
-            <CardTitle className="text-xl">{props.restaurant.name}</CardTitle>
-            <CardDescription dir="rtl">{props.restaurant.type}</CardDescription>
+            <CardTitle className="text-xl">{restaurant.name}</CardTitle>
+            <CardDescription dir="rtl">{restaurant.type}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            {props.restaurant.halavi && (
+            {restaurant.halavi && (
               <Badge
                 variant="outline"
                 className="text-xs text-blue-600 border-blue-600"
@@ -47,7 +53,7 @@ export default function RestaurantCard(props: RestaurantCardProps) {
                 חלבי
               </Badge>
             )}
-            {props.restaurant.bessari && (
+            {restaurant.bessari && (
               <Badge
                 variant="outline"
                 className="text-xs text-red-600 border-red-600"
@@ -55,7 +61,7 @@ export default function RestaurantCard(props: RestaurantCardProps) {
                 בשרי
               </Badge>
             )}
-            {props.restaurant.parve && (
+            {restaurant.parve && (
               <Badge
                 variant="outline"
                 className="text-xs text-green-600 border-green-600"
@@ -70,7 +76,7 @@ export default function RestaurantCard(props: RestaurantCardProps) {
         <div className="flex justify-between items-center flex-row-reverse">
           <div className="flex items-center gap-2 text-gray-600 mb-2 flex-row-reverse">
             <MapPin className="h-4 w-4" />
-            <span className="text-sm">{props.restaurant.address}</span>
+            <span className="text-sm text-end">{restaurant.address}</span>
           </div>
           <Badge
             className="text-sm flex justify-between align-center"
@@ -85,7 +91,7 @@ export default function RestaurantCard(props: RestaurantCardProps) {
               height={40}
               className="mr-2"
             />
-            {props.restaurant.certification}
+            {restaurant.certification}
           </Badge>
         </div>
       </CardContent>

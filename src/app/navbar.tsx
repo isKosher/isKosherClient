@@ -9,13 +9,10 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
+  const { user, logout } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
@@ -43,9 +40,13 @@ export default function Navbar() {
         isVisible ? "transform-none" : "-translate-y-full"
       }`}
     >
-      <h1 className="hidden text-3xl font-serif text-[#1A365D] font-bold lg:block">
+      <h1 className="hidden text-3xl is-kosher-font text-[#1A365D] font-bold lg:block">
         isKosher
       </h1>
+      <div className="absolute h-full flex right-2 top-2">
+        <h1 className="text-[12px]">בס&rdquo;ד</h1>
+      </div>
+
       <Sheet>
         <SheetTrigger asChild>
           <Button
@@ -59,7 +60,7 @@ export default function Navbar() {
         </SheetTrigger>
         <SheetContent side="left" className="">
           <div>
-            <SheetTitle className="text-3xl font-serif text-[#1A365D] font-bold text-center">
+            <SheetTitle className="text-3xl font-serif text-[#1A365D] font-bold text-center is-kosher-font">
               isKosher
             </SheetTitle>
             <div className="absolute bottom-0 left-0 w-full h-[50%] bg-pattern2 bg-cover bg-center custom-gradient"></div>
@@ -77,6 +78,48 @@ export default function Navbar() {
               ))}
             </div>
           </div>
+
+          {!user ? (
+            <SheetClose asChild>
+              <Link href="/login">
+                <Button className="w-full mt-4" variant="outline">
+                  התחבר
+                </Button>
+              </Link>
+            </SheetClose>
+          ) : (
+            <div>
+              <div className="flex justify-between items-center gap-3">
+                <SheetClose asChild key="/dashboard">
+                  <Link href="/dashboard">
+                    <Button className="w-full">לוח הבקרה</Button>
+                  </Link>
+                </SheetClose>
+                <div className="flex flex-row-reverse items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
+                    <img
+                      src="/default-avatar.png"
+                      alt={`${user.name}'s profile`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <span className="text-[#1A365D] font-medium">
+                    {user.name}
+                  </span>
+                </div>
+              </div>
+
+              <SheetClose asChild>
+                <Button
+                  className="w-full mt-4"
+                  variant="outline"
+                  onClick={() => logout()}
+                >
+                  להתנתק
+                </Button>
+              </SheetClose>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
       {/* <NavigationMenu className="hidden lg:flex max-w-full" dir="rtl">
@@ -98,7 +141,6 @@ export default function Navbar() {
           </NavigationMenuList> */}
       {/* </div>
       </NavigationMenu> */}
-      <h1 className="absolute right-2 top-2 text-[12px]">בס&rdquo;ד</h1>
     </header>
   );
 }

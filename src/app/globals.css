@@ -1,3 +1,5 @@
+@import '../../node_modules/leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,26 +64,132 @@ body {
   }
 
   .bg-pattern {
-    background-color: #EDF2F7;
-    background: url('/bg.jpeg');
+    background-color: #edf2f7;
+    background: url("/bg.jpeg");
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-}
-.bg-pattern2 {
-  background-color: #EDF2F7;
-  background: url('/bg2.jpeg');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center center;
-}
-.custom-gradient{
-  mask-image: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0));
+  }
+  .bg-pattern2 {
+    background-color: #edf2f7;
+    background: url("/bg2.jpeg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+  }
+  .custom-gradient {
+    mask-image: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+  }
+
+  .hebrew-side {
+    direction: rtl;
+    text-align: right;
+  }
 }
 
-.hebrew-side{
-  direction: rtl;
-  text-align: right;
-}
+@keyframes collapsible-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
 }
 
+@keyframes collapsible-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.animate-collapsible-down {
+  animation: collapsible-down 0.2s ease-out;
+}
+
+.animate-collapsible-up {
+  animation: collapsible-up 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+.is-kosher-font {
+  font-family: var(--font-yatra-one);
+}
+.collapsible-content[data-state="open"] {
+  animation: slideDown 200ms ease-out;
+}
+
+.collapsible-content[data-state="closed"] {
+  animation: slideUp 200ms ease-out;
+}
+
+.wave-box {
+  background:
+    radial-gradient(100% 58% at top   ,transparent   99%,#1A365D) calc(0*100%/3) 0/50.1% 180%,
+    radial-gradient(100% 58% at bottom,#1A365D 99%,transparent  ) calc(3*100%/3) 0/50.1% 180%,
+    radial-gradient(100% 58% at top   ,transparent   99%,#1A365D) calc(6*100%/3) 0/50.1% 180%,
+    radial-gradient(100% 58% at bottom,#1A365D 99%,transparent  ) calc(9*100%/3) 0/50.1% 180%,
+    linear-gradient(#1A365D,#1A365D) bottom/100% 0%;
+  background-repeat:no-repeat;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  display:inline-block;
+  padding:20px;
+  font-weight:bold;
+  animation:
+    waveMove 0.5s infinite linear,
+    waveUp   3s infinite linear alternate;
+}
+
+@keyframes waveMove {
+  to {
+    background-position:
+       calc(-6*100%/3) 0,
+       calc(-3*100%/3) 0,
+       calc(0*100%/3)  0,
+       calc(3*100%/3)  0,
+       bottom;
+  }
+}
+
+@keyframes waveUp {
+  to {
+    background-size: 
+      50.1% 20%,
+      50.1% 20%,
+      50.1% 20%,
+      50.1% 20%,
+      100%  80%;
+  }
+}
