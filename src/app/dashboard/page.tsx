@@ -5,30 +5,27 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { RestaurantPreview } from "@/types";
 
-interface BusinessPhoto {
-  url: string;
-  photo_info: string;
+async function getInitialRestaurants() {
+  try {
+    const response = await axios.get(
+      "http://localhost:8080/api/v1/businesses/preview?size=12&page=1"
+    );
+    if (!response.data.content) {
+      return [];
+    } else {
+      return response.data.content;
+    }
+  } catch (error) {
+    console.error("Error fetching restaurants:", error);
+  }
 }
-
-interface Restaurant {
-  business_id: string;
-  business_name: string;
-  food_types: string[];
-  food_item_types: string[];
-  address: string;
-  street_number: number;
-  city: string;
-  business_photos: BusinessPhoto[];
-  kosher_type: string;
-  business_type: string;
-}
-
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [restaurants, setRestaurants] = useState<RestaurantPreview[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -40,19 +37,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserRestaurants = async () => {
       setLoading(true);
-      try {
-        // Replace with actual user-specific endpoint
-        const { data } = await axios.get<Restaurant[]>(
-          "http://localhost:8080/api/v1/businesses/preview"
-        );
-        setRestaurants(data);
-        setError("");
-      } catch (error) {
-        console.error("Error fetching restaurants:", error);
-        setError("Failed to load restaurants");
-      } finally {
-        setLoading(false);
-      }
+      setRestaurants(await getInitialRestaurants());
+      setLoading(false);
     };
 
     fetchUserRestaurants();
@@ -96,10 +82,11 @@ export default function DashboardPage() {
                 >
                   <RestaurantCard
                     restaurant={{
+                      id: restaurant.business_id,
                       name: restaurant.business_name,
                       type: restaurant.business_type,
                       certification: restaurant.kosher_type,
-                      address: `${restaurant.address} ${restaurant.street_number}, ${restaurant.city}`,
+                      address: `${restaurant.location.address} ${restaurant.location.street_number}, ${restaurant.location.city}`,
                       halavi: restaurant.food_types.includes("חלבי"),
                       bessari: restaurant.food_types.includes("בשרי"),
                       parve: restaurant.food_types.includes("פרווה"),
