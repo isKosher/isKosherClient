@@ -40,9 +40,11 @@ export default function Navbar() {
         isVisible ? "transform-none" : "-translate-y-full"
       }`}
     >
-      <h1 className="hidden text-3xl is-kosher-font text-[#1A365D] font-bold lg:block">
-        isKosher
-      </h1>
+      <Link href="/">
+        <h1 className="hidden text-3xl is-kosher-font text-[#1A365D] font-bold lg:block">
+          isKosher
+        </h1>
+      </Link>
       <div className="absolute h-full flex right-2 top-2">
         <h1 className="text-[12px]">בס&rdquo;ד</h1>
       </div>

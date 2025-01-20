@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -15,38 +15,49 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
-import LoadingPage from "@/app/loading";
 import { useInView } from "react-intersection-observer";
+import { RestaurantPreview } from "@/types";
 
-interface BusinessPhoto {
-  url: string;
-  photo_info: string;
-}
+const certifications = [
+  "או יו כשר",
+  "אוקיי כשר",
+  "סטאר-קיי",
+  "סי-אר-סי",
+  "קוף-קיי",
+  "רבנות",
+  "מהדרין",
+  "בד״ץ",
+];
 
-interface Restaurant {
-  business_id: string;
-  business_name: string;
-  food_types: string[];
-  food_item_types: string[];
-  location: {
-    address: string;
-    street_number: number;
-    city: string;
-  };
-  business_photos: BusinessPhoto[];
-  kosher_type: string;
-  business_type: string;
-}
+const cuisineTypes = [
+  "ישראלי",
+  "מזרח תיכוני",
+  "אמריקאי",
+  "מעדניה",
+  "פיצה",
+  "סושי",
+  "ים תיכוני",
+];
+
+const businessTypes = ["מלון", "מסעדה", "קייטרינג"];
+
+const foodTypes = ["בשרי", "חלבי", "פרווה"];
+
 const API_URL = "http://localhost:8080/api/v1/businesses/preview?size=12&page=";
 
-export default function HomePage() {
+type homePageProps = {
+  initialRestaurants: RestaurantPreview[];
+};
+
+export default function HomePage({ initialRestaurants }: homePageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [restaurants, setRestaurants] =
+    useState<RestaurantPreview[]>(initialRestaurants);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedFoodType, setSelectedFoodType] = useState([""]);
   const [isOpen, setIsOpen] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(2);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const { ref, inView } = useInView();
@@ -54,12 +65,14 @@ export default function HomePage() {
   const loadMore = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${API_URL}${page}`);
-      const newRestaurants = response.data.content;
+      const response = await axios.get<{ content: RestaurantPreview[] }>(
+        `${API_URL}${page}`
+      );
 
-      if (newRestaurants.length === 0) {
+      if (!response.data.content) {
         setHasMore(false);
       } else {
+        const newRestaurants = response.data.content;
         setRestaurants((prev) => [...prev, ...newRestaurants]);
         setPage((prev) => prev + 1);
       }
@@ -69,10 +82,6 @@ export default function HomePage() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadMore();
-  }, []); // Initial load
 
   useEffect(() => {
     if (inView && !isLoading && hasMore) {
@@ -87,31 +96,6 @@ export default function HomePage() {
         )
       : setSelectedFoodType(selectedFoodType.concat(selectedType));
   }
-
-  const certifications = [
-    "או יו כשר",
-    "אוקיי כשר",
-    "סטאר-קיי",
-    "סי-אר-סי",
-    "קוף-קיי",
-    "רבנות",
-    "מהדרין",
-    "בד״ץ",
-  ];
-
-  const cuisineTypes = [
-    "ישראלי",
-    "מזרח תיכוני",
-    "אמריקאי",
-    "מעדניה",
-    "פיצה",
-    "סושי",
-    "ים תיכוני",
-  ];
-
-  const businessTypes = ["מלון", "מסעדה", "קייטרינג"];
-
-  const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
   const handleSearch = () => {
     setLoading(true);
