@@ -1,2 +1,92 @@
 {
+"github.copilot.advanced": {
+"ignoredFiles": {
+"/node_modules/": true,
+"/dist/": true,
+"/build/": true,
+"/*.min.js": true
+},
+"ignoredFolders": {
+"/node_modules": true,
+"/dist": true,
+"/build": true
+},
+"ignoredFilesGlob": [
+"/node_modules/",
+"/dist/",
+"/build/",
+"/*.min.js"
+],
+"ignoredFoldersGlob": [
+"/node_modules",
+"/dist",
+"/build"
+],
+"ignoredFilesRegex": [
+"node_modules",
+"dist",
+"build",
+".min.js"
+],
+"ignoredFoldersRegex": [
+"node_modules",
+"dist",
+"build"
+],
+"ignoredFilesGlobRegex": [
+"node_modules",
+"dist",
+"build",
+".min.js"
+],
+"ignoredFoldersGlobRegex": [
+"node_modules",
+"dist",
+"build"
+],
+"ignoredFilesGlobRegexArray": [
+"node_modules",
+"dist",
+"build",
+".min.js"
+],
+"ignoredFoldersGlobRegexArray": [
+"node_modules",
+"dist",
+"build"
+],
+"ignoredFilesArray": [
+"/node_modules/",
+"/dist/",
+"/build/",
+"/*.min.js"
+],
+"ignoredFoldersArray": [
+"/node_modules",
+"/dist",
+"/build"
+],
+"ignoredFilesGlobArray": [
+"/node_modules/",
+"/dist/",
+"/build/",
+"/*.min.js"
+],
+"ignoredFoldersGlobArray": [
+"/node_modules",
+"/dist",
+"/build"
+],
+"ignoredFilesRegexArray": [
+"node_modules",
+"dist",
+"build",
+".min.js"
+],
+"ignoredFoldersRegexArray": [
+"node_modules",
+"dist",
+"build"
+],
+}
 }

@@ -1,27 +1,32 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
-import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "@/lib/firebaseConfig";
+import useAuth from "@/hooks/useAuth";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async () => {
-    // Test user data
-    const userData = {
-      id: "1",
-      name: "ישראל ישראלי",
-      email: email,
-    };
-
-    login(userData);
-    router.push("/dashboard");
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      // const idToken = await user.getIdToken();
+      // const userData = {
+      //   id: idToken,
+      //   name: user.displayName || "Unknown",
+      //   email: user.email || "",
+      //   photo_url: user.photoURL || null,
+      // };
+      await login(user);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error logging in with Google:", error);
+    }
   };
 
   return (

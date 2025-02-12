@@ -8,9 +8,11 @@ export type BusinessPhoto = {
     business_name: string;
     food_types: (string | null)[];
     food_item_types: (string | null)[];
-    address: string;
-    street_number: number;
-    city: string;
+    location: {
+      address: string;
+      street_number: number;
+      city: string;
+    };
     business_photos: BusinessPhoto[];
     kosher_type: string;
     business_type: string;

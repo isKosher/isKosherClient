@@ -17,6 +17,7 @@ import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
 import { useInView } from "react-intersection-observer";
 import { RestaurantPreview } from "@/types";
+import axiosInstance from "@/utils/axiosConfig";
 
 const certifications = [
   "או יו כשר",
@@ -43,8 +44,6 @@ const businessTypes = ["מלון", "מסעדה", "קייטרינג"];
 
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
-const API_URL = "http://localhost:8080/api/v1/businesses/preview?size=12&page=";
-
 type homePageProps = {
   initialRestaurants: RestaurantPreview[];
 };
@@ -65,9 +64,9 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const loadMore = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<{ content: RestaurantPreview[] }>(
-        `${API_URL}${page}`
-      );
+      const response = await axiosInstance.get<{
+        content: RestaurantPreview[];
+      }>(`/api/v1/discover/preview?size=12&page=${page}`);
 
       if (!response.data.content) {
         setHasMore(false);

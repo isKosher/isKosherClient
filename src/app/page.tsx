@@ -1,10 +1,12 @@
+import ErrorPage from "@/components/ErrorPage";
 import HomePage from "@/components/homePage";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosConfig";
+import { Suspense } from "react";
 
 async function getInitialRestaurants() {
   try {
-    const response = await axios.get(
-      "http://localhost:8080/api/v1/businesses/preview?size=12&page=1"
+    const response = await axiosInstance.get(
+      "/api/v1/discover/preview?size=12&page=1"
     );
     if (!response.data.content) {
       return [];
@@ -13,10 +15,19 @@ async function getInitialRestaurants() {
     }
   } catch (error) {
     console.error("Error fetching restaurants:", error);
+    throw error;
   }
 }
 
-export default async function Page() {
-  const initialRestaurants = await getInitialRestaurants();
-  return <HomePage initialRestaurants={initialRestaurants} />;
+export default function Page() {
+  return <PageContent />;
+}
+
+async function PageContent() {
+  try {
+    const initialRestaurants = await getInitialRestaurants();
+    return <HomePage initialRestaurants={initialRestaurants} />;
+  } catch (error) {
+    return <ErrorPage />;
+  }
 }

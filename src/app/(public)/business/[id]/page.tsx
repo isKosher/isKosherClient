@@ -1,6 +1,8 @@
 import { Metadata } from "next";
-import { RestaurantDetails } from "@/components/restaurantDetails";
+import { RestaurantDetails } from "./restaurantDetails";
 import { LatLngExpression } from "leaflet";
+import { Restaurant } from "@/types";
+import axiosInstance from "@/utils/axiosConfig";
 
 export async function generateMetadata({
   params,
@@ -15,16 +17,14 @@ export async function generateMetadata({
   };
 }
 
-export async function getRestaurant(id: string) {
-  const res = await fetch(
-    `http://localhost:8080/api/v1/businesses/${id}/details`
-  );
+export async function getRestaurant(id: string): Promise<Restaurant> {
+  const res = await axiosInstance.get(`/api/v1/discover/${id}/details`);
 
-  if (!res.ok) {
+  if (!res.data) {
     throw new Error("Failed to fetch restaurant");
   }
 
-  return res.json();
+  return res.data;
 }
 
 export async function getCoordinates(
@@ -58,7 +58,7 @@ export default async function RestaurantPage({
   try {
     restaurant = await getRestaurant(id);
     coordinates = await getCoordinates(
-      `${restaurant.street_number} ${restaurant.address}, ${restaurant.city}`
+      `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`
     );
   } catch (error) {
     console.error("Error fetching data:", error);

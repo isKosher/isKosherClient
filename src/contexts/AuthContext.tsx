@@ -1,14 +1,12 @@
 "use client";
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import React, { createContext, useState, ReactNode, useEffect } from "react";
 import { AuthContextType, User } from "../types/auth";
+import axiosInstance from "@/utils/axiosConfig";
+import { User as FirebaseUser } from "firebase/auth";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 const COOKIE_NAME = "auth_user";
 
@@ -39,13 +37,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const storedUser = getCookie(COOKIE_NAME);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      console.log(storedUser);
     }
   }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const login = async (userData: FirebaseUser) => {
+    const googleToken = (await userData.getIdTokenResult()).token;
+    console.log(googleToken);
+    const response = await axiosInstance.post(
+      "/api/v1/auth/login",
+      {},
+      {
+        headers: {
+          Authorization: `${googleToken}`,
+        },
+      }
+    );
+
+    const user: User = {
+      name: userData.displayName || "Unknown",
+      photoURL: userData.photoURL || "",
+      email: userData.email || "",
+    };
+    setUser(user);
     // Save to cookie
-    setCookie(COOKIE_NAME, JSON.stringify(userData));
+    setCookie(COOKIE_NAME, JSON.stringify(user));
   };
 
   const logout = () => {
@@ -59,12 +75,4 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };
