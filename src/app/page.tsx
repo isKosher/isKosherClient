@@ -1,12 +1,11 @@
 import ErrorPage from "@/components/ErrorPage";
 import HomePage from "@/components/homePage";
-import axiosInstance from "@/utils/axiosConfig";
-import { Suspense } from "react";
+import axios from "axios";
 
 async function getInitialRestaurants() {
   try {
-    const response = await axiosInstance.get(
-      "/api/v1/discover/preview?size=12&page=1"
+    const response = await axios.get(
+      "https://iskoshermanager.onrender.com/api/v1/discover/preview?size=12&page=1"
     );
     if (!response.data.content) {
       return [];

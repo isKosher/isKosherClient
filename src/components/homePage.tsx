@@ -8,16 +8,12 @@ import RestaurantCard from "../app/restaurantCard";
 import { cn } from "@/lib/utils";
 import CityFilter from "../app/cityFilter";
 import axios from "axios";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
 import { useInView } from "react-intersection-observer";
 import { RestaurantPreview } from "@/types";
-import axiosInstance from "@/utils/axiosConfig";
+//import axiosInstance from "@/utils/axiosConfig";
 
 const certifications = [
   "או יו כשר",
@@ -30,15 +26,7 @@ const certifications = [
   "בד״ץ",
 ];
 
-const cuisineTypes = [
-  "ישראלי",
-  "מזרח תיכוני",
-  "אמריקאי",
-  "מעדניה",
-  "פיצה",
-  "סושי",
-  "ים תיכוני",
-];
+const cuisineTypes = ["ישראלי", "מזרח תיכוני", "אמריקאי", "מעדניה", "פיצה", "סושי", "ים תיכוני"];
 
 const businessTypes = ["מלון", "מסעדה", "קייטרינג"];
 
@@ -51,8 +39,7 @@ type homePageProps = {
 export default function HomePage({ initialRestaurants }: homePageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [restaurants, setRestaurants] =
-    useState<RestaurantPreview[]>(initialRestaurants);
+  const [restaurants, setRestaurants] = useState<RestaurantPreview[]>(initialRestaurants);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedFoodType, setSelectedFoodType] = useState([""]);
   const [isOpen, setIsOpen] = useState(false);
@@ -64,9 +51,9 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const loadMore = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get<{
+      const response = await axios.get<{
         content: RestaurantPreview[];
-      }>(`/api/v1/discover/preview?size=12&page=${page}`);
+      }>(`https://iskoshermanager.onrender.com/api/v1/discover/preview?size=12&page=${page}`);
 
       if (!response.data.content) {
         setHasMore(false);
@@ -90,9 +77,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
 
   function handleSelectFoodType(selectedType: string) {
     selectedFoodType.includes(selectedType)
-      ? setSelectedFoodType(
-          selectedFoodType.filter((type) => type != selectedType)
-        )
+      ? setSelectedFoodType(selectedFoodType.filter((type) => type != selectedType))
       : setSelectedFoodType(selectedFoodType.concat(selectedType));
   }
 
@@ -118,12 +103,8 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
       <div className="mx-auto px-4 py-20 bg-pattern text-sm">
         <div className="max-w-3xl mx-auto bg-white/95 rounded-lg shadow-xl p-8 backdrop-blur-sm">
           <div className="text-center mb-8">
-            <h2 className="text-5xl is-kosher-font text-[#1A365D] font-bold mb-2">
-              isKosher
-            </h2>
-            <p className="text-[#2D4A6D] text-md lg:text-lg">
-              מצא מסעדות כשרות בסביבתך
-            </p>
+            <h2 className="text-5xl is-kosher-font text-[#1A365D] font-bold mb-2">isKosher</h2>
+            <p className="text-[#2D4A6D] text-md lg:text-lg">מצא מסעדות כשרות בסביבתך</p>
           </div>
           <Input
             className="w-full p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg hebrew-side"
@@ -132,11 +113,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={loading}
           />
-          <Collapsible
-            open={isOpen}
-            onOpenChange={setIsOpen}
-            className="w-full space-y-4 mt-4"
-          >
+          <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-4 mt-4">
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
@@ -148,10 +125,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
               >
                 <span>סינון תוצאות</span>
                 <ChevronDown
-                  className={cn(
-                    "h-6 w-6 transition-transform duration-200",
-                    isOpen && "rotate-180"
-                  )}
+                  className={cn("h-6 w-6 transition-transform duration-200", isOpen && "rotate-180")}
                 />
               </Button>
             </CollapsibleTrigger>
@@ -202,10 +176,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
                     </Button>
                   ))}
                 </div>
-                <CityFilter
-                  onSelectCity={(city) => setSelectedCity(city)}
-                  loading={loading}
-                />
+                <CityFilter onSelectCity={(city) => setSelectedCity(city)} loading={loading} />
               </div>
             </CollapsibleContent>
           </Collapsible>

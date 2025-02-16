@@ -2,13 +2,10 @@ import { Metadata } from "next";
 import { RestaurantDetails } from "./restaurantDetails";
 import { LatLngExpression } from "leaflet";
 import { Restaurant } from "@/types";
-import axiosInstance from "@/utils/axiosConfig";
+import axios from "axios";
+//import axiosInstance from "@/utils/axiosConfig";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { id: string };
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = await params;
   const restaurant = await getRestaurant(id);
   return {
@@ -18,7 +15,7 @@ export async function generateMetadata({
 }
 
 export async function getRestaurant(id: string): Promise<Restaurant> {
-  const res = await axiosInstance.get(`/api/v1/discover/${id}/details`);
+  const res = await axios.get(`https://iskoshermanager.onrender.com/api/v1/discover/${id}/details`);
 
   if (!res.data) {
     throw new Error("Failed to fetch restaurant");
@@ -27,9 +24,7 @@ export async function getRestaurant(id: string): Promise<Restaurant> {
   return res.data;
 }
 
-export async function getCoordinates(
-  address: string
-): Promise<LatLngExpression> {
+export async function getCoordinates(address: string): Promise<LatLngExpression> {
   let url = `https://nominatim.openstreetmap.org/search?q=${address}&format=json`;
   console.log(url);
   const res = await fetch(url);
@@ -46,11 +41,7 @@ export async function getCoordinates(
   return { lat: data[0].lat, lng: data[0].lon };
 }
 
-export default async function RestaurantPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function RestaurantPage({ params }: { params: { id: string } }) {
   const { id } = await params;
   let restaurant;
   let coordinates: LatLngExpression;
@@ -65,7 +56,5 @@ export default async function RestaurantPage({
     return <div>Error</div>;
   }
 
-  return (
-    <RestaurantDetails restaurant={restaurant} coordinates={coordinates} />
-  );
+  return <RestaurantDetails restaurant={restaurant} coordinates={coordinates} />;
 }
