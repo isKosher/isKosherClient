@@ -1,4 +1,3 @@
-```markdown
 # 🍽️ isKosherClient
 
 A modern kosher business directory – Easily search, filter, and view kosher-certified businesses with essential details such as certification, supervisor contacts, and more.
@@ -67,4 +66,4 @@ npm run dev # or yarn dev
 This project is open-source under the MIT License.
 
 🔥 Looking for contributors? Feel free to submit a pull request
-```
+
