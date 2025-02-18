@@ -3,20 +3,15 @@ import type React from "react";
 import { createContext, useEffect, useState, type ReactNode } from "react";
 import type { AuthContextType, User } from "../types/auth";
 import type { User as FirebaseUser } from "firebase/auth";
-import axios from "axios";
-import { handleLoginAction } from "@/app/(public)/login/actionsAuth";
+import { handleLoginAction, logoutAction } from "@/app/actions/actionsAuth";
+import { useRouter } from "next/navigation";
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-
+  const router = useRouter();
   useEffect(() => {
-    // Check localStorage for user data on component mount
     const storedUser = localStorage.getItem("user_data");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -46,17 +41,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await axios.post("/api/v1/auth/logout");
+      await logoutAction();
       setUser(null);
       localStorage.removeItem("user_data");
+      router.push("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
 };
