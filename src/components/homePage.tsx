@@ -13,6 +13,8 @@ import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
 import { useInView } from "react-intersection-observer";
 import { RestaurantPreview } from "@/types";
+import { serverApi } from "@/utils/apiClient";
+import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
 //import axiosInstance from "@/utils/axiosConfig";
 
 const certifications = [
@@ -51,14 +53,14 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const loadMore = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<{
+      const response = await serverApi.get<{
         content: RestaurantPreview[];
-      }>(`https://iskoshermanager.onrender.com/api/v1/discover/preview?size=12&page=${page}`);
+      }>(`${BASE_URL_IS_KOSHER_MANAGER}/discover/preview?size=12&page=${page}`);
 
-      if (!response.data.content) {
+      if (!response.content) {
         setHasMore(false);
       } else {
-        const newRestaurants = response.data.content;
+        const newRestaurants = response.content;
         setRestaurants((prev) => [...prev, ...newRestaurants]);
         setPage((prev) => prev + 1);
       }

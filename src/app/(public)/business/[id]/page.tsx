@@ -2,7 +2,9 @@ import { Metadata } from "next";
 import { RestaurantDetails } from "./restaurantDetails";
 import { LatLngExpression } from "leaflet";
 import { Restaurant } from "@/types";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+import { serverApi } from "@/utils/apiClient";
+import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
 //import axiosInstance from "@/utils/axiosConfig";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -15,7 +17,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export async function getRestaurant(id: string): Promise<Restaurant> {
-  const res = await axios.get(`https://iskoshermanager.onrender.com/api/v1/discover/${id}/details`);
+  const res = await serverApi.get<AxiosResponse>(`${BASE_URL_IS_KOSHER_MANAGER}/discover/${id}/details`);
 
   if (!res.data) {
     throw new Error("Failed to fetch restaurant");
