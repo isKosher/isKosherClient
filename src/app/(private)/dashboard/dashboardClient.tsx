@@ -3,13 +3,22 @@ import React from "react";
 import RestaurantCard from "@/app/restaurantCard";
 import Link from "next/link";
 import { RestaurantPreview } from "@/types";
-
+import { getMyBusinessAction } from "@/app/(private)/dashboard/page";
 interface DashboardClientProps {
-  userBusinesses: RestaurantPreview[];
+  getBusinessesAction: () => Promise<RestaurantPreview[]>;
 }
-export default function DashboardClient({
-  userBusinesses,
-}: DashboardClientProps) {
+export default function DashboardClient() {
+  const [userBusinesses, setUserBusinesses] = React.useState<
+    RestaurantPreview[]
+  >([]);
+  React.useEffect(() => {
+    const updateUserBusinesses = async () => {
+      const businesses = await getMyBusinessAction();
+      setUserBusinesses(businesses);
+    };
+
+    updateUserBusinesses();
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto px-4 py-20">

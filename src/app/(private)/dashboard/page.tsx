@@ -1,18 +1,18 @@
-import { getMyRestaurants } from "./actionsDashboard";
+"use server";
 import DashboardClient from "./dashboardClient";
+import { RestaurantPreview } from "@/types";
+import { apiFetch } from "@/utils/axiosConfig";
+export async function getMyBusinessAction(): Promise<RestaurantPreview[]> {
+  return apiFetch<RestaurantPreview[]>("/admin/businesses/my-businesses", {
+    method: "GET",
+    includeCookies: true,
+  });
+}
 
 export default async function DashboardPage() {
-  let userBusinesses = null;
-
   try {
-    userBusinesses = await getMyRestaurants();
   } catch (error) {
     console.error("Error fetching businesses:", error);
   }
-
-  if (!userBusinesses) {
-    return <div>Please log in to view your dashboard</div>;
-  }
-
-  return <DashboardClient userBusinesses={userBusinesses} />;
+  return <DashboardClient />;
 }
