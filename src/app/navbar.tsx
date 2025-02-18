@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import useAuth from "@/hooks/useAuth";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -100,7 +100,7 @@ export default function Navbar() {
                 <div className="flex flex-row-reverse items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
                     <img
-                      src="/default-avatar.png"
+                      src={user.photoURL}
                       alt={`${user.name}'s profile`}
                       className="h-full w-full object-cover"
                     />
