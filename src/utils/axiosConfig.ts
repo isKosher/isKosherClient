@@ -2,7 +2,7 @@
 
 import { refreshAccessTokenAction } from "@/app/actions/actionsAuth";
 import { AXIOS_DEFAULT_TIMEOUT, BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
-import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import axios, { AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
 
 export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<AxiosInstance> => {
@@ -43,16 +43,8 @@ export async function apiFetch<T>(
     headers?: Record<string, string>;
     timeout?: number;
   } = {}
-): Promise<T> {
-  const {
-    method = "GET",
-    data,
-    params,
-    includeCookies = false,
-    retry = true,
-    headers = {},
-    timeout,
-  } = options;
+): Promise<AxiosResponse<T>> {
+  const { method = "GET", data, params, includeCookies = false, retry = true, headers = {}, timeout } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
 
@@ -79,7 +71,7 @@ export async function apiFetch<T>(
       headers: requestHeaders,
     });
 
-    return response.data;
+    return response;
   } catch (error: any) {
     if (error.response?.status === 401 && retry) {
       console.warn("Access token expired, trying to refresh...");
@@ -100,19 +92,4 @@ export async function apiFetch<T>(
     }
     throw error;
   }
-}
-
-export async function getFromServer<T>(
-  endpoint: string,
-  options: Omit<Parameters<typeof apiFetch>[1], "method"> = {}
-) {
-  return apiFetch<T>(endpoint, { ...options, method: "GET" });
-}
-
-export async function postToServer<T>(
-  endpoint: string,
-  data: any,
-  options: Omit<Parameters<typeof apiFetch>[1], "method" | "data"> = {}
-) {
-  return apiFetch<T>(endpoint, { ...options, method: "POST", data });
 }

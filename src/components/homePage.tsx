@@ -7,7 +7,6 @@ import FilterDropdown from "../app/filterDropdown";
 import RestaurantCard from "../app/restaurantCard";
 import { cn } from "@/lib/utils";
 import CityFilter from "../app/cityFilter";
-import axios from "axios";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
@@ -15,18 +14,10 @@ import { useInView } from "react-intersection-observer";
 import { RestaurantPreview } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
+import { getRestaurantsAction } from "@/app/actions/getRestaurantAction";
 //import axiosInstance from "@/utils/axiosConfig";
 
-const certifications = [
-  "או יו כשר",
-  "אוקיי כשר",
-  "סטאר-קיי",
-  "סי-אר-סי",
-  "קוף-קיי",
-  "רבנות",
-  "מהדרין",
-  "בד״ץ",
-];
+const certifications = ["או יו כשר", "אוקיי כשר", "סטאר-קיי", "סי-אר-סי", "קוף-קיי", "רבנות", "מהדרין", "בד״ץ"];
 
 const cuisineTypes = ["ישראלי", "מזרח תיכוני", "אמריקאי", "מעדניה", "פיצה", "סושי", "ים תיכוני"];
 
@@ -53,14 +44,10 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const loadMore = async () => {
     try {
       setIsLoading(true);
-      const response = await serverApi.get<{
-        content: RestaurantPreview[];
-      }>(`${BASE_URL_IS_KOSHER_MANAGER}/discover/preview?size=12&page=${page}`);
-
-      if (!response.content) {
+      const newRestaurants = await getRestaurantsAction(page);
+      if (newRestaurants.length === 0) {
         setHasMore(false);
       } else {
-        const newRestaurants = response.content;
         setRestaurants((prev) => [...prev, ...newRestaurants]);
         setPage((prev) => prev + 1);
       }
@@ -126,28 +113,14 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
         rounded-lg mt-2 mb-4"
               >
                 <span>סינון תוצאות</span>
-                <ChevronDown
-                  className={cn("h-6 w-6 transition-transform duration-200", isOpen && "rotate-180")}
-                />
+                <ChevronDown className={cn("h-6 w-6 transition-transform duration-200", isOpen && "rotate-180")} />
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="collapsible-content space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <FilterDropdown
-                  filterOptions={certifications}
-                  loading={loading}
-                  filterPlaceholder="תבחר תעודת כשרות"
-                />
-                <FilterDropdown
-                  filterOptions={cuisineTypes}
-                  loading={loading}
-                  filterPlaceholder="תבחר סוג מטבח"
-                />
-                <FilterDropdown
-                  filterOptions={businessTypes}
-                  loading={loading}
-                  filterPlaceholder="תבחר סוג עסק"
-                />
+                <FilterDropdown filterOptions={certifications} loading={loading} filterPlaceholder="תבחר תעודת כשרות" />
+                <FilterDropdown filterOptions={cuisineTypes} loading={loading} filterPlaceholder="תבחר סוג מטבח" />
+                <FilterDropdown filterOptions={businessTypes} loading={loading} filterPlaceholder="תבחר סוג עסק" />
                 <div className="grid grid-cols-2 row-span-2 gap-2 w-full">
                   <Button
                     key="check-all"

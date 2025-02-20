@@ -1,17 +1,13 @@
 "use server";
 import { clearTokensAction, setTokensAction } from "@/app/actions/tokenCookieActions";
-import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
 import { LoginResponse } from "@/types";
 import { extractTokens, serverApi } from "@/utils/apiClient";
-import axios from "axios";
 import { cookies } from "next/headers";
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 export async function handleLoginAction(idToken: string): Promise<LoginResponse> {
   try {
-    const response = await axios.post(
-      `${BASE_URL_IS_KOSHER_MANAGER}/auth/login`,
+    const response = await serverApi.post(
+      `/auth/login`,
       {},
       {
         headers: {
@@ -21,7 +17,6 @@ export async function handleLoginAction(idToken: string): Promise<LoginResponse>
         withCredentials: true,
       }
     );
-
     const { accessToken, refreshToken } = extractTokens(response.headers["set-cookie"]);
     await setTokensAction(accessToken, refreshToken);
 
@@ -40,7 +35,7 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
 
-    const response = await axios.post(`${BASE_URL_IS_KOSHER_MANAGER}/auth/refresh-token`, null, {
+    const response = await serverApi.post(`/auth/refresh-token`, null, {
       headers: {
         Cookie: cookieHeader,
         "Content-Type": "application/json",
@@ -61,7 +56,7 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
 
 export async function logoutAction(): Promise<boolean> {
   try {
-    await serverApi.post(`${BASE_URL_IS_KOSHER_MANAGER}/auth/logout`, null, {});
+    await serverApi.post(`/auth/logout`, null, {});
     await clearTokensAction();
     console.log("Logged out successfully!");
     return true;
