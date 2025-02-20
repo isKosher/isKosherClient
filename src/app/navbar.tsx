@@ -1,12 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetClose,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetTrigger, SheetContent, SheetClose, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import useAuth from "@/hooks/useAuth";
@@ -41,9 +35,7 @@ export default function Navbar() {
       }`}
     >
       <Link href="/">
-        <h1 className="hidden text-3xl is-kosher-font text-[#1A365D] font-bold lg:block">
-          isKosher
-        </h1>
+        <h1 className="hidden text-3xl is-kosher-font text-[#1A365D] font-bold lg:block">isKosher</h1>
       </Link>
       <div className="absolute h-full flex right-2 top-2">
         <h1 className="text-[12px]">בס&rdquo;ד</h1>
@@ -51,29 +43,20 @@ export default function Navbar() {
 
       <Sheet>
         <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-0 ml-3"
-          >
+          <Button variant="outline" size="icon" className="absolute left-0 ml-3">
             <MenuIcon className="h-6 w-6" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="">
           <div>
-            <SheetTitle className="text-3xl font-serif text-[#1A365D] font-bold text-center is-kosher-font">
-              isKosher
-            </SheetTitle>
-            <div className="absolute bottom-0 left-0 w-full h-[50%] bg-pattern2 bg-cover bg-center custom-gradient"></div>
+            <SheetTitle className="text-3xl font-serif text-[#1A365D] font-bold text-center is-kosher-font">isKosher</SheetTitle>
+            <div className="absolute bottom-0 left-0 -z-10 w-full h-[50%] bg-pattern2 bg-cover bg-center custom-gradient"></div>
 
             <div className="grid gap-2 py-6 hebrew-side">
               {menuLinks.map((link) => (
                 <SheetClose asChild key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="flex w-full items-center py-2 text-lg lg:text-2xl font-semibold"
-                  >
+                  <Link href={link.href} className="flex w-full items-center py-2 text-lg lg:text-2xl font-semibold">
                     {link.label}
                   </Link>
                 </SheetClose>
@@ -99,24 +82,14 @@ export default function Navbar() {
                 </SheetClose>
                 <div className="flex flex-row-reverse items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
-                    <img
-                      src={user.photoURL}
-                      alt={`${user.name}'s profile`}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={user.photoURL} alt={`${user.name}'s profile`} className="h-full w-full object-cover" />
                   </div>
-                  <span className="text-[#1A365D] font-medium">
-                    {user.name}
-                  </span>
+                  <span className="text-[#1A365D] font-medium">{user.name}</span>
                 </div>
               </div>
 
               <SheetClose asChild>
-                <Button
-                  className="w-full mt-4"
-                  variant="outline"
-                  onClick={() => logout()}
-                >
+                <Button className="w-full mt-4" variant="outline" onClick={() => logout()}>
                   להתנתק
                 </Button>
               </SheetClose>
