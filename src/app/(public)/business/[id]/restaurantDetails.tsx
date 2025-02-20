@@ -24,10 +24,7 @@ const images = [
   },
 ];
 
-export function RestaurantDetails(props: {
-  restaurant: Restaurant;
-  coordinates: LatLngExpression;
-}) {
+export function RestaurantDetails(props: { restaurant: Restaurant; coordinates: LatLngExpression }) {
   const router = useRouter();
   const position: LatLngExpression = [31.25181, 34.7913];
   const Map = useMemo(
@@ -52,26 +49,23 @@ export function RestaurantDetails(props: {
             <ChevronLeft className="mr-2" /> Back
           </Button> */}
           <div className="flex items-center gap-4">
-            <Image
-              src={
-                "https://rest.jdn.co.il/wp-content/uploads/2022/09/Untitled-18-06.png"
-              }
-              alt="kosher beit yossef"
-              width={80}
-              height={80}
-              className="mr-2"
-            />
-            <h2 className="text-2xl font-serif text-[#2D4A6D]">
-              {props.restaurant.kosher_type}
-            </h2>
+            {props.restaurant.kosher_types.map((type) => (
+              <div>
+                <Image
+                  src={type.kosher_icon_url || "/default-avatar.png"}
+                  alt="kosher beit yossef"
+                  width={80}
+                  height={80}
+                  className="mr-2"
+                />
+                <h2 className="text-2xl font-serif text-[#2D4A6D]">{type.name}</h2>
+              </div>
+            ))}
           </div>
           <div className="text-end">
-            <h1 className="text-6xl font-serif text-[#2D4A6D] font-bold mb-2">
-              {props.restaurant.business_name}
-            </h1>
+            <h1 className="text-6xl font-serif text-[#2D4A6D] font-bold mb-2">{props.restaurant.business_name}</h1>
             <p className="text-[#2D4A6D]/90 text-2xl flex items-center justify-end gap-2">
-              {props.restaurant.location.address}{" "}
-              {props.restaurant.location.street_number},{" "}
+              {props.restaurant.location.address} {props.restaurant.location.street_number},{" "}
               {props.restaurant.location.city}
               <MapPin size={24} className="text-[#2D4A6D]/90" />
             </p>
@@ -98,11 +92,26 @@ export function RestaurantDetails(props: {
           <div className="space-y-4">
             {/* Kosher Details */}
             <div className="p-4 bg-[#1A365D]/5 rounded-lg">
-              <h2 className="font-bold text-[#1A365D] mb-2">Kosher Details</h2>
-              <p>Certification: {props.restaurant.kosher_type}</p>
-              <p>Supervisor: {props.restaurant.supervisor_name}</p>
+              <h2 className="font-bold text-[#1A365D] mb-2">Mashguiach Details</h2>
+              {props.restaurant.kosher_supervisors.map((supervisor) => (
+                <div>
+                  <p>Supervisor: {supervisor.name}</p>
+                  <p>Authority: {supervisor.authority}</p>
+                  <p>Contact: {supervisor.contact_info}</p>
+                </div>
+              ))}
+              {/* <p>Supervisor: {props.restaurant.supervisor_name}</p>
               <p>Authority: {props.restaurant.supervisor_authority}</p>
-              <p>Expiration: {props.restaurant.expiration_date}</p>
+              <p>Expiration: {props.restaurant.expiration_date}</p> */}
+            </div>
+            <div className="p-4 bg-[#1A365D]/5 rounded-lg">
+              <h2 className="font-bold text-[#1A365D] mb-2">Certificate Details</h2>
+              {props.restaurant.kosher_certificates.map((certificate) => (
+                <div>
+                  <p>Name: {certificate.certificate}</p>
+                  <p>Expiration: {certificate.expiration_date}</p>
+                </div>
+              ))}
             </div>
 
             {/* Business Type */}
@@ -117,7 +126,10 @@ export function RestaurantDetails(props: {
             <div className="p-4 bg-[#1A365D]/5 rounded-lg">
               <h2 className="font-bold text-[#1A365D] mb-2">Details</h2>
               <p>{props.restaurant.business_details}</p>
-              <p>{props.restaurant.location_details}</p>
+              <p>
+                {props.restaurant.location.address}, {props.restaurant.location.street_number},{" "}
+                {props.restaurant.location.city}
+              </p>
               <p>Rating: {props.restaurant.business_rating}</p>
             </div>
           </div>
