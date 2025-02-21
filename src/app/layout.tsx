@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "./navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ToastProvider } from "@/components/ui/toaster";
 import { Yatra_One } from "next/font/google";
 import { Suspense } from "react";
 import LoadingPage from "./loading";
@@ -35,12 +36,11 @@ export default function RootLayout({
 }>) {
   return (
     <AuthProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${yatraOne.variable}  antialiased`}
-        >
+      <html lang="en" dir="rtl">
+        <body className={`${geistSans.variable} ${geistMono.variable} ${yatraOne.variable}  antialiased`}>
           <Navbar />
           {children}
+          <ToastProvider />
         </body>
       </html>
     </AuthProvider>
