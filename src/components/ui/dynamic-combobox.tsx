@@ -25,18 +25,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Option } from "@/lib/schemaCreateBusiness";
+import type { Option } from "@/lib/schemaCreateBusiness";
 
 interface DynamicComboboxProps {
   options: Option[];
   selected: Option[];
   onSelect: (option: Option) => void;
   onRemove: (option: Option) => void;
-  onAdd: (name: string) => void;
+  onAdd?: (name: string) => void;
   placeholder: string;
   emptyText: string;
   addNewText: string;
   multiple?: boolean;
+  allowCustom?: boolean; // New prop
 }
 
 export function DynamicCombobox({
@@ -49,6 +50,7 @@ export function DynamicCombobox({
   emptyText,
   addNewText,
   multiple = false,
+  allowCustom = true, // Default to true for backward compatibility
 }: DynamicComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -73,18 +75,19 @@ export function DynamicCombobox({
   };
 
   const handleAddNew = () => {
-    if (newItemName.trim()) {
+    if (newItemName.trim() && onAdd) {
       onAdd(newItemName.trim());
       setNewItemName("");
       setDialogOpen(false);
       setSearch("");
-      // Keep the popover open after adding a new item
       setOpen(true);
     }
   };
 
   const showAddNew =
-    search && !filteredOptions.some((option) => option.name.toLowerCase() === search.toLowerCase());
+    allowCustom &&
+    search &&
+    !filteredOptions.some((option) => option.name.toLowerCase() === search.toLowerCase());
 
   return (
     <div className="flex flex-col gap-2">
@@ -171,7 +174,7 @@ export function DynamicCombobox({
                   </CommandItem>
                 ))}
               </CommandGroup>
-              {!showAddNew && (
+              {allowCustom && addNewText && !showAddNew && (
                 <>
                   <CommandSeparator />
                   <CommandGroup>
