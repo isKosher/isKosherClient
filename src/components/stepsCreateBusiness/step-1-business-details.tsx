@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/from";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useState } from "react";
 import { FormData } from "@/lib/schemaCreateBusiness";
 
@@ -43,6 +43,7 @@ export function Step1BusinessDetails() {
             <FormLabel>טלפון העסק</FormLabel>
             <FormControl>
               <Input
+                dir="rtl"
                 type="tel"
                 placeholder="הכנס את מספר הטלפון"
                 {...field}

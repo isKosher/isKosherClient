@@ -1,24 +1,63 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/from";
+import { useEffect, useState } from "react";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DynamicCombobox } from "@/components/ui/dynamic-combobox";
-import {
-  businessTypes as initialBusinessTypes,
-  kosherTypes as initialKosherTypes,
-  foodTypes as initialFoodTypes,
-  foodItems as initialFoodItems,
-  Option,
-  FormData,
-} from "@/lib/schemaCreateBusiness";
-import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import type { FormData, Option } from "@/lib/schemaCreateBusiness";
+import { foodTypes } from "@/lib/schemaCreateBusiness";
+import { fetchLookupData } from "@/services/lookup-service";
 
 export function Step3FoodAndKosher() {
   const form = useFormContext<FormData>();
-  const [businessTypes, setBusinessTypes] = useState<Option[]>(initialBusinessTypes);
-  const [kosherTypes, setKosherTypes] = useState<Option[]>(initialKosherTypes);
-  const [foodTypes, setFoodTypes] = useState<Option[]>(initialFoodTypes);
-  const [foodItems, setFoodItems] = useState<Option[]>(initialFoodItems);
+  const [isLoading, setIsLoading] = useState(true);
+  const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
+  const [kosherTypes, setKosherTypes] = useState<Option[]>([]);
+  const [foodItems, setFoodItems] = useState<Option[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchLookupData();
+
+        // Transform and merge API data with existing options
+        setBusinessTypes(
+          data.business_types.map((item) => ({
+            id: item.id,
+            name: item.name,
+            isCustom: false,
+          }))
+        );
+
+        setKosherTypes(
+          data.kosher_types.map((item) => ({
+            id: item.id,
+            name: item.name,
+            isCustom: false,
+          }))
+        );
+
+        setFoodItems(
+          data.food_item_types.map((item) => ({
+            id: item.id,
+            name: item.name,
+            isCustom: false,
+          }))
+        );
+      } catch (error) {
+        toast.error("שגיאה בטעינת הנתונים", {
+          description: "לא ניתן לטעון את רשימת האפשרויות. אנא נסה שוב מאוחר יותר.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   if (!form) {
     return null;
@@ -31,7 +70,7 @@ export function Step3FoodAndKosher() {
       isCustom: true,
     };
     setBusinessTypes([...businessTypes, newType]);
-    form.setValue("business_type", newType);
+    form.setValue("business_type", { ...newType, isCustom: newType.isCustom ?? false });
   };
 
   const handleAddKosherType = (name: string) => {
@@ -42,18 +81,7 @@ export function Step3FoodAndKosher() {
     };
     setKosherTypes([...kosherTypes, newType]);
     const currentTypes = form.getValues("kosher_types") || [];
-    form.setValue("kosher_types", [...currentTypes, newType]);
-  };
-
-  const handleAddFoodType = (name: string) => {
-    const newType: Option = {
-      id: `custom-${Date.now()}`,
-      name,
-      isCustom: true,
-    };
-    setFoodTypes([...foodTypes, newType]);
-    const currentTypes = form.getValues("food_types") || [];
-    form.setValue("food_types", [...currentTypes, newType]);
+    form.setValue("kosher_types", [...currentTypes, { ...newType, isCustom: newType.isCustom ?? false }]);
   };
 
   const handleAddFoodItem = (name: string) => {
@@ -64,8 +92,17 @@ export function Step3FoodAndKosher() {
     };
     setFoodItems([...foodItems, newItem]);
     const currentItems = form.getValues("food_items") || [];
-    form.setValue("food_items", [...currentItems, newItem]);
+    form.setValue("food_items", [...currentItems, { ...newItem, isCustom: newItem.isCustom ?? false }]);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+        <p className="text-sky-600">טוען נתונים...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -81,12 +118,16 @@ export function Step3FoodAndKosher() {
               <DynamicCombobox
                 options={businessTypes}
                 selected={field.value ? [{ ...field.value, id: field.value.id || "" }] : []}
-                onSelect={(option) => form.setValue("business_type", option)}
+                onSelect={(option) => {
+                  // Clear previous selection and set new one
+                  form.setValue("business_type", { ...option, isCustom: option.isCustom ?? false });
+                }}
                 onRemove={() => form.setValue("business_type", { name: "", id: "", isCustom: false })}
                 onAdd={handleAddBusinessType}
                 placeholder="בחר סוג עסק"
                 emptyText="לא נמצאו תוצאות"
                 addNewText="הוסף סוג עסק חדש"
+                multiple={false} // Ensure single selection
               />
             </FormControl>
             <FormMessage />
@@ -103,10 +144,13 @@ export function Step3FoodAndKosher() {
             <FormControl>
               <DynamicCombobox
                 options={kosherTypes}
-                selected={field.value ? field.value.map((item) => ({ ...item, id: item.id || "" })) : []}
+                selected={(field.value || []).map((option) => ({ ...option, id: option.id || "" }))}
                 onSelect={(option) => {
                   const current = field.value || [];
-                  form.setValue("kosher_types", [...current, option]);
+                  form.setValue("kosher_types", [
+                    ...current,
+                    { ...option, isCustom: option.isCustom ?? false },
+                  ]);
                 }}
                 onRemove={(option) => {
                   const current = field.value || [];
@@ -132,11 +176,11 @@ export function Step3FoodAndKosher() {
         name="food_types"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>סוגי אוכל</FormLabel>
+            <FormLabel>סוג אוכל</FormLabel>
             <FormControl>
               <DynamicCombobox
-                options={foodTypes}
-                selected={field.value ? field.value.map((item) => ({ ...item, id: item.id || "" })) : []}
+                options={[...foodTypes]}
+                selected={(field.value || []).map((option) => ({ ...option, id: option.id || "" }))}
                 onSelect={(option) => {
                   const current = field.value || [];
                   form.setValue("food_types", [...current, option]);
@@ -148,11 +192,11 @@ export function Step3FoodAndKosher() {
                     current.filter((item) => item.id !== option.id)
                   );
                 }}
-                onAdd={handleAddFoodType}
-                placeholder="בחר סוגי אוכל"
+                placeholder="בחר סוג אוכל"
                 emptyText="לא נמצאו תוצאות"
-                addNewText="הוסף סוג אוכל חדש"
+                addNewText=""
                 multiple
+                allowCustom={false}
               />
             </FormControl>
             <FormMessage />
@@ -169,10 +213,13 @@ export function Step3FoodAndKosher() {
             <FormControl>
               <DynamicCombobox
                 options={foodItems}
-                selected={field.value ? field.value.map((item) => ({ ...item, id: item.id || "" })) : []}
+                selected={(field.value || []).map((option) => ({ ...option, id: option.id || "" }))}
                 onSelect={(option) => {
                   const current = field.value || [];
-                  form.setValue("food_items", [...current, option]);
+                  form.setValue("food_items", [
+                    ...current,
+                    { ...option, isCustom: option.isCustom ?? false },
+                  ]);
                 }}
                 onRemove={(option) => {
                   const current = field.value || [];

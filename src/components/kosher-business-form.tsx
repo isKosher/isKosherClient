@@ -5,7 +5,9 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { StepIndicator } from "@/components/ui/step-indicator";
 import { FormData, formSchema } from "@/lib/schemaCreateBusiness";
 import { Step5Summary } from "./stepsCreateBusiness/step-5-summary";
 import { Step4Supervision } from "./stepsCreateBusiness/step-4-supervision";
@@ -13,7 +15,7 @@ import { Step3FoodAndKosher } from "./stepsCreateBusiness/step-3-food-and-kosher
 import { Step2Location } from "./stepsCreateBusiness/step-2-location";
 import { Step1BusinessDetails } from "./stepsCreateBusiness/step-1-business-details";
 import { createBusiness } from "@/app/actions/dashboardAction";
-import { useToast } from "@/components/ui/use-toast";
+
 const steps = [
   { title: "פרטי העסק", component: Step1BusinessDetails },
   { title: "מיקום", component: Step2Location },
@@ -22,10 +24,23 @@ const steps = [
   { title: "סיכום", component: Step5Summary },
 ];
 
+const stepValidationFields = {
+  0: ["business_name", "business_phone", "business_details"],
+  1: ["location.street_number", "location.address", "location.city"],
+  2: ["business_type", "kosher_types", "food_types", "food_items"],
+  3: [
+    "supervisor.name",
+    "supervisor.contact_info",
+    "supervisor.authority",
+    "kosher_certificate.expiration_date",
+  ],
+  4: [], // Summary step doesn't need validation
+};
+
 export function KosherBusinessForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+  const [stepValidity, setStepValidity] = useState<Record<number, boolean>>({});
 
   const methods = useForm<FormData>({
     mode: "onChange",
@@ -37,7 +52,10 @@ export function KosherBusinessForm() {
       location: {
         street_number: 0,
         address: "",
-        region: "",
+        area: {
+          name: "",
+          id: "",
+        },
         location_details: "",
         city: "",
       },
@@ -67,19 +85,17 @@ export function KosherBusinessForm() {
       const result = await createBusiness(data);
 
       if (result.success) {
-        toast({
-          title: "העסק נוצר בהצלחה!",
+        toast.success("העסק נוצר בהצלחה!", {
           description: "הפרטים נשמרו במערכת",
         });
         methods.reset();
         setCurrentStep(0);
+        setStepValidity({});
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "שגיאה!",
+      toast.error("שגיאה!", {
         description: "אירעה שגיאה בעת יצירת העסק. אנא נסה שוב.",
       });
     } finally {
@@ -87,16 +103,25 @@ export function KosherBusinessForm() {
     }
   };
 
-  const nextStep = async () => {
-    const fields = Object.keys(methods.formState.errors);
-    if (fields.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "שגיאה!",
-        description: "אנא תקן את השגיאות לפני שתמשיך",
+  const validateStep = async (stepIndex: number) => {
+    const fieldsToValidate = stepValidationFields[stepIndex as keyof typeof stepValidationFields];
+
+    const result = await methods.trigger(fieldsToValidate as any);
+    setStepValidity((prev) => ({ ...prev, [stepIndex]: result }));
+
+    if (!result) {
+      toast.error("שגיאה!", {
+        description: "אנא מלא את כל השדות הנדרשים",
       });
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const nextStep = async () => {
+    const isValid = await validateStep(currentStep);
+    if (!isValid) return;
+
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
@@ -112,16 +137,14 @@ export function KosherBusinessForm() {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             {steps.map((step, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    index <= currentStep ? "bg-sky-600 text-white" : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {index + 1}
-                </div>
-                <span className="mt-2 text-sm hidden md:block">{step.title}</span>
-              </div>
+              <StepIndicator
+                key={index}
+                currentStep={currentStep}
+                stepIndex={index}
+                title={step.title}
+                isValid={stepValidity[index] || false}
+                isActive={currentStep === index}
+              />
             ))}
           </div>
           <div className="mt-4 h-2 bg-gray-200 rounded-full">
