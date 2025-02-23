@@ -57,9 +57,7 @@ export function DynamicCombobox({
   const [newItemName, setNewItemName] = React.useState("");
   const [search, setSearch] = React.useState("");
 
-  const filteredOptions = options.filter((option) =>
-    option.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredOptions = options.filter((option) => option.name.toLowerCase().includes(search.toLowerCase()));
 
   const handleSelect = (option: Option) => {
     if (multiple) {
@@ -85,34 +83,20 @@ export function DynamicCombobox({
   };
 
   const showAddNew =
-    allowCustom &&
-    search &&
-    !filteredOptions.some((option) => option.name.toLowerCase() === search.toLowerCase());
+    allowCustom && search && !filteredOptions.some((option) => option.name.toLowerCase() === search.toLowerCase());
 
   return (
     <div className="flex flex-col gap-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between text-right"
-          >
-            <span className="truncate">
-              {multiple ? `${selected.length} נבחרו` : selected[0]?.name || placeholder}
-            </span>
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between text-right">
+            <span className="truncate">{multiple ? `${selected.length} נבחרו` : selected[0]?.name || placeholder}</span>
             <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0" align="end">
           <Command>
-            <CommandInput
-              placeholder={placeholder}
-              value={search}
-              onValueChange={setSearch}
-              className="text-right"
-            />
+            <CommandInput placeholder={placeholder} value={search} onValueChange={setSearch} className="text-right" />
             <CommandList>
               <CommandEmpty>
                 {showAddNew ? (
@@ -133,7 +117,7 @@ export function DynamicCombobox({
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
+                        <div className="grid gap-2 text-right">
                           <Label>שם</Label>
                           <Input
                             value={newItemName || search}
@@ -193,7 +177,7 @@ export function DynamicCombobox({
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                          <div className="grid gap-2">
+                          <div className="grid gap-2 text-right">
                             <Label>שם</Label>
                             <Input
                               value={newItemName}

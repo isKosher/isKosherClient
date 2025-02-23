@@ -3,7 +3,13 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { useState } from "react";
 import { FormData } from "@/lib/schemaCreateBusiness";
 
@@ -17,7 +23,7 @@ export function Step1BusinessDetails() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-sky-800">פרטי העסק</h2>
+      <h2 className="text-2xl font-semibold text-[#1A365D]">פרטי העסק</h2>
       <FormField
         control={form.control}
         name="business_name"

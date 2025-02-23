@@ -1,12 +1,13 @@
 "use client";
 
-import { KosherBusinessForm } from "@/components/kosher-business-form";
+import { KosherBusinessForm } from "@/app/(private)/create-business/kosher-business-form";
 
 export default function CreateBusinessPage() {
   return (
-    <div className="container mx-auto p-4" dir="rtl">
-      <h1 className="text-3xl font-bold mb-4">הוסף עסק כשר</h1>
-      <KosherBusinessForm />
+    <div className="h-screen flex justify-center items-center">
+      <div className="container mx-auto p-4 " dir="rtl">
+        <KosherBusinessForm />
+      </div>
     </div>
   );
 }

@@ -7,13 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Step1BusinessDetails } from "./stepsCreateBusiness/step-1-business-details";
-import { Step2Location } from "./stepsCreateBusiness/step-2-location";
-import { Step3FoodAndKosher } from "./stepsCreateBusiness/step-3-food-and-kosher";
-import { Step4Supervision } from "./stepsCreateBusiness/step-4-supervision";
-import { Step5Summary } from "./stepsCreateBusiness/step-5-summary";
+import { Step1BusinessDetails } from "./(stepsCreateBusiness)/step-1-business-details";
+import { Step2Location } from "./(stepsCreateBusiness)/step-2-location";
+import { Step3FoodAndKosher } from "./(stepsCreateBusiness)/step-3-food-and-kosher";
+import { Step4Supervision } from "./(stepsCreateBusiness)/step-4-supervision";
+import { Step5Summary } from "./(stepsCreateBusiness)/step-5-summary";
 import { formSchema, type FormData } from "@/lib/schemaCreateBusiness";
-import { StepIndicator } from "@/components/ui/step-indicator";
+import { StepIndicator } from "@/components/step-indicator";
 import { createBusiness } from "@/app/actions/dashboardAction";
 
 const steps = [
@@ -28,12 +28,7 @@ const stepValidationFields = {
   0: ["business_name", "business_phone", "business_details"],
   1: ["location.street_number", "location.address", "location.city"],
   2: ["business_type", "kosher_types", "food_types", "food_items"],
-  3: [
-    "supervisor.name",
-    "supervisor.contact_info",
-    "supervisor.authority",
-    "kosher_certificate.expiration_date",
-  ],
+  3: ["supervisor.name", "supervisor.contact_info", "supervisor.authority", "kosher_certificate.expiration_date"],
   4: [], // Summary step doesn't need validation
 };
 
@@ -155,7 +150,7 @@ export function KosherBusinessForm() {
           </div>
           <div className="mt-4 h-2 bg-gray-200 rounded-full">
             <div
-              className="h-full bg-sky-600 rounded-full transition-all duration-300 ease-in-out"
+              className="h-full bg-[#1A365D] rounded-full transition-all duration-300 ease-in-out"
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
             ></div>
           </div>
@@ -168,7 +163,7 @@ export function KosherBusinessForm() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="min-h-[400px]"
+            className="max-h-[400px] overflow-scroll"
           >
             <CurrentStepComponent />
           </motion.div>

@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { DynamicCombobox } from "@/components/ui/dynamic-combobox";
+import { DynamicCombobox } from "@/components/dynamic-combobox";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { FormData, Option } from "@/lib/schemaCreateBusiness";
@@ -70,7 +70,10 @@ export function Step3FoodAndKosher() {
       isCustom: true,
     };
     setBusinessTypes([...businessTypes, newType]);
-    form.setValue("business_type", { ...newType, isCustom: newType.isCustom ?? false });
+    form.setValue("business_type", {
+      ...newType,
+      isCustom: newType.isCustom ?? false,
+    });
   };
 
   const handleAddKosherType = (name: string) => {
@@ -98,15 +101,15 @@ export function Step3FoodAndKosher() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
-        <p className="text-sky-600">טוען נתונים...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-[#1A365D]" />
+        <p className="text-[#1A365D]">טוען נתונים...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-sky-800">סוגי אוכל וכשרות</h2>
+      <h2 className="text-2xl font-semibold text-[#1A365D]">סוגי אוכל וכשרות</h2>
 
       <FormField
         control={form.control}
@@ -120,9 +123,18 @@ export function Step3FoodAndKosher() {
                 selected={field.value ? [{ ...field.value, id: field.value.id || "" }] : []}
                 onSelect={(option) => {
                   // Clear previous selection and set new one
-                  form.setValue("business_type", { ...option, isCustom: option.isCustom ?? false });
+                  form.setValue("business_type", {
+                    ...option,
+                    isCustom: option.isCustom ?? false,
+                  });
                 }}
-                onRemove={() => form.setValue("business_type", { name: "", id: "", isCustom: false })}
+                onRemove={() =>
+                  form.setValue("business_type", {
+                    name: "",
+                    id: "",
+                    isCustom: false,
+                  })
+                }
                 onAdd={handleAddBusinessType}
                 placeholder="בחר סוג עסק"
                 emptyText="לא נמצאו תוצאות"
@@ -144,13 +156,13 @@ export function Step3FoodAndKosher() {
             <FormControl>
               <DynamicCombobox
                 options={kosherTypes}
-                selected={(field.value || []).map((option) => ({ ...option, id: option.id || "" }))}
+                selected={(field.value || []).map((option) => ({
+                  ...option,
+                  id: option.id || "",
+                }))}
                 onSelect={(option) => {
                   const current = field.value || [];
-                  form.setValue("kosher_types", [
-                    ...current,
-                    { ...option, isCustom: option.isCustom ?? false },
-                  ]);
+                  form.setValue("kosher_types", [...current, { ...option, isCustom: option.isCustom ?? false }]);
                 }}
                 onRemove={(option) => {
                   const current = field.value || [];
@@ -180,7 +192,10 @@ export function Step3FoodAndKosher() {
             <FormControl>
               <DynamicCombobox
                 options={[...foodTypes]}
-                selected={(field.value || []).map((option) => ({ ...option, id: option.id || "" }))}
+                selected={(field.value || []).map((option) => ({
+                  ...option,
+                  id: option.id || "",
+                }))}
                 onSelect={(option) => {
                   const current = field.value || [];
                   form.setValue("food_types", [...current, option]);
@@ -213,13 +228,13 @@ export function Step3FoodAndKosher() {
             <FormControl>
               <DynamicCombobox
                 options={foodItems}
-                selected={(field.value || []).map((option) => ({ ...option, id: option.id || "" }))}
+                selected={(field.value || []).map((option) => ({
+                  ...option,
+                  id: option.id || "",
+                }))}
                 onSelect={(option) => {
                   const current = field.value || [];
-                  form.setValue("food_items", [
-                    ...current,
-                    { ...option, isCustom: option.isCustom ?? false },
-                  ]);
+                  form.setValue("food_items", [...current, { ...option, isCustom: option.isCustom ?? false }]);
                 }}
                 onRemove={(option) => {
                   const current = field.value || [];

@@ -2,10 +2,20 @@
 
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -16,7 +26,7 @@ export function Step4Supervision() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-sky-800">פיקוח וכשרות</h2>
+      <h2 className="text-2xl font-semibold text-[#1A365D]">פיקוח וכשרות</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           control={control}
@@ -59,7 +69,10 @@ export function Step4Supervision() {
           <FormItem>
             <FormLabel>רשות הפיקוח</FormLabel>
             <FormControl>
-              <Input {...field} className="border-sky-200 focus:border-sky-500 transition-all duration-300" />
+              <Input
+                {...field}
+                className="border-sky-200 focus:border-sky-500 transition-all duration-300"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -100,7 +113,11 @@ export function Step4Supervision() {
                       !field.value && "text-muted-foreground"
                     )}
                   >
-                    {field.value ? format(field.value, "PPP") : <span>בחר תאריך</span>}
+                    {field.value ? (
+                      format(field.value, "PPP")
+                    ) : (
+                      <span>בחר תאריך</span>
+                    )}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </FormControl>
@@ -110,7 +127,9 @@ export function Step4Supervision() {
                   mode="single"
                   selected={field.value}
                   onSelect={field.onChange}
-                  disabled={(date) => date < new Date() || date > new Date("2100-01-01")}
+                  disabled={(date) =>
+                    date < new Date() || date > new Date("2100-01-01")
+                  }
                   initialFocus
                 />
               </PopoverContent>

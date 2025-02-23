@@ -3,8 +3,18 @@
 import { useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -56,7 +66,7 @@ export function Step2Location() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-sky-800">מיקום העסק</h2>
+      <h2 className="text-2xl font-semibold text-[#1A365D]">מיקום העסק</h2>
 
       {/* Area Selection */}
       <FormField
@@ -83,7 +93,10 @@ export function Step2Location() {
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="end">
                 <Command>
-                  <CommandInput placeholder="חפש אזור..." className="text-right" />
+                  <CommandInput
+                    placeholder="חפש אזור..."
+                    className="text-right"
+                  />
                   <CommandList>
                     <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
                     <CommandGroup>
@@ -102,7 +115,9 @@ export function Step2Location() {
                           <Check
                             className={cn(
                               "ml-2 h-4 w-4",
-                              area.id === field.value?.id ? "opacity-100" : "opacity-0"
+                              area.id === field.value?.id
+                                ? "opacity-100"
+                                : "opacity-0"
                             )}
                           />
                           {area.name}
@@ -151,7 +166,10 @@ export function Step2Location() {
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="end">
                 <Command>
-                  <CommandInput placeholder="חפש עיר..." className="text-right" />
+                  <CommandInput
+                    placeholder="חפש עיר..."
+                    className="text-right"
+                  />
                   <CommandList>
                     <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
                     <CommandGroup>
@@ -167,7 +185,10 @@ export function Step2Location() {
                           className="text-right"
                         >
                           <Check
-                            className={cn("ml-2 h-4 w-4", city === field.value ? "opacity-100" : "opacity-0")}
+                            className={cn(
+                              "ml-2 h-4 w-4",
+                              city === field.value ? "opacity-100" : "opacity-0"
+                            )}
                           />
                           {city}
                         </CommandItem>
@@ -215,7 +236,10 @@ export function Step2Location() {
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="end">
                 <Command>
-                  <CommandInput placeholder="חפש רחוב..." className="text-right" />
+                  <CommandInput
+                    placeholder="חפש רחוב..."
+                    className="text-right"
+                  />
                   <CommandList>
                     <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
                     <CommandGroup>
@@ -232,7 +256,9 @@ export function Step2Location() {
                           <Check
                             className={cn(
                               "ml-2 h-4 w-4",
-                              street === field.value ? "opacity-100" : "opacity-0"
+                              street === field.value
+                                ? "opacity-100"
+                                : "opacity-0"
                             )}
                           />
                           {street}
