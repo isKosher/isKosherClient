@@ -41,3 +41,6 @@ next-env.d.ts
 
 # package manager
 /package-lock.json
+
+# public files
+/public/govmap.html

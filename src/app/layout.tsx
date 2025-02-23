@@ -3,10 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "./navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ToastProvider } from "@/components/ui/toaster";
 import { Yatra_One } from "next/font/google";
-import { Suspense } from "react";
-import LoadingPage from "./loading";
+import { Toaster } from "sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -40,7 +38,7 @@ export default function RootLayout({
         <body className={`${geistSans.variable} ${geistMono.variable} ${yatraOne.variable}  antialiased`}>
           <Navbar />
           {children}
-          <ToastProvider />
+          <Toaster position="top-left" dir="rtl" />
         </body>
       </html>
     </AuthProvider>
