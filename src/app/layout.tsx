@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <AuthProvider>
-      <html lang="en" dir="rtl">
+      <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} ${yatraOne.variable}  antialiased`}>
           <Navbar />
           {children}
