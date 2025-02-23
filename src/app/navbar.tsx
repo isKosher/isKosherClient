@@ -50,13 +50,18 @@ export default function Navbar() {
         </SheetTrigger>
         <SheetContent side="left" className="">
           <div>
-            <SheetTitle className="text-3xl font-serif text-[#1A365D] font-bold text-center is-kosher-font">isKosher</SheetTitle>
+            <SheetTitle className="text-3xl font-serif text-[#1A365D] font-bold text-center is-kosher-font">
+              isKosher
+            </SheetTitle>
             <div className="absolute bottom-0 left-0 -z-10 w-full h-[50%] bg-pattern2 bg-cover bg-center custom-gradient"></div>
 
             <div className="grid gap-2 py-6 hebrew-side">
               {menuLinks.map((link) => (
                 <SheetClose asChild key={link.href}>
-                  <Link href={link.href} className="flex w-full items-center py-2 text-lg lg:text-2xl font-semibold">
+                  <Link
+                    href={link.href}
+                    className="flex w-full items-center py-2 text-lg lg:text-2xl font-semibold"
+                  >
                     {link.label}
                   </Link>
                 </SheetClose>
@@ -82,11 +87,23 @@ export default function Navbar() {
                 </SheetClose>
                 <div className="flex flex-row-reverse items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
-                    <img src={user.photoURL} alt={`${user.name}'s profile`} className="h-full w-full object-cover" />
+                    <img
+                      src={user.photoURL}
+                      alt={`${user.name}'s profile`}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <span className="text-[#1A365D] font-medium">{user.name}</span>
                 </div>
               </div>
+
+              <SheetClose asChild>
+                <Link href="/create-business">
+                  <Button className="w-full mt-4" variant="outline">
+                    הוסף עסק כשר
+                  </Button>
+                </Link>
+              </SheetClose>
 
               <SheetClose asChild>
                 <Button className="w-full mt-4" variant="outline" onClick={() => logout()}>
