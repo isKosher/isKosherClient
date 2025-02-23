@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { areas, FormData } from "@/lib/schemaCreateBusiness";
+import { FormData } from "@/lib/schemaCreateBusiness";
 import { getCitiesByArea, getStreetsByCity } from "@/services/location-service";
+import { regions } from "@/data/staticData";
 
 export function Step2Location() {
   const form = useFormContext<FormData>();
@@ -86,7 +87,7 @@ export function Step2Location() {
                   <CommandList>
                     <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
                     <CommandGroup>
-                      {areas.map((area) => (
+                      {regions.map((area) => (
                         <CommandItem
                           key={area.id}
                           value={area.name}

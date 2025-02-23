@@ -42,7 +42,7 @@ export function Step4Supervision() {
               <FormLabel>פרטי התקשרות</FormLabel>
               <FormControl>
                 <Input
-                  type="email"
+                  type="text"
                   {...field}
                   className="border-sky-200 focus:border-sky-500 transition-all duration-300"
                 />

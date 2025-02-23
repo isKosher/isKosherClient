@@ -7,13 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { StepIndicator } from "@/components/ui/step-indicator";
-import { FormData, formSchema } from "@/lib/schemaCreateBusiness";
-import { Step5Summary } from "./stepsCreateBusiness/step-5-summary";
-import { Step4Supervision } from "./stepsCreateBusiness/step-4-supervision";
-import { Step3FoodAndKosher } from "./stepsCreateBusiness/step-3-food-and-kosher";
-import { Step2Location } from "./stepsCreateBusiness/step-2-location";
 import { Step1BusinessDetails } from "./stepsCreateBusiness/step-1-business-details";
+import { Step2Location } from "./stepsCreateBusiness/step-2-location";
+import { Step3FoodAndKosher } from "./stepsCreateBusiness/step-3-food-and-kosher";
+import { Step4Supervision } from "./stepsCreateBusiness/step-4-supervision";
+import { Step5Summary } from "./stepsCreateBusiness/step-5-summary";
+import { formSchema, type FormData } from "@/lib/schemaCreateBusiness";
+import { StepIndicator } from "@/components/ui/step-indicator";
 import { createBusiness } from "@/app/actions/dashboardAction";
 
 const steps = [
@@ -41,6 +41,7 @@ export function KosherBusinessForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepValidity, setStepValidity] = useState<Record<number, boolean>>({});
+  const [attemptedSteps, setAttemptedSteps] = useState<Record<number, boolean>>({}); // Track attempted steps
 
   const methods = useForm<FormData>({
     mode: "onChange",
@@ -91,6 +92,7 @@ export function KosherBusinessForm() {
         methods.reset();
         setCurrentStep(0);
         setStepValidity({});
+        setAttemptedSteps({}); // Reset attempted steps
       } else {
         throw new Error(result.error);
       }
@@ -105,6 +107,9 @@ export function KosherBusinessForm() {
 
   const validateStep = async (stepIndex: number) => {
     const fieldsToValidate = stepValidationFields[stepIndex as keyof typeof stepValidationFields];
+
+    // Mark step as attempted
+    setAttemptedSteps((prev) => ({ ...prev, [stepIndex]: true }));
 
     const result = await methods.trigger(fieldsToValidate as any);
     setStepValidity((prev) => ({ ...prev, [stepIndex]: result }));
@@ -144,6 +149,7 @@ export function KosherBusinessForm() {
                 title={step.title}
                 isValid={stepValidity[index] || false}
                 isActive={currentStep === index}
+                wasAttempted={attemptedSteps[index] || false} // Pass attempted state
               />
             ))}
           </div>

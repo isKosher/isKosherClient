@@ -127,8 +127,10 @@ export function DynamicCombobox({
                     </Button>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>הוספת פריט חדש</DialogTitle>
-                        <DialogDescription>האם אתה בטוח שברצונך להוסיף את הפריט החדש?</DialogDescription>
+                        <DialogTitle className="text-right mr-2">הוספת פריט חדש</DialogTitle>
+                        <DialogDescription className="text-right">
+                          האם אתה בטוח שברצונך להוסיף את הפריט החדש?
+                        </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
@@ -185,8 +187,10 @@ export function DynamicCombobox({
                       </CommandItem>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>הוספת פריט חדש</DialogTitle>
-                          <DialogDescription>הכנס את שם הפריט החדש שברצונך להוסיף</DialogDescription>
+                          <DialogTitle className="text-right mr-2">הוספת פריט חדש</DialogTitle>
+                          <DialogDescription className="text-right">
+                            הכנס את שם הפריט החדש שברצונך להוסיף
+                          </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid gap-2">
