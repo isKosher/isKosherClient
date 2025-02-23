@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: process.env.PRIVATE_FIREBASE_API_KEY,
+  apiKey: `${process.env.PRIVATE_FIREBASE_API_KEY}`,
   authDomain: "iskosher-f8bd7.firebaseapp.com",
   projectId: "iskosher-f8bd7",
   storageBucket: "iskosher-f8bd7.firebasestorage.app",

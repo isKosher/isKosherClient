@@ -1,4 +1,4 @@
-@import '../../node_modules/leaflet/dist/leaflet.css';
+@import "../../node_modules/leaflet/dist/leaflet.css";
 
 @tailwind base;
 @tailwind components;
@@ -154,42 +154,100 @@ body {
 }
 
 .wave-box {
-  background:
-    radial-gradient(100% 58% at top   ,transparent   99%,#1A365D) calc(0*100%/3) 0/50.1% 180%,
-    radial-gradient(100% 58% at bottom,#1A365D 99%,transparent  ) calc(3*100%/3) 0/50.1% 180%,
-    radial-gradient(100% 58% at top   ,transparent   99%,#1A365D) calc(6*100%/3) 0/50.1% 180%,
-    radial-gradient(100% 58% at bottom,#1A365D 99%,transparent  ) calc(9*100%/3) 0/50.1% 180%,
-    linear-gradient(#1A365D,#1A365D) bottom/100% 0%;
-  background-repeat:no-repeat;
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  display:inline-block;
-  padding:20px;
-  font-weight:bold;
-  animation:
-    waveMove 0.5s infinite linear,
-    waveUp   3s infinite linear alternate;
+  background: radial-gradient(100% 58% at top, transparent 99%, #1a365d) calc(0 * 100% / 3) 0/50.1% 180%,
+    radial-gradient(100% 58% at bottom, #1a365d 99%, transparent) calc(3 * 100% / 3) 0/50.1% 180%,
+    radial-gradient(100% 58% at top, transparent 99%, #1a365d) calc(6 * 100% / 3) 0/50.1% 180%,
+    radial-gradient(100% 58% at bottom, #1a365d 99%, transparent) calc(9 * 100% / 3) 0/50.1% 180%,
+    linear-gradient(#1a365d, #1a365d) bottom/100% 0%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  padding: 20px;
+  font-weight: bold;
+  animation: waveMove 0.5s infinite linear, waveUp 3s infinite linear alternate;
 }
 
 @keyframes waveMove {
   to {
-    background-position:
-       calc(-6*100%/3) 0,
-       calc(-3*100%/3) 0,
-       calc(0*100%/3)  0,
-       calc(3*100%/3)  0,
-       bottom;
+    background-position: calc(-6 * 100% / 3) 0, calc(-3 * 100% / 3) 0, calc(0 * 100% / 3) 0,
+      calc(3 * 100% / 3) 0, bottom;
   }
 }
 
 @keyframes waveUp {
   to {
-    background-size: 
-      50.1% 20%,
-      50.1% 20%,
-      50.1% 20%,
-      50.1% 20%,
-      100%  80%;
+    background-size: 50.1% 20%, 50.1% 20%, 50.1% 20%, 50.1% 20%, 100% 80%;
   }
+}
+
+/* RTL Support */
+[dir="rtl"] .form-control {
+  text-align: right;
+}
+
+[dir="rtl"] .form-label {
+  text-align: right;
+}
+
+[dir="rtl"] .popover-content {
+  text-align: right;
+}
+
+[dir="rtl"] .command-input {
+  text-align: right;
+}
+
+[dir="rtl"] .command-item {
+  text-align: right;
+}
+
+[dir="rtl"] .badge {
+  direction: rtl;
+}
+
+[dir="rtl"] .tooltip {
+  direction: rtl;
+}
+
+/* RTL Support for Dialog */
+[dir="rtl"] .dialog {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .dialog-header {
+  text-align: right;
+}
+
+[dir="rtl"] .dialog-body {
+  text-align: right;
+}
+
+[dir="rtl"] .dialog-footer {
+  text-align: right;
+}
+
+/* Sonner Toast Styles */
+[data-sonner-toaster][dir="rtl"] {
+  --normal-width: 360px;
+  --offset: 16px;
+}
+
+[data-sonner-toaster][dir="rtl"] [data-sonner-toast] {
+  --normal-width: 360px;
+  --offset: 16px;
+  direction: rtl;
+  text-align: right;
+}
+
+[data-sonner-toaster][dir="rtl"] [data-sonner-toast] [data-icon] {
+  margin-left: 12px;
+  margin-right: 0;
+}
+
+[data-sonner-toaster][dir="rtl"] [data-close-button] {
+  margin-right: auto;
+  margin-left: 0;
 }
