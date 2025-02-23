@@ -1,9 +1,10 @@
 import * as z from "zod";
 
+const phonePattern = /^(\+?\d{1,4}[\s-]?)?(\d{8,15})$/;
+const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 const contactInfoSchema = z.string().refine(
   (value) => {
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const phonePattern = /^(\+?\d{1,4}[\s-]?)?((\(\d{1,3}\))|\d{1,4})[\s-]?\d{1,4}[\s-]?\d{1,9}$/;
     return emailPattern.test(value) || phonePattern.test(value);
   },
   {
@@ -13,7 +14,7 @@ const contactInfoSchema = z.string().refine(
 
 export const formSchema = z.object({
   business_name: z.string().min(2, { message: "שם העסק חייב להכיל לפחות 2 תווים" }),
-  business_phone: z.string().regex(/^0\d{8,9}$/, { message: "מספר טלפון לא תקין" }),
+  business_phone: z.string().regex(phonePattern, { message: "מספר טלפון לא תקין" }),
   business_details: z.string().min(10, { message: "פרטי העסק חייבים להכיל לפחות 10 תווים" }),
   location: z.object({
     area: z.object({

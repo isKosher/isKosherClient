@@ -152,9 +152,7 @@ export function Step5Summary() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <p className="text-sm">
-          אנא בדוק את כל הפרטים לפני השליחה. לאחר השליחה לא ניתן יהיה לערוך את הפרטים.
-        </p>
+        <p className="text-sm">אנא בדוק את כל הפרטים לפני השליחה.</p>
       </motion.div>
     </div>
   );
