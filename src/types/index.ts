@@ -64,3 +64,32 @@ export interface LoginResponse {
   success: boolean;
   error?: string;
 }
+
+export interface ServerPayload {
+  business_name: string;
+  business_phone: string;
+  business_details: string;
+  business_rating: number;
+  location: {
+    street_number: number;
+    address: string;
+    region: string;
+    location_details?: string;
+    city: string;
+    longitude?: number;
+    latitude?: number;
+  };
+  kosher_types: string[];
+  business_type_name: string;
+  food_types: string[];
+  food_item_types: string[];
+  supervisor: {
+    name: string;
+    contact_info: string;
+    authority: string;
+  };
+  kosher_certificate: {
+    certificate: string;
+    expiration_date: string;
+  };
+}

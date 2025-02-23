@@ -1,5 +1,16 @@
 import * as z from "zod";
 
+const contactInfoSchema = z.string().refine(
+  (value) => {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const phonePattern = /^(\+?\d{1,4}[\s-]?)?((\(\d{1,3}\))|\d{1,4})[\s-]?\d{1,4}[\s-]?\d{1,9}$/;
+    return emailPattern.test(value) || phonePattern.test(value);
+  },
+  {
+    message: "פרטי התקשרות חייבים להיות כתובת אימייל או מספר טלפון תקינים",
+  }
+);
+
 export const formSchema = z.object({
   business_name: z.string().min(2, { message: "שם העסק חייב להכיל לפחות 2 תווים" }),
   business_phone: z.string().regex(/^0\d{8,9}$/, { message: "מספר טלפון לא תקין" }),
@@ -46,9 +57,9 @@ export const formSchema = z.object({
     )
     .min(1, { message: "יש לבחור לפחות פריט אוכל אחד" }),
   supervisor: z.object({
-    name: z.string().min(2, { message: "שם המשגיח חייב להכיל לפחות 2 תווים" }),
-    contact_info: z.string().email({ message: "כתובת אימייל לא תקינה" }),
-    authority: z.string().min(2, { message: "רשות הפיקוח חייבת להכיל לפחות 2 תווים" }),
+    name: z.string().min(3, { message: "שם המשגיח חייב להכיל לפחות 3 תווים" }),
+    contact_info: contactInfoSchema,
+    authority: z.string().min(5, { message: "רשות הפיקוח חייבת להכיל לפחות 5 תווים" }),
   }),
   kosher_certificate: z.object({
     certificate: z.any(),
@@ -63,93 +74,3 @@ export interface Option {
   name: string;
   isCustom?: boolean;
 }
-
-// Export all the static data
-export const cities = [
-  "תל אביב",
-  "ירושלים",
-  "חיפה",
-  "ראשון לציון",
-  "פתח תקווה",
-  "אשדוד",
-  "נתניה",
-  "באר שבע",
-  "בני ברק",
-  "רמת גן",
-  "בת ים",
-  "רחובות",
-  "אשקלון",
-  "הרצליה",
-  "חולון",
-  "כפר סבא",
-  "רעננה",
-  "מודיעין",
-  "רמלה",
-  "לוד",
-];
-
-export const businessTypes: Option[] = [
-  { id: "1", name: "מסעדה" },
-  { id: "2", name: "בית קפה" },
-  { id: "3", name: "מאפייה" },
-  { id: "4", name: "סופרמרקט" },
-  { id: "5", name: "קייטרינג" },
-  { id: "6", name: "מעדנייה" },
-  { id: "7", name: "בר" },
-  { id: "8", name: "דוכן מזון" },
-  { id: "9", name: "חנות ממתקים" },
-  { id: "10", name: "אטליז" },
-];
-
-export const kosherTypes: Option[] = [
-  { id: "1", name: "כשר למהדרין" },
-  { id: "2", name: "כשר רגיל" },
-  { id: "3", name: "גלאט כשר" },
-  { id: "4", name: "חלב ישראל" },
-  { id: "5", name: "פת ישראל" },
-  { id: "6", name: "בד״ץ" },
-  { id: "7", name: "רבנות ראשית" },
-  { id: "8", name: "מהדרין מן המהדרין" },
-];
-
-export const foodTypes = [
-  { id: "dairy", name: "חלבי" },
-  { id: "meat", name: "בשרי" },
-  { id: "parve", name: "פרווה" },
-] as const;
-
-export const foodItems: Option[] = [
-  { id: "1", name: "פלאפל" },
-  { id: "2", name: "שווארמה" },
-  { id: "3", name: "פיצה" },
-  { id: "4", name: "סושי" },
-  { id: "5", name: "המבורגר" },
-  { id: "6", name: "סלט" },
-  { id: "7", name: "מרק" },
-  { id: "8", name: "דגים" },
-  { id: "9", name: "פסטה" },
-  { id: "10", name: "סנדוויצ׳ים" },
-  { id: "11", name: "מאפים" },
-  { id: "12", name: "קינוחים" },
-  { id: "13", name: "גלידה" },
-  { id: "14", name: "שתייה" },
-  { id: "15", name: "חומוס" },
-  { id: "16", name: "שניצל" },
-  { id: "17", name: "אורז" },
-  { id: "18", name: "תבשילים" },
-  { id: "19", name: "מנות צמחוניות" },
-  { id: "20", name: "מנות טבעוניות" },
-];
-
-export const areas = [
-  { id: "north", name: "צפון" },
-  { id: "haifa", name: "חיפה והקריות" },
-  { id: "sharon", name: "השרון" },
-  { id: "center", name: "מרכז" },
-  { id: "tel-aviv", name: "תל אביב והסביבה" },
-  { id: "jerusalem", name: "ירושלים והסביבה" },
-  { id: "lowlands", name: "שפלה" },
-  { id: "south", name: "דרום" },
-  { id: "eilat", name: "אילת והערבה" },
-  { id: "judea-samaria", name: "יהודה ושומרון" },
-] as const;

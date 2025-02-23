@@ -1,5 +1,6 @@
 "use server";
 import { formSchema } from "@/lib/schemaCreateBusiness";
+import { transformFormDataToServerPayload } from "@/lib/transform";
 import { RestaurantPreview } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 import { z } from "zod";
@@ -13,16 +14,15 @@ export async function getMyBusinessAction(): Promise<RestaurantPreview[]> {
 
 export async function createBusiness(data: z.infer<typeof formSchema>) {
   try {
-    // Here you would typically:
-    // 1. Upload the image to your storage service
-    // 2. Save the data to your database
-    // 3. Send confirmation emails, etc.
+    const serverPayload = await transformFormDataToServerPayload(data);
+    console.log("Date to send backend: ", serverPayload);
 
-    console.log("Creating business:", data);
+    const response = await serverApi.post<any>("/admin/businesses/create-business", serverPayload, {
+      includeCookies: true,
+    });
+    console.log("Response Backnd: ", response.data);
 
-    // Simulate a delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    console.log("Creating business: ", serverPayload);
     return { success: true };
   } catch (error) {
     console.error("Error creating business:", error);
