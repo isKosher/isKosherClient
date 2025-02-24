@@ -1,6 +1,6 @@
 "use server";
 
-import { RestaurantPreview } from "@/types";
+import { BusinessSearchResult, RestaurantPreview } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 
 export async function getRestaurantsAction(page: Number = 1): Promise<RestaurantPreview[]> {
@@ -15,6 +15,16 @@ export async function getRestaurantsAction(page: Number = 1): Promise<Restaurant
     }
   } catch (error) {
     console.error("Error fetching restaurants:", error);
+    throw error;
+  }
+}
+
+export async function getSearchTrem(text: string): Promise<BusinessSearchResult[]> {
+  try {
+    const response = await serverApi.get<BusinessSearchResult[]>(`discover/search?query=${text}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching restaurant:", error);
     throw error;
   }
 }

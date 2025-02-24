@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import FilterDropdown from "../app/filterDropdown";
 import RestaurantCard from "../app/restaurantCard";
@@ -12,10 +11,8 @@ import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
 import { useInView } from "react-intersection-observer";
 import { RestaurantPreview } from "@/types";
-import { serverApi } from "@/utils/apiClient";
-import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
 import { getRestaurantsAction } from "@/app/actions/getRestaurantAction";
-//import axiosInstance from "@/utils/axiosConfig";
+import SearchComponent from "./search-term";
 
 const certifications = ["או יו כשר", "אוקיי כשר", "סטאר-קיי", "סי-אר-סי", "קוף-קיי", "רבנות", "מהדרין", "בד״ץ"];
 
@@ -30,7 +27,6 @@ type homePageProps = {
 };
 
 export default function HomePage({ initialRestaurants }: homePageProps) {
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [restaurants, setRestaurants] = useState<RestaurantPreview[]>(initialRestaurants);
   const [selectedCity, setSelectedCity] = useState("");
@@ -58,6 +54,19 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
     }
   };
 
+  const transformRestaurantData = (restaurant: RestaurantPreview) => {
+    return {
+      id: restaurant.business_id,
+      name: restaurant.business_name,
+      type: restaurant.business_type || "לא ידוע",
+      certification: restaurant.kosher_type || "ללא תעודה",
+      address: `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`,
+      halavi: restaurant.food_item_types.includes("חלבי"),
+      bessari: restaurant.food_item_types.includes("בשרי"),
+      parve: restaurant.food_item_types.includes("פרווה"),
+      image: restaurant.business_photos?.[0]?.url || "/default-restaurant.jpg",
+    };
+  };
   useEffect(() => {
     if (inView && !isLoading && hasMore) {
       loadMore();
@@ -95,13 +104,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
             <h2 className="text-5xl is-kosher-font text-[#1A365D] font-bold mb-2">isKosher</h2>
             <p className="text-[#2D4A6D] text-md lg:text-lg">מצא מסעדות כשרות בסביבתך</p>
           </div>
-          <Input
-            className="w-full p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg hebrew-side"
-            placeholder="חפש לפי מיקום או שם מסעדה"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            disabled={loading}
-          />
+          <SearchComponent />
           <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-4 mt-4">
             <CollapsibleTrigger asChild>
               <Button
@@ -171,43 +174,11 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
       <div className="px-4 py-8 flex justify-center flex-col">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {restaurants.map((restaurant, index) => {
-            if (restaurants.length === index + 1) {
-              return (
-                <div key={restaurant.business_id}>
-                  <RestaurantCard
-                    restaurant={{
-                      id: restaurant.business_id,
-                      name: restaurant.business_name,
-                      type: restaurant.business_type,
-                      certification: restaurant.kosher_type,
-                      address: `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`,
-                      halavi: restaurant.food_item_types.includes("חלבי"),
-                      bessari: restaurant.food_item_types.includes("בשרי"),
-                      parve: restaurant.food_item_types.includes("פרווה"),
-                      image: restaurant.business_photos[0]?.url || "",
-                    }}
-                  />
-                </div>
-              );
-            } else {
-              return (
-                <div key={restaurant.business_id}>
-                  <RestaurantCard
-                    restaurant={{
-                      id: restaurant.business_id,
-                      name: restaurant.business_name,
-                      type: restaurant.business_type,
-                      certification: restaurant.kosher_type,
-                      address: `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`,
-                      halavi: restaurant.food_item_types.includes("חלבי"),
-                      bessari: restaurant.food_item_types.includes("בשרי"),
-                      parve: restaurant.food_item_types.includes("פרווה"),
-                      image: restaurant.business_photos[0]?.url || "",
-                    }}
-                  />
-                </div>
-              );
-            }
+            return (
+              <div key={restaurant.business_id}>
+                <RestaurantCard restaurant={transformRestaurantData(restaurant)} />
+              </div>
+            );
           })}
         </div>
         {hasMore && (
