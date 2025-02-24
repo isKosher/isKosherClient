@@ -19,6 +19,7 @@ const geistMono = localFont({
 
 const yatraOne = Yatra_One({
   weight: "400",
+  subsets: ["latin"],
   variable: "--font-yatra-one",
 });
 

@@ -45,6 +45,14 @@ export type Restaurant = {
   kosher_certificates: KosherCertificate[];
 };
 
+export type BusinessSearchResult = {
+  business_id: string;
+  business_name: string;
+  city: string;
+  address: string;
+  match_score: number;
+};
+
 export type RestaurantPreview = {
   business_id: string;
   business_name: string;
