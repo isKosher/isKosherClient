@@ -13,12 +13,10 @@ import { useInView } from "react-intersection-observer";
 import { RestaurantPreview } from "@/types";
 import { getRestaurantsAction } from "@/app/actions/getRestaurantAction";
 import SearchComponent from "./search-term";
-
-const certifications = ["או יו כשר", "אוקיי כשר", "סטאר-קיי", "סי-אר-סי", "קוף-קיי", "רבנות", "מהדרין", "בד״ץ"];
-
-const cuisineTypes = ["ישראלי", "מזרח תיכוני", "אמריקאי", "מעדניה", "פיצה", "סושי", "ים תיכוני"];
-
-const businessTypes = ["מלון", "מסעדה", "קייטרינג"];
+import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
+import { toast } from "sonner";
+import { fetchLookupData } from "@/services/lookup-service";
+import { Option } from "@/lib/schemaCreateBusiness";
 
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
@@ -30,12 +28,57 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const [loading, setLoading] = useState(false);
   const [restaurants, setRestaurants] = useState<RestaurantPreview[]>(initialRestaurants);
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedFoodType, setSelectedFoodType] = useState([""]);
+  const [selectedFoodType, setSelectedFoodType] = useState<string[]>([]);
+  const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
+  const [kosherTypes, setKosherTypes] = useState<Option[]>([]);
+  const [foodItems, setFoodItems] = useState<Option[]>([]);
+  const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
+  const [selectedKosherTypes, setSelectedKosherTypes] = useState<string[]>([]);
+  const [selectedFoodItems, setSelectedFoodItems] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [page, setPage] = useState(2);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const { ref, inView } = useInView();
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchLookupData();
+
+        // Transform and merge API data with existing options
+        setBusinessTypes(
+          data.business_types.map((item) => ({
+            id: item.id,
+            name: item.name,
+          }))
+        );
+
+        setKosherTypes(
+          data.kosher_types.map((item) => ({
+            id: item.id,
+            name: item.name,
+          }))
+        );
+
+        setFoodItems(
+          data.food_item_types.map((item) => ({
+            id: item.id,
+            name: item.name,
+          }))
+        );
+      } catch (error) {
+        toast.error("שגיאה בטעינת הנתונים", {
+          description: "לא ניתן לטעון את רשימת האפשרויות. אנא נסה שוב מאוחר יותר.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const loadMore = async () => {
     try {
@@ -75,17 +118,55 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
 
   function handleSelectFoodType(selectedType: string) {
     selectedFoodType.includes(selectedType)
-      ? setSelectedFoodType(selectedFoodType.filter((type) => type != selectedType))
+      ? setSelectedFoodType(selectedFoodType.filter((type) => type !== selectedType))
       : setSelectedFoodType(selectedFoodType.concat(selectedType));
   }
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setLoading(true);
-    // Simulate a search request with a delay
-    setTimeout(() => {
+
+    try {
+      const params = new URLSearchParams();
+      console.log(selectedFoodItems);
+      console.log(selectedBusinessTypes);
+      console.log(selectedKosherTypes);
+      console.log(selectedCity);
+
+      if (selectedCity) params.append("city", selectedCity);
+
+      selectedFoodType.forEach((type) => {
+        params.append("foodTypes", type);
+      });
+
+      selectedBusinessTypes.forEach((type) => {
+        params.append("businessTypes", type);
+      });
+
+      selectedKosherTypes.forEach((type) => {
+        params.append("kosherTypes", type);
+      });
+
+      const url = `https://iskoshermanager.onrender.com/api/v1/discover/filter?${params.toString()}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch restaurants");
+      }
+
+      const data: { content: RestaurantPreview[] } = await response.json();
+      setRestaurants(data.content);
+      console.log(data.content);
+    } catch (error) {
+      console.error("Error searching restaurants:", error);
+    } finally {
       setLoading(false);
-      // Logic to perform search goes here
-    }, 2500);
+    }
   };
 
   const handleCheckAll = () => {
@@ -121,9 +202,27 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
             </CollapsibleTrigger>
             <CollapsibleContent className="collapsible-content space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <FilterDropdown filterOptions={certifications} loading={loading} filterPlaceholder="תבחר תעודת כשרות" />
-                <FilterDropdown filterOptions={cuisineTypes} loading={loading} filterPlaceholder="תבחר סוג מטבח" />
-                <FilterDropdown filterOptions={businessTypes} loading={loading} filterPlaceholder="תבחר סוג עסק" />
+                <FilterDropdown
+                  filterOptions={kosherTypes}
+                  loading={loading}
+                  filterPlaceholder="תבחר תעודת כשרות"
+                  onSelectFilters={(selectedFilters) => setSelectedKosherTypes(selectedFilters)}
+                  selectedFilters={selectedKosherTypes}
+                />
+                <FilterDropdown
+                  filterOptions={foodItems}
+                  loading={loading}
+                  filterPlaceholder="תבחר סוג אוכל"
+                  onSelectFilters={(selectedFilters) => setSelectedFoodItems(selectedFilters)}
+                  selectedFilters={selectedFoodItems}
+                />
+                <FilterDropdown
+                  filterOptions={businessTypes}
+                  loading={loading}
+                  filterPlaceholder="תבחר סוג עסק"
+                  onSelectFilters={(selectedFilters) => setSelectedBusinessTypes(selectedFilters)}
+                  selectedFilters={selectedBusinessTypes}
+                />
                 <div className="grid grid-cols-2 row-span-2 gap-2 w-full">
                   <Button
                     key="check-all"

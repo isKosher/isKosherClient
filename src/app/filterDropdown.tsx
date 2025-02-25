@@ -9,38 +9,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Option } from "@/lib/schemaCreateBusiness";
 
 //make generic filter dropdown component
 interface FilterProps {
-  filterOptions: string[];
+  filterOptions: Option[];
   loading: boolean;
   filterPlaceholder: string;
+  onSelectFilters: (selectedFilters: string[]) => void;
+  selectedFilters: string[];
 }
 
 export default function FilterDropdown(props: FilterProps) {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(props.selectedFilters);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Only proceed if dropdownRef and the event target exist
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     };
 
-    // Add event listener for mousedown (better for detecting the click)
     document.addEventListener("mousedown", handleClickOutside);
 
-    // Cleanup the event listener when the component unmounts
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    setSelectedFilters(props.selectedFilters);
+  }, [props.selectedFilters]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -50,18 +51,22 @@ export default function FilterDropdown(props: FilterProps) {
   };
 
   const toggleFilter = (filter: string) => {
-    setSelectedFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((f) => f !== filter)
-        : [...prev, filter]
-    );
+    const updatedFilters = selectedFilters.includes(filter)
+      ? selectedFilters.filter((f) => f !== filter)
+      : [...selectedFilters, filter];
+    setSelectedFilters(updatedFilters);
+    props.onSelectFilters(updatedFilters);
   };
+
+  const handleSelectAll = () => {
+    const allSelected = selectedFilters.length === props.filterOptions.length;
+    const updatedFilters = allSelected ? [] : props.filterOptions.map((option) => option.name);
+    setSelectedFilters(updatedFilters);
+    props.onSelectFilters(updatedFilters);
+  };
+
   return (
-    <DropdownMenu
-      open={isDropdownOpen}
-      onOpenChange={handleOpenChange}
-      modal={false}
-    >
+    <DropdownMenu open={isDropdownOpen} onOpenChange={handleOpenChange} modal={false}>
       <DropdownMenuTrigger asChild className="hebrew-side">
         <Button
           variant="outline"
@@ -75,28 +80,26 @@ export default function FilterDropdown(props: FilterProps) {
       <DropdownMenuContent
         ref={dropdownRef}
         className="w-full flex flex-col justify-start"
+        align="end"
+        side="bottom"
+        sideOffset={4}
+        forceMount
       >
         <DropdownMenuCheckboxItem
           checked={selectedFilters.length === props.filterOptions.length}
-          onCheckedChange={() =>
-            setSelectedFilters(
-              selectedFilters.length === props.filterOptions.length
-                ? []
-                : props.filterOptions
-            )
-          }
+          onCheckedChange={handleSelectAll}
           className="w-full px-4 py-2 hebrew-side"
         >
           בחר הכל
         </DropdownMenuCheckboxItem>
         {props.filterOptions.map((filter) => (
           <DropdownMenuCheckboxItem
-            key={filter}
-            checked={selectedFilters.includes(filter)}
-            onCheckedChange={() => toggleFilter(filter)}
+            key={filter.id}
+            checked={selectedFilters.includes(filter.name)}
+            onCheckedChange={() => toggleFilter(filter.name)}
             className="w-full px-4 py-2 text-base hebrew-side"
           >
-            {filter}
+            {filter.name}
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
