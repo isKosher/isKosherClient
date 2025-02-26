@@ -1,280 +1,226 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { FormData } from "@/lib/schemaCreateBusiness";
-import { getCitiesByArea, getStreetsByCity } from "@/services/location-service";
-import { regions } from "@/data/staticData";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Loader2 } from "lucide-react";
+import { searchCities, searchStreets } from "@/services/govmap-service";
+import { toast } from "sonner";
+import type { FormData } from "@/lib/schemaCreateBusiness";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 export function Step2Location() {
   const form = useFormContext<FormData>();
-  const [areaOpen, setAreaOpen] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
-  const [streetOpen, setStreetOpen] = useState(false);
+  const [cityInput, setCityInput] = useState("");
+  const [streetInput, setStreetInput] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
+  const [isLoadingCity, setIsLoadingCity] = useState(false);
+  const [isLoadingStreet, setIsLoadingStreet] = useState(false);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showStreetSuggestions, setShowStreetSuggestions] = useState(false);
 
-  const [cities, setCities] = useState<string[]>([]);
-  const [streets, setStreets] = useState<string[]>([]);
-  const [isLoadingCities, setIsLoadingCities] = useState(false);
-  const [isLoadingStreets, setIsLoadingStreets] = useState(false);
+  // Create refs for the dropdown containers
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+  const streetDropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedArea = form.watch("location.area");
-  const selectedCity = form.watch("location.city");
+  const city = form.watch("location.city");
 
-  // Fetch cities when area changes
+  // Create handlers for outside clicks
+  const handleCityOutsideClick = useCallback(() => {
+    setShowCitySuggestions(false);
+  }, []);
+
+  const handleStreetOutsideClick = useCallback(() => {
+    setShowStreetSuggestions(false);
+  }, []);
+
+  // Use your custom hook for both dropdowns
+  useOnClickOutside(cityDropdownRef, handleCityOutsideClick);
+  useOnClickOutside(streetDropdownRef, handleStreetOutsideClick);
+
+  // Search cities
   useEffect(() => {
-    if (selectedArea?.id) {
-      setIsLoadingCities(true);
-      getCitiesByArea(selectedArea.id)
-        .then(setCities)
-        .finally(() => setIsLoadingCities(false));
+    if (!cityInput) {
+      setCitySuggestions([]);
+      return;
     }
-  }, [selectedArea?.id]);
 
-  // Fetch streets when city changes
+    const timer = setTimeout(async () => {
+      setIsLoadingCity(true);
+      try {
+        const cities = await searchCities(cityInput);
+        setCitySuggestions(cities);
+        if (cities.length > 0) {
+          setShowCitySuggestions(true);
+        }
+      } catch (error) {
+        console.error("Error searching cities:", error);
+        toast.error("שגיאה בחיפוש ערים");
+      } finally {
+        setIsLoadingCity(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [cityInput]);
+
+  // Search streets
   useEffect(() => {
-    if (selectedCity) {
-      setIsLoadingStreets(true);
-      getStreetsByCity(selectedCity)
-        .then(setStreets)
-        .finally(() => setIsLoadingStreets(false));
+    if (!streetInput || !city) {
+      setStreetSuggestions([]);
+      return;
     }
-  }, [selectedCity]);
+
+    const timer = setTimeout(async () => {
+      setIsLoadingStreet(true);
+      try {
+        const streets = await searchStreets(streetInput, city);
+        setStreetSuggestions(streets);
+        if (streets.length > 0) {
+          setShowStreetSuggestions(true);
+        }
+      } catch (error) {
+        console.error("Error searching streets:", error);
+        toast.error("שגיאה בחיפוש רחובות");
+      } finally {
+        setIsLoadingStreet(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [streetInput, city]);
+
+  if (!form) return null;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-[#1A365D]">מיקום העסק</h2>
+      <div id="hidden-map" style={{ display: "none", height: "1px", width: "1px" }} />
 
-      {/* Area Selection */}
-      <FormField
-        control={form.control}
-        name="location.area"
-        render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <FormLabel>אזור</FormLabel>
-            <Popover open={areaOpen} onOpenChange={setAreaOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "w-full justify-between text-right",
-                      !field.value && "text-muted-foreground"
-                    )}
-                  >
-                    {field.value?.name || "בחר אזור"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="end">
-                <Command>
-                  <CommandInput
-                    placeholder="חפש אזור..."
+      <h2 className="text-2xl font-semibold text-sky-800">מיקום העסק</h2>
+
+      <div className="relative" ref={cityDropdownRef}>
+        <FormField
+          control={form.control}
+          name="location.city"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>עיר</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    placeholder="הקלד שם עיר..."
+                    value={cityInput}
+                    onChange={(e) => {
+                      setCityInput(e.target.value);
+                      field.onChange("");
+                    }}
+                    onFocus={() => {
+                      setShowCitySuggestions(citySuggestions.length > 0);
+                      // Close the other dropdown when focusing on this one
+                      setShowStreetSuggestions(false);
+                    }}
                     className="text-right"
                   />
-                  <CommandList>
-                    <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
-                    <CommandGroup>
-                      {regions.map((area) => (
-                        <CommandItem
-                          key={area.id}
-                          value={area.name}
-                          onSelect={() => {
-                            form.setValue("location.area", area);
-                            form.setValue("location.city", ""); // Reset city when area changes
-                            form.setValue("location.address", ""); // Reset street when area changes
-                            setAreaOpen(false);
-                          }}
-                          className="text-right"
-                        >
-                          <Check
-                            className={cn(
-                              "ml-2 h-4 w-4",
-                              area.id === field.value?.id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {area.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+                  {isLoadingCity && (
+                    <Loader2 className="absolute left-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </FormControl>
+              {showCitySuggestions && citySuggestions.length > 0 && (
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
+                  <Command>
+                    <CommandList>
+                      <CommandGroup>
+                        {citySuggestions.map((city) => (
+                          <CommandItem
+                            key={city}
+                            onSelect={() => {
+                              field.onChange(city);
+                              setCityInput(city);
+                              setShowCitySuggestions(false);
+                              // Reset street when city changes
+                              form.setValue("location.address", "");
+                              setStreetInput("");
+                            }}
+                            className="text-right"
+                          >
+                            {city}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </div>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
-      {/* City Selection */}
-      <FormField
-        control={form.control}
-        name="location.city"
-        render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <FormLabel>עיר</FormLabel>
-            <Popover open={cityOpen} onOpenChange={setCityOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "w-full justify-between text-right",
-                      !field.value && "text-muted-foreground"
-                    )}
-                    disabled={!selectedArea || isLoadingCities}
-                  >
-                    {isLoadingCities ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>טוען ערים...</span>
-                      </div>
-                    ) : (
-                      field.value || "בחר עיר"
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="end">
-                <Command>
-                  <CommandInput
-                    placeholder="חפש עיר..."
+      <div className="relative" ref={streetDropdownRef}>
+        <FormField
+          control={form.control}
+          name="location.address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>רחוב</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    placeholder="הקלד שם רחוב..."
+                    value={streetInput}
+                    onChange={(e) => {
+                      setStreetInput(e.target.value);
+                      field.onChange("");
+                    }}
+                    onFocus={() => {
+                      if (city) {
+                        setShowStreetSuggestions(streetSuggestions.length > 0);
+                        // Close the other dropdown when focusing on this one
+                        setShowCitySuggestions(false);
+                      }
+                    }}
                     className="text-right"
+                    disabled={!form.watch("location.city")}
                   />
-                  <CommandList>
-                    <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
-                    <CommandGroup>
-                      {cities.map((city) => (
-                        <CommandItem
-                          key={city}
-                          value={city}
-                          onSelect={() => {
-                            form.setValue("location.city", city);
-                            form.setValue("location.address", ""); // Reset street when city changes
-                            setCityOpen(false);
-                          }}
-                          className="text-right"
-                        >
-                          <Check
-                            className={cn(
-                              "ml-2 h-4 w-4",
-                              city === field.value ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {city}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+                  {isLoadingStreet && (
+                    <Loader2 className="absolute left-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </FormControl>
+              {showStreetSuggestions && streetSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
+                  <Command>
+                    <CommandList>
+                      <CommandGroup>
+                        {streetSuggestions.map((street) => (
+                          <CommandItem
+                            key={street}
+                            onSelect={() => {
+                              field.onChange(street);
+                              setStreetInput(street);
+                              setShowStreetSuggestions(false);
+                            }}
+                            className="text-right"
+                          >
+                            {street}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </div>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
-      {/* Street Selection */}
-      <FormField
-        control={form.control}
-        name="location.address"
-        render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <FormLabel>רחוב</FormLabel>
-            <Popover open={streetOpen} onOpenChange={setStreetOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "w-full justify-between text-right",
-                      !field.value && "text-muted-foreground"
-                    )}
-                    disabled={!selectedCity || isLoadingStreets}
-                  >
-                    {isLoadingStreets ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>טוען רחובות...</span>
-                      </div>
-                    ) : (
-                      field.value || "בחר רחוב"
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="end">
-                <Command>
-                  <CommandInput
-                    placeholder="חפש רחוב..."
-                    className="text-right"
-                  />
-                  <CommandList>
-                    <CommandEmpty>לא נמצאו תוצאות.</CommandEmpty>
-                    <CommandGroup>
-                      {streets.map((street) => (
-                        <CommandItem
-                          key={street}
-                          value={street}
-                          onSelect={() => {
-                            form.setValue("location.address", street);
-                            setStreetOpen(false);
-                          }}
-                          className="text-right"
-                        >
-                          <Check
-                            className={cn(
-                              "ml-2 h-4 w-4",
-                              street === field.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {street}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Street Number */}
       <FormField
         control={form.control}
         name="location.street_number"
@@ -283,10 +229,11 @@ export function Step2Location() {
             <FormLabel>מספר בית</FormLabel>
             <FormControl>
               <Input
+                placeholder="הקלד מספר רחוב..."
                 type="number"
-                {...field}
+                value={field.value || ""}
                 onChange={(e) => field.onChange(Number(e.target.value))}
-                className="border-sky-200 focus:border-sky-500 transition-all duration-300"
+                className="text-right"
                 disabled={!form.watch("location.address")}
               />
             </FormControl>
@@ -295,7 +242,6 @@ export function Step2Location() {
         )}
       />
 
-      {/* Additional Location Details */}
       <FormField
         control={form.control}
         name="location.location_details"
@@ -303,11 +249,7 @@ export function Step2Location() {
           <FormItem>
             <FormLabel>פרטים נוספים על המיקום</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                placeholder="כניסה, קומה, או הוראות הגעה נוספות"
-                className="border-sky-200 focus:border-sky-500 transition-all duration-300"
-              />
+              <Input {...field} placeholder="כניסה, קומה, או הוראות הגעה נוספות" className="text-right" />
             </FormControl>
             <FormMessage />
           </FormItem>

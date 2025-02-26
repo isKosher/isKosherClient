@@ -17,14 +17,16 @@ export const formSchema = z.object({
   business_phone: z.string().regex(phonePattern, { message: "מספר טלפון לא תקין" }),
   business_details: z.string().min(10, { message: "פרטי העסק חייבים להכיל לפחות 10 תווים" }),
   location: z.object({
-    area: z.object({
-      id: z.string().min(1, { message: "יש לבחור אזור" }),
-      name: z.string().min(1, { message: "יש לבחור אזור" }),
-    }),
+    // area: z.object({
+    //   id: z.string().min(1, { message: "יש לבחור אזור" }),
+    //   name: z.string().min(1, { message: "יש לבחור אזור" }),
+    // }),
     street_number: z.number().positive({ message: "מספר רחוב חייב להיות חיובי" }),
     address: z.string().min(2, { message: "כתובת חייבת להכיל לפחות 2 תווים" }),
     city: z.string().min(2, { message: "עיר חייבת להכיל לפחות 2 תווים" }),
     location_details: z.string().optional(),
+    longitude: z.number().optional(),
+    latitude: z.number().optional(),
   }),
   business_type: z.object({
     id: z.string().optional(),
