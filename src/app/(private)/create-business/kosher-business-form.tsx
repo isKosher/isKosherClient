@@ -26,53 +26,54 @@ const steps = [
 
 const stepValidationFields = {
   0: ["business_name", "business_phone", "business_details"],
-  1: ["location.street_number", "location.address", "location.city"],
+  1: ["location.street_number", "location.address", "location.city", "location.region"],
   2: ["business_type", "kosher_types", "food_types", "food_items"],
   3: ["supervisor.name", "supervisor.contact_info", "supervisor.authority", "kosher_certificate.expiration_date"],
   4: [], // Summary step doesn't need validation
+};
+
+const defaultValues: FormData = {
+  business_name: "",
+  business_phone: "",
+  business_details: "",
+  location: {
+    street_number: 0,
+    address: "",
+    region: "",
+    location_details: "",
+    city: "",
+    longitude: 0,
+    latitude: 0,
+  },
+  business_type: {
+    name: "",
+    id: "",
+    isCustom: false,
+  },
+  kosher_types: [],
+  food_types: [],
+  food_items: [],
+  supervisor: {
+    name: "",
+    contact_info: "",
+    authority: "",
+  },
+  kosher_certificate: {
+    certificate: undefined,
+    expiration_date: new Date(),
+  },
 };
 
 export function KosherBusinessForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepValidity, setStepValidity] = useState<Record<number, boolean>>({});
-  const [attemptedSteps, setAttemptedSteps] = useState<Record<number, boolean>>({}); // Track attempted steps
+  const [attemptedSteps, setAttemptedSteps] = useState<Record<number, boolean>>({});
 
   const methods = useForm<FormData>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      business_name: "",
-      business_phone: "",
-      business_details: "",
-      location: {
-        street_number: 0,
-        address: "",
-        area: {
-          name: "",
-          id: "",
-        },
-        location_details: "",
-        city: "",
-      },
-      business_type: {
-        name: "",
-        id: "",
-        isCustom: false,
-      },
-      kosher_types: [],
-      food_types: [],
-      food_items: [],
-      supervisor: {
-        name: "",
-        contact_info: "",
-        authority: "",
-      },
-      kosher_certificate: {
-        certificate: undefined,
-        expiration_date: new Date(),
-      },
-    },
+    defaultValues,
   });
 
   const onSubmit = async (data: FormData) => {
@@ -84,10 +85,10 @@ export function KosherBusinessForm() {
         toast.success("העסק נוצר בהצלחה!", {
           description: "הפרטים נשמרו במערכת",
         });
-        methods.reset();
+        methods.reset(defaultValues);
         setCurrentStep(0);
         setStepValidity({});
-        setAttemptedSteps({}); // Reset attempted steps
+        setAttemptedSteps({});
       } else {
         throw new Error(result.error);
       }
@@ -102,8 +103,6 @@ export function KosherBusinessForm() {
 
   const validateStep = async (stepIndex: number) => {
     const fieldsToValidate = stepValidationFields[stepIndex as keyof typeof stepValidationFields];
-
-    // Mark step as attempted
     setAttemptedSteps((prev) => ({ ...prev, [stepIndex]: true }));
 
     const result = await methods.trigger(fieldsToValidate as any);
@@ -121,7 +120,6 @@ export function KosherBusinessForm() {
   const nextStep = async () => {
     const isValid = await validateStep(currentStep);
     if (!isValid) return;
-
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
@@ -144,13 +142,13 @@ export function KosherBusinessForm() {
                 title={step.title}
                 isValid={stepValidity[index] || false}
                 isActive={currentStep === index}
-                wasAttempted={attemptedSteps[index] || false} // Pass attempted state
+                wasAttempted={attemptedSteps[index] || false}
               />
             ))}
           </div>
           <div className="mt-4 h-2 bg-gray-200 rounded-full">
             <div
-              className="h-full bg-[#1A365D] rounded-full transition-all duration-300 ease-in-out"
+              className="h-full bg-sky-600 rounded-full transition-all duration-300 ease-in-out"
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
             ></div>
           </div>
@@ -163,7 +161,7 @@ export function KosherBusinessForm() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="max-h-[400px] overflow-scroll"
+            className="min-h-[400px]"
           >
             <CurrentStepComponent />
           </motion.div>

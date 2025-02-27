@@ -7,6 +7,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Loader2 } from "lucide-react";
 import { searchCities, searchStreets } from "@/services/govmap-service";
+import { getRegions } from "@/services/lookup-service"; // נניח שזו הפונקציה שלך שמחזירה אזורים
 import { toast } from "sonner";
 import type { FormData } from "@/lib/schemaCreateBusiness";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
@@ -15,16 +16,22 @@ export function Step2Location() {
   const form = useFormContext<FormData>();
   const [cityInput, setCityInput] = useState("");
   const [streetInput, setStreetInput] = useState("");
+  const [regionInput, setRegionInput] = useState("");
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
+  const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
+  const [allRegions, setAllRegions] = useState<string[]>([]);
   const [isLoadingCity, setIsLoadingCity] = useState(false);
   const [isLoadingStreet, setIsLoadingStreet] = useState(false);
+  const [isLoadingRegions, setIsLoadingRegions] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [showStreetSuggestions, setShowStreetSuggestions] = useState(false);
+  const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
 
   // Create refs for the dropdown containers
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const streetDropdownRef = useRef<HTMLDivElement>(null);
+  const regionDropdownRef = useRef<HTMLDivElement>(null);
 
   const city = form.watch("location.city");
 
@@ -37,9 +44,52 @@ export function Step2Location() {
     setShowStreetSuggestions(false);
   }, []);
 
-  // Use your custom hook for both dropdowns
+  const handleRegionOutsideClick = useCallback(() => {
+    setShowRegionSuggestions(false);
+  }, []);
+
+  // Use your custom hook for all dropdowns
   useOnClickOutside(cityDropdownRef, handleCityOutsideClick);
   useOnClickOutside(streetDropdownRef, handleStreetOutsideClick);
+  useOnClickOutside(regionDropdownRef, handleRegionOutsideClick);
+
+  // Fetch all regions once when component mounts
+  useEffect(() => {
+    const fetchRegions = async () => {
+      setIsLoadingRegions(true);
+      try {
+        const regions = await getRegions();
+        setAllRegions(regions);
+      } catch (error) {
+        console.error("Error fetching regions:", error);
+        toast.error("שגיאה בטעינת רשימת האזורים");
+      } finally {
+        setIsLoadingRegions(false);
+      }
+    };
+
+    fetchRegions();
+  }, []);
+
+  // Filter regions based on input
+  useEffect(() => {
+    if (!regionInput) {
+      setRegionSuggestions(allRegions);
+      if (allRegions.length > 0) {
+        setShowRegionSuggestions(true);
+      }
+      return;
+    }
+
+    const filteredRegions = allRegions.filter((region) => region.includes(regionInput));
+
+    setRegionSuggestions(filteredRegions);
+    if (filteredRegions.length > 0) {
+      setShowRegionSuggestions(true);
+    } else {
+      setShowRegionSuggestions(false);
+    }
+  }, [regionInput, allRegions]);
 
   // Search cities
   useEffect(() => {
@@ -101,6 +151,68 @@ export function Step2Location() {
 
       <h2 className="text-2xl font-semibold text-sky-800">מיקום העסק</h2>
 
+      <div className="relative" ref={regionDropdownRef}>
+        <FormField
+          control={form.control}
+          name="location.region"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>אזור</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    placeholder="בחר אזור..."
+                    value={regionInput}
+                    onChange={(e) => {
+                      setRegionInput(e.target.value);
+                      if (!e.target.value) {
+                        field.onChange("");
+                      }
+                    }}
+                    onFocus={() => {
+                      if (allRegions.length > 0) {
+                        setShowRegionSuggestions(true);
+                      }
+                      // Close the other dropdowns when focusing on this one
+                      setShowCitySuggestions(false);
+                      setShowStreetSuggestions(false);
+                    }}
+                    className="text-right"
+                  />
+                  {isLoadingRegions && (
+                    <Loader2 className="absolute left-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </FormControl>
+              {showRegionSuggestions && regionSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
+                  <Command>
+                    <CommandList>
+                      <CommandGroup>
+                        {regionSuggestions.map((region) => (
+                          <CommandItem
+                            key={region}
+                            onSelect={() => {
+                              field.onChange(region);
+                              setRegionInput(region);
+                              setShowRegionSuggestions(false);
+                            }}
+                            className="text-right"
+                          >
+                            {region}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </div>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
       <div className="relative" ref={cityDropdownRef}>
         <FormField
           control={form.control}
@@ -119,8 +231,9 @@ export function Step2Location() {
                     }}
                     onFocus={() => {
                       setShowCitySuggestions(citySuggestions.length > 0);
-                      // Close the other dropdown when focusing on this one
+                      // Close the other dropdowns when focusing on this one
                       setShowStreetSuggestions(false);
+                      setShowRegionSuggestions(false);
                     }}
                     className="text-right"
                   />
@@ -180,8 +293,9 @@ export function Step2Location() {
                     onFocus={() => {
                       if (city) {
                         setShowStreetSuggestions(streetSuggestions.length > 0);
-                        // Close the other dropdown when focusing on this one
+                        // Close the other dropdowns when focusing on this one
                         setShowCitySuggestions(false);
+                        setShowRegionSuggestions(false);
                       }
                     }}
                     className="text-right"
