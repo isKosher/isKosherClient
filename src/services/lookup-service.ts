@@ -26,3 +26,20 @@ export async function fetchLookupData(): Promise<LookupData> {
     };
   }
 }
+
+const regions = ["צפון", "חיפה", "מרכז", "תל אביב", "ירושלים", "דרום", "יהודה ושומרון"];
+
+// פונקציה שמחזירה את כל האזורים
+export async function getRegions(): Promise<string[]> {
+  // במקרה אמיתי, זו תהיה קריאת API לשרת:
+  // const response = await fetch('/api/regions');
+  // return response.json();
+
+  // במקום זאת, נחזיר את הרשימה הסטטית:
+  return new Promise((resolve) => {
+    // מדמה השהייה של רשת
+    setTimeout(() => {
+      resolve(regions);
+    }, 300);
+  });
+}
