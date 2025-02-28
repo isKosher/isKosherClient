@@ -21,7 +21,7 @@ export async function initGovmap(): Promise<boolean> {
         govmapScript.src = "https://www.govmap.gov.il/govmap/api/govmap.api.js";
         govmapScript.onload = () => {
           window.govmap.createMap("hidden-map", {
-            token: "",
+            token: process.env.GOVMAP_API_TOKEN_KEY,
             layers: [],
             showXY: false,
             identifyOnClick: false,
