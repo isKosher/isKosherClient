@@ -1,0 +1,50 @@
+title = "Advanced GitLeaks Config"
+
+# Rule to detect generic API keys
+[[rules]]
+id = "Generic API Key"
+description = "Detects generic API keys"
+regex = '''(?i)(api_key|apikey|secret|token|auth|bearer|password|pass|client_secret|access_token|private_key|consumer_key|session_key)\s*[:=]\s*["“”']?[A-Za-z0-9_\-]{10,}["“”']?'''
+tags = ["apikey", "security"]
+
+# Rule to detect API keys inside JSON format
+[[rules]]
+id = "JSON Sensitive Data"
+description = "Detects sensitive keys inside JSON files"
+regex = '''"?(api_key|apikey|secret|token|auth|bearer|password|pass|client_secret|access_token|private_key|consumer_key|session_key)"?\s*:\s*"[^"]{10,}"'''
+tags = ["json", "security"]
+
+# Rule to detect Bearer tokens
+[[rules]]
+id = "Bearer Token"
+description = "Detects bearer tokens"
+regex = '''(?i)authorization\s*:\s*bearer\s+["“”']?[A-Za-z0-9_\-]{10,}["“”']?'''
+tags = ["auth", "token"]
+
+# Rule to detect private keys (RSA, DSA, EC)
+[[rules]]
+id = "Private Key"
+description = "Detects private keys (RSA, DSA, EC)"
+regex = '''-----BEGIN (RSA|EC|DSA|PRIVATE) KEY-----'''
+tags = ["private", "key"]
+
+# Rule to detect AWS access keys
+[[rules]]
+id = "AWS Access Key"
+description = "Detects AWS access keys"
+regex = '''AKIA[0-9A-Z]{16}'''
+tags = ["aws", "key"]
+
+# Rule to detect Slack tokens
+[[rules]]
+id = "Slack Token"
+description = "Detects Slack tokens"
+regex = '''xox[baprs]-[0-9]{10,}-[0-9]{10,}-[0-9A-Za-z]{24}'''
+tags = ["slack", "key"]
+
+# Rule to detect Google API keys
+[[rules]]
+id = "Google API Key"
+description = "Detects Google API keys"
+regex = '''AIza[0-9A-Za-z-_]{35}'''
+tags = ["google", "key"]
