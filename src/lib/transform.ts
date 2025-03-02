@@ -12,11 +12,11 @@ export async function transformFormDataToServerPayload(formData: FormData): Prom
     location: {
       street_number: formData.location.street_number,
       address: formData.location.address,
-      region: formData.location.area.name, // Using area name as region
+      region: formData.location.region,
       location_details: formData.location.location_details || "",
       city: formData.location.city,
-      latitude: 0,
-      longitude: 0,
+      latitude: formData.location.latitude || 0,
+      longitude: formData.location.longitude || 0,
     },
     kosher_types: formData.kosher_types.map((type) => type.name),
     business_type_name: formData.business_type.name,
