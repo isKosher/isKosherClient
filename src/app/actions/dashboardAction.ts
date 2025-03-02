@@ -1,12 +1,12 @@
 "use server";
 import { formSchema } from "@/lib/schemaCreateBusiness";
 import { transformFormDataToServerPayload } from "@/lib/transform";
-import { RestaurantPreview } from "@/types";
+import { BusinessPreview } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 import { z } from "zod";
 
-export async function getMyBusinessAction(): Promise<RestaurantPreview[]> {
-  const response = await serverApi.get<RestaurantPreview[]>("/admin/businesses/my-businesses", {
+export async function getMyBusinessAction(): Promise<BusinessPreview[]> {
+  const response = await serverApi.get<BusinessPreview[]>("/admin/businesses/my-businesses", {
     includeCookies: true,
   });
   return response.data;

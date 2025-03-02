@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { RestaurantDetails } from "./restaurantDetails";
 import { LatLngExpression } from "leaflet";
-import { Restaurant } from "@/types";
+import { BusinessDetails } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -13,8 +13,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export async function getRestaurant(id: string): Promise<Restaurant> {
-  const res = await serverApi.get<Restaurant>(`/discover/${id}/details`);
+export async function getRestaurant(id: string): Promise<BusinessDetails> {
+  const res = await serverApi.get<BusinessDetails>(`/discover/${id}/details`);
 
   if (!res.data) {
     throw new Error("Failed to fetch restaurant");
@@ -47,7 +47,9 @@ export default async function RestaurantPage({ params }: { params: { id: string 
 
   try {
     restaurant = await getRestaurant(id);
-    coordinates = await getCoordinates(`${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`);
+    coordinates = await getCoordinates(
+      `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`
+    );
   } catch (error) {
     console.error("Error fetching data:", error);
     return <div>Error</div>;

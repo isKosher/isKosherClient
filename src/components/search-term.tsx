@@ -122,7 +122,6 @@ export default function SearchComponent() {
     }
 
     if (searchResults.length > 0) {
-      console.log(searchResults.length);
       return (
         <ScrollArea className="max-h-96 overflow-y-auto">
           {searchResults.map((restaurant) => (

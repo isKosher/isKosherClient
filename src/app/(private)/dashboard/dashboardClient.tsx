@@ -1,14 +1,15 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import RestaurantCard from "@/app/restaurantCard";
 import Link from "next/link";
-import { RestaurantPreview } from "@/types";
+import { BusinessPreview, RestaurantPreview } from "@/types";
 import { getMyBusinessAction } from "@/app/actions/dashboardAction";
 import LoadingPage from "@/app/loading";
 import ErrorPage from "@/components/ErrorPage";
 
 export default function DashboardClient() {
-  const [userBusinesses, setUserBusinesses] = useState<RestaurantPreview[]>([]);
+  //TODO: Add type of UserOwnedBusinessResponse
+  const [userBusinesses, setUserBusinesses] = useState<BusinessPreview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,19 +54,7 @@ export default function DashboardClient() {
                 href={`/dashboard/edit/${userBusiness.business_id}`}
                 className="transition-transform hover:scale-105"
               >
-                <RestaurantCard
-                  restaurant={{
-                    id: userBusiness.business_id,
-                    name: userBusiness.business_name,
-                    type: userBusiness.business_type,
-                    certification: userBusiness.kosher_type,
-                    address: `${userBusiness.location.address} ${userBusiness.location.street_number}, ${userBusiness.location.city}`,
-                    halavi: userBusiness.food_types.includes("חלבי"),
-                    bessari: userBusiness.food_types.includes("בשרי"),
-                    parve: userBusiness.food_types.includes("פרווה"),
-                    image: userBusiness.business_photos[0]?.url || "",
-                  }}
-                />
+                <RestaurantCard restaurant={userBusiness} />
               </Link>
             ))}
           </div>

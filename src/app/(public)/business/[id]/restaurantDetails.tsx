@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Restaurant } from "@/types";
+import { BusinessDetails } from "@/types";
 import { LatLngExpression } from "leaflet";
 import dynamic from "next/dynamic";
 import SquareGallery from "@/components/squareGallery";
@@ -24,7 +24,7 @@ const images = [
   },
 ];
 
-export function RestaurantDetails(props: { restaurant: Restaurant; coordinates: LatLngExpression }) {
+export function RestaurantDetails(props: { restaurant: BusinessDetails; coordinates: LatLngExpression }) {
   const router = useRouter();
   const position: LatLngExpression = [31.25181, 34.7913];
   const Map = useMemo(
