@@ -101,3 +101,15 @@ export interface ServerPayload {
     expiration_date: string;
   };
 }
+
+export type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+export interface GovmapResult {
+  ResultLable: string;
+  X: number;
+  Y: number;
+  ObjectID: string;
+}

@@ -1,14 +1,12 @@
+import { Coordinates, GovmapResult } from "@/types";
+import { convertITMToWGS84 } from "@/utils/convertCoordinates";
+
 declare global {
   interface Window {
     govmap: any;
   }
 }
-interface GovmapResult {
-  ResultLable: string;
-  X: number;
-  Y: number;
-  ObjectID: string;
-}
+
 let isInitialized = false;
 export async function initGovmap(): Promise<boolean> {
   if (isInitialized) return true;
@@ -21,7 +19,7 @@ export async function initGovmap(): Promise<boolean> {
         govmapScript.src = "https://www.govmap.gov.il/govmap/api/govmap.api.js";
         govmapScript.onload = () => {
           window.govmap.createMap("hidden-map", {
-            token: process.env.GOVMAP_API_TOKEN_KEY,
+            token: process.env.NEXT_PUBLIC_GOVMAP_API_TOKEN_KEY,
             layers: [],
             showXY: false,
             identifyOnClick: false,
@@ -78,6 +76,7 @@ export async function searchCities(keyword: string): Promise<string[]> {
     return [];
   }
 }
+
 export async function searchStreets(street: string, city: string): Promise<string[]> {
   if (!isInitialized) {
     await initGovmap();
@@ -102,5 +101,31 @@ export async function searchStreets(street: string, city: string): Promise<strin
   } catch (error) {
     console.error("Error searching streets:", error);
     return [];
+  }
+}
+
+export async function getCoordinates(address: string, city: string, streetNumber: number): Promise<Coordinates | null> {
+  if (!isInitialized) {
+    await initGovmap();
+  }
+
+  const searchTerm = `${address} ${streetNumber || ""} ${city}`.trim();
+
+  try {
+    const response = await window.govmap.geocode({
+      keyword: searchTerm,
+      type: window.govmap.geocodeType.FullResult,
+    });
+
+    if (!response?.data || response.data.length === 0) {
+      return null;
+    }
+
+    const firstResult = response.data[0];
+
+    return convertITMToWGS84(firstResult.X, firstResult.Y);
+  } catch (error) {
+    console.error("Error getting coordinates:", error);
+    return null;
   }
 }

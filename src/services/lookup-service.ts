@@ -1,3 +1,5 @@
+import { regions } from "@/data/staticData";
+
 interface LookupData {
   food_types: Array<{ id: string; name: string }>;
   business_types: Array<{ id: string; name: string }>;
@@ -27,17 +29,11 @@ export async function fetchLookupData(): Promise<LookupData> {
   }
 }
 
-const regions = ["צפון", "חיפה", "מרכז", "תל אביב", "ירושלים", "דרום", "יהודה ושומרון"];
-
-// פונקציה שמחזירה את כל האזורים
 export async function getRegions(): Promise<string[]> {
-  // במקרה אמיתי, זו תהיה קריאת API לשרת:
+  //TODO: Add a function that fetches the regions from the server
   // const response = await fetch('/api/regions');
   // return response.json();
-
-  // במקום זאת, נחזיר את הרשימה הסטטית:
   return new Promise((resolve) => {
-    // מדמה השהייה של רשת
     setTimeout(() => {
       resolve(regions);
     }, 300);
