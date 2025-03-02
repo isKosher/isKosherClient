@@ -62,8 +62,8 @@ export const formSchema = z.object({
     authority: z.string().min(5, { message: "רשות הפיקוח חייבת להכיל לפחות 5 תווים" }),
   }),
   kosher_certificate: z.object({
-    certificate: z.any(),
-    expiration_date: z.date(),
+    certificate: z.string().nonempty({ message: "תעודת כשרות לא יכולה להיות ריקה" }),
+    expiration_date: z.any().refine((date) => date > new Date(), { message: "תאריך תפוגה חייב להיות בעתיד" }),
   }),
 });
 

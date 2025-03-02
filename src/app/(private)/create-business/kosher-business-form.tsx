@@ -15,6 +15,7 @@ import { Step5Summary } from "./(stepsCreateBusiness)/step-5-summary";
 import { formSchema, type FormData } from "@/lib/schemaCreateBusiness";
 import { StepIndicator } from "@/components/step-indicator";
 import { createBusiness } from "@/app/actions/dashboardAction";
+import { string } from "zod";
 
 const steps = [
   { title: "פרטי העסק", component: Step1BusinessDetails },
@@ -28,7 +29,14 @@ const stepValidationFields = {
   0: ["business_name", "business_phone", "business_details"],
   1: ["location.street_number", "location.address", "location.city", "location.region"],
   2: ["business_type", "kosher_types", "food_types", "food_items"],
-  3: ["supervisor.name", "supervisor.contact_info", "supervisor.authority", "kosher_certificate.expiration_date"],
+  3: [
+    "supervisor.name",
+    "supervisor.contact_info",
+    "supervisor.authority",
+    //TODO: Add link for kosher_certificate
+    //"kosher_certificate.certificate",
+    "kosher_certificate.expiration_date",
+  ],
   4: [], // Summary step doesn't need validation
 };
 
@@ -59,8 +67,8 @@ const defaultValues: FormData = {
     authority: "",
   },
   kosher_certificate: {
-    certificate: undefined,
-    expiration_date: new Date(),
+    certificate: "",
+    expiration_date: undefined,
   },
 };
 
