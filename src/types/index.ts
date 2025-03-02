@@ -6,7 +6,7 @@ export type BusinessPhoto = {
 
 export type KosherType = {
   id: string | null;
-  name: string | null;
+  name: string;
   kosher_icon_url: string | null;
 };
 
@@ -23,7 +23,7 @@ export type KosherCertificate = {
   expiration_date: string | null;
 };
 
-export type Restaurant = {
+export interface BusinessDetails {
   business_id: string;
   business_name: string;
   food_types: string[];
@@ -43,7 +43,7 @@ export type Restaurant = {
   business_rating: number;
   kosher_supervisors: KosherSupervisor[];
   kosher_certificates: KosherCertificate[];
-};
+}
 
 export type BusinessSearchResult = {
   business_id: string;
@@ -67,6 +67,21 @@ export type RestaurantPreview = {
   kosher_type: string;
   business_type: string;
 };
+
+export interface BusinessPreview {
+  business_id: string;
+  business_name: string;
+  food_types: string[];
+  food_item_types: string[];
+  location: {
+    address: string;
+    street_number: number;
+    city: string;
+  };
+  business_photos: BusinessPhoto[];
+  kosher_types: KosherType[];
+  business_type: string;
+}
 
 export interface LoginResponse {
   success: boolean;

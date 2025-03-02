@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import FilterDropdown from "../app/filterDropdown";
 import RestaurantCard from "../app/restaurantCard";
 import { cn } from "@/lib/utils";
@@ -10,23 +10,23 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
 import { useInView } from "react-intersection-observer";
-import { RestaurantPreview } from "@/types";
-import { getRestaurantsAction } from "@/app/actions/getRestaurantAction";
+import { BusinessPreview } from "@/types";
+import { getFilterParams, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
 import SearchComponent from "./search-term";
-import { BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
 import { toast } from "sonner";
 import { fetchLookupData } from "@/services/lookup-service";
 import { Option } from "@/lib/schemaCreateBusiness";
 
+//TODO: Remove foodTypes from here and props
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
 type homePageProps = {
-  initialRestaurants: RestaurantPreview[];
+  initialRestaurants: BusinessPreview[];
 };
 
 export default function HomePage({ initialRestaurants }: homePageProps) {
   const [loading, setLoading] = useState(false);
-  const [restaurants, setRestaurants] = useState<RestaurantPreview[]>(initialRestaurants);
+  const [restaurants, setRestaurants] = useState<BusinessPreview[]>(initialRestaurants);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedFoodType, setSelectedFoodType] = useState<string[]>([]);
   const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
@@ -39,6 +39,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const [page, setPage] = useState(2);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
   const { ref, inView } = useInView();
 
   useEffect(() => {
@@ -47,7 +48,6 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
         setIsLoading(true);
         const data = await fetchLookupData();
 
-        // Transform and merge API data with existing options
         setBusinessTypes(
           data.business_types.map((item) => ({
             id: item.id,
@@ -80,10 +80,27 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
     loadData();
   }, []);
 
+  // Check if any filters are applied
+  const hasActiveFilters = () => {
+    return (
+      selectedCity !== "" ||
+      selectedFoodType.length > 0 ||
+      selectedBusinessTypes.length > 0 ||
+      selectedKosherTypes.length > 0 ||
+      selectedFoodItems.length > 0
+    );
+  };
+
   const loadMore = async () => {
+    // Don't load more if we're filtering or already loading
+    if (isFiltering || isLoading || !hasMore) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       const newRestaurants = await getRestaurantsAction(page);
+
       if (newRestaurants.length === 0) {
         setHasMore(false);
       } else {
@@ -92,29 +109,19 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
       }
     } catch (error) {
       console.error("Error fetching restaurants:", error);
+      toast.error("שגיאה בטעינת הנתונים", {
+        description: "אירעה שגיאה בטעינת מסעדות נוספות.",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const transformRestaurantData = (restaurant: RestaurantPreview) => {
-    return {
-      id: restaurant.business_id,
-      name: restaurant.business_name,
-      type: restaurant.business_type || "לא ידוע",
-      certification: restaurant.kosher_type || "ללא תעודה",
-      address: `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`,
-      halavi: restaurant.food_item_types.includes("חלבי"),
-      bessari: restaurant.food_item_types.includes("בשרי"),
-      parve: restaurant.food_item_types.includes("פרווה"),
-      image: restaurant.business_photos?.[0]?.url || "/default-restaurant.jpg",
-    };
-  };
   useEffect(() => {
-    if (inView && !isLoading && hasMore) {
+    if (inView && !isLoading && hasMore && !isFiltering) {
       loadMore();
     }
-  }, [inView]);
+  }, [inView, isLoading, hasMore, isFiltering]);
 
   function handleSelectFoodType(selectedType: string) {
     selectedFoodType.includes(selectedType)
@@ -122,17 +129,34 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
       : setSelectedFoodType(selectedFoodType.concat(selectedType));
   }
 
+  const resetFilters = async () => {
+    setSelectedCity("");
+    setSelectedFoodType([]);
+    setSelectedBusinessTypes([]);
+    setSelectedKosherTypes([]);
+    setSelectedFoodItems([]);
+    setIsFiltering(false);
+    setPage(2); // Reset pagination to start loading from page 2 (after initial)
+    setRestaurants(await getRestaurantsAction());
+    setHasMore(true);
+    // Optionally close the filter panel
+    setIsOpen(false);
+  };
+
   const handleSearch = async () => {
     setLoading(true);
 
-    try {
-      const params = new URLSearchParams();
-      console.log(selectedFoodItems);
-      console.log(selectedBusinessTypes);
-      console.log(selectedKosherTypes);
-      console.log(selectedCity);
+    // Clear current results before searching
+    setRestaurants([]);
 
-      if (selectedCity) params.append("city", selectedCity);
+    // Set filtering state
+    setIsFiltering(hasActiveFilters());
+
+    try {
+      //TODO: Save params in url of website
+      const params = new URLSearchParams();
+
+      if (selectedCity) params.append("city", selectedCity.trim());
 
       selectedFoodType.forEach((type) => {
         params.append("foodTypes", type);
@@ -146,24 +170,37 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
         params.append("kosherTypes", type);
       });
 
-      const url = `https://iskoshermanager.onrender.com/api/v1/discover/filter?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      selectedFoodItems.forEach((item) => {
+        params.append("foodItems", item);
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch restaurants");
+      const response: BusinessPreview[] = await getFilterParams(params.toString());
+
+      // Set filtered restaurants
+      setRestaurants(response);
+
+      // If no results or very few results, disable "load more"
+      if (response.length === 0) {
+        setHasMore(false);
       }
 
-      const data: { content: RestaurantPreview[] } = await response.json();
-      setRestaurants(data.content);
-      console.log(data.content);
+      // If no filters are applied and we got results, enable pagination again
+      if (!hasActiveFilters() && response.length > 0) {
+        setIsFiltering(false);
+        setPage(2);
+        setHasMore(true);
+      }
     } catch (error) {
       console.error("Error searching restaurants:", error);
+      toast.error("שגיאה בטעינת הנתונים", {
+        description: "אירעה שגיאה בחיפוש. אנא נסה שנית.",
+      });
+
+      // On error, return to initial state
+      if (!hasActiveFilters()) {
+        setRestaurants(await getRestaurantsAction());
+        setIsFiltering(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -258,29 +295,50 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
             </CollapsibleContent>
           </Collapsible>
 
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center space-x-2">
             <Button
               className="w-full bg-[#1A365D] hover:bg-[#2D4A6D] text-white text-md lg:text-lg py-6 mt-4"
               onClick={handleSearch}
               disabled={loading}
             >
-              <Search className="w-6 h-6 " />
-              {loading ? "Searching..." : "Search"}
+              <Search className="w-6 h-6 mr-2" />
+              {loading ? "מחפש..." : "חפש"}
             </Button>
+
+            {hasActiveFilters() && (
+              <Button
+                className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 text-md lg:text-lg py-6"
+                onClick={resetFilters}
+                disabled={loading}
+              >
+                <X className="w-6 h-6 mr-2" />
+                נקה סינון
+              </Button>
+            )}
           </div>
         </div>
       </div>
       <div className="px-4 py-8 flex justify-center flex-col">
+        {restaurants.length === 0 && !loading && (
+          <div className="text-center py-8">
+            <p className="text-2xl text-gray-600">לא נמצאו תוצאות</p>
+            {isFiltering && (
+              <Button className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800" onClick={resetFilters}>
+                נקה סינון ונסה שוב
+              </Button>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurants.map((restaurant, index) => {
-            return (
-              <div key={restaurant.business_id}>
-                <RestaurantCard restaurant={transformRestaurantData(restaurant)} />
-              </div>
-            );
-          })}
+          {restaurants.map((restaurant) => (
+            <div key={restaurant.business_id}>
+              <RestaurantCard restaurant={restaurant} />
+            </div>
+          ))}
         </div>
-        {hasMore && (
+
+        {hasMore && !isFiltering && (
           <div ref={ref} className="self-center h-60 w-60">
             <GpsSearchAnimation />
           </div>
