@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import axios from "axios";
+import { Input } from "@/components/ui/input";
 
 interface CityFilterProps {
   onSelectCity: (city: string) => void;
   loading: boolean;
+  selectedCity?: string;
 }
 
-const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading, selectedCity = "" }) => {
+  const [searchTerm, setSearchTerm] = useState(selectedCity);
   const [cities, setCities] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   let resource_id = "5c78e9fa-c2e2-4771-93ff-7f400a12f7ba";
+
+  useEffect(() => {
+    if (selectedCity) {
+      setSearchTerm(selectedCity);
+    }
+  }, [selectedCity]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,18 +42,19 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading }) => {
           const { data } = await axios.get(
             `https://data.gov.il/api/3/action/datastore_search?resource_id=${resource_id}&q=${searchTerm}`
           );
-          const cityNames = data.result.records.map(
-            (record: any) => record["שם_ישוב"]
-          );
+          const cityNames = data.result.records.map((record: any) => record["שם_ישוב"]);
           setCities(cityNames);
+          setIsDropdownOpen(true);
         } catch (error) {
           console.error("Error fetching cities:", error);
+          setIsDropdownOpen(false);
         }
       };
 
       fetchCities();
     } else {
       setCities([]);
+      setIsDropdownOpen(false);
     }
   }, [searchTerm]);
 
@@ -66,12 +74,13 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading }) => {
           setSearchTerm(e.target.value);
           setIsDropdownOpen(true);
         }}
+        onFocus={() => searchTerm && setIsDropdownOpen(true)}
         disabled={loading}
       />
       {isDropdownOpen && cities.length > 0 && (
         <ul
           dir="rtl"
-          className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto"
+          className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg"
         >
           {cities.map((city) => (
             <li

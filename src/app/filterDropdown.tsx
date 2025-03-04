@@ -11,7 +11,6 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Option } from "@/lib/schemaCreateBusiness";
 
-//make generic filter dropdown component
 interface FilterProps {
   filterOptions: Option[];
   loading: boolean;
@@ -21,9 +20,18 @@ interface FilterProps {
 }
 
 export default function FilterDropdown(props: FilterProps) {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>(props.selectedFilters);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(
+    props.selectedFilters.filter((filter) => props.filterOptions.some((option) => option.name === filter))
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const validFilters = props.selectedFilters.filter((filter) =>
+      props.filterOptions.some((option) => option.name === filter)
+    );
+    setSelectedFilters(validFilters);
+  }, [props.selectedFilters, props.filterOptions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,10 +46,6 @@ export default function FilterDropdown(props: FilterProps) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  useEffect(() => {
-    setSelectedFilters(props.selectedFilters);
-  }, [props.selectedFilters]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -73,7 +77,7 @@ export default function FilterDropdown(props: FilterProps) {
           className="w-full justify-between p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg text-wrap h-full"
           disabled={props.loading}
         >
-          {props.filterPlaceholder}
+          {selectedFilters.length > 0 ? `נבחרו ${selectedFilters.length} פריטים` : props.filterPlaceholder}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
