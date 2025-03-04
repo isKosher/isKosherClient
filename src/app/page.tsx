@@ -8,8 +8,7 @@ export default function Page() {
 
 async function PageContent() {
   try {
-    const initialRestaurants = await getRestaurantsAction();
-    return <HomePage initialRestaurants={initialRestaurants} />;
+    return <HomePage />;
   } catch (error) {
     return <ErrorPage />;
   }

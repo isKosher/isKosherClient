@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import FilterDropdown from "../app/filterDropdown";
@@ -10,23 +10,23 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown } from "lucide-react";
 import GpsSearchAnimation from "@/components/gpsSearchAnimation";
 import { useInView } from "react-intersection-observer";
-import { BusinessPreview } from "@/types";
+import type { BusinessPreview } from "@/types";
 import { getFilterParams, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
 import SearchComponent from "./search-term";
 import { toast } from "sonner";
 import { fetchLookupData } from "@/services/lookup-service";
-import { Option } from "@/lib/schemaCreateBusiness";
+import type { Option } from "@/lib/schemaCreateBusiness";
+import { useRouter, useSearchParams } from "next/navigation";
 
-//TODO: Remove foodTypes from here and props
+// TODO: Remove foodTypes from here and props
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
-type homePageProps = {
-  initialRestaurants: BusinessPreview[];
-};
+export default function HomePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-export default function HomePage({ initialRestaurants }: homePageProps) {
-  const [loading, setLoading] = useState(false);
-  const [restaurants, setRestaurants] = useState<BusinessPreview[]>(initialRestaurants);
+  const [loading, setLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState<BusinessPreview[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedFoodType, setSelectedFoodType] = useState<string[]>([]);
   const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
@@ -41,7 +41,21 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const { ref, inView } = useInView();
+  const [dataInitialized, setDataInitialized] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
+  // Check if any filters are applied
+  const hasActiveFilters = useCallback(() => {
+    return (
+      selectedCity !== "" ||
+      selectedFoodType.length > 0 ||
+      selectedBusinessTypes.length > 0 ||
+      selectedKosherTypes.length > 0 ||
+      selectedFoodItems.length > 0
+    );
+  }, [selectedCity, selectedFoodType, selectedBusinessTypes, selectedKosherTypes, selectedFoodItems]);
+
+  // Load lookup data on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -68,6 +82,8 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
             name: item.name,
           }))
         );
+
+        setDataInitialized(true);
       } catch (error) {
         toast.error("שגיאה בטעינת הנתונים", {
           description: "לא ניתן לטעון את רשימת האפשרויות. אנא נסה שוב מאוחר יותר.",
@@ -80,15 +96,98 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
     loadData();
   }, []);
 
-  // Check if any filters are applied
-  const hasActiveFilters = () => {
-    return (
-      selectedCity !== "" ||
-      selectedFoodType.length > 0 ||
-      selectedBusinessTypes.length > 0 ||
-      selectedKosherTypes.length > 0 ||
-      selectedFoodItems.length > 0
-    );
+  // Initialize filters from URL and load appropriate data - only runs once
+  useEffect(() => {
+    const initializeData = async () => {
+      // Only run this once when data is initialized and not already loaded
+      if (!dataInitialized || initialLoadComplete) return;
+
+      setLoading(true);
+
+      // Check if there are any filters in the URL
+      const city = searchParams.get("city") || "";
+      const foodTypeParams = searchParams.getAll("foodTypes");
+      const businessTypeParams = searchParams.getAll("businessTypes");
+      const kosherTypeParams = searchParams.getAll("kosherTypes");
+      const foodItemParams = searchParams.getAll("foodItems");
+
+      // Set the filter values from URL
+      setSelectedCity(city);
+      setSelectedFoodType(foodTypeParams.filter((type) => foodTypes.includes(type)));
+      setSelectedBusinessTypes(businessTypeParams);
+      setSelectedKosherTypes(kosherTypeParams);
+      setSelectedFoodItems(foodItemParams);
+
+      const hasUrlFilters =
+        city ||
+        foodTypeParams.length > 0 ||
+        businessTypeParams.length > 0 ||
+        kosherTypeParams.length > 0 ||
+        foodItemParams.length > 0;
+
+      try {
+        if (hasUrlFilters) {
+          // If we have URL filters, fetch filtered results directly
+          setIsFiltering(true);
+          setIsOpen(true); // Open filter panel
+
+          const params = new URLSearchParams(searchParams.toString());
+          const filteredRestaurants = await getFilterParams(params.toString());
+
+          setRestaurants(filteredRestaurants);
+          setHasMore(filteredRestaurants.length > 0);
+        } else {
+          // No filters, load initial data
+          const initialData = await getRestaurantsAction();
+          setRestaurants(initialData);
+          setHasMore(initialData.length > 0);
+          setIsFiltering(false);
+        }
+      } catch (error) {
+        console.error("Error initializing data:", error);
+        toast.error("שגיאה בטעינת הנתונים", {
+          description: "אירעה שגיאה בטעינת הנתונים הראשוניים.",
+        });
+
+        // Fallback to empty state
+        setRestaurants([]);
+      } finally {
+        setLoading(false);
+        setInitialLoadComplete(true); // Mark initial load as complete to prevent duplicate loads
+      }
+    };
+
+    initializeData();
+  }, [searchParams, dataInitialized, initialLoadComplete]);
+
+  // Update URL based on current filters
+  const updateUrl = () => {
+    const params = new URLSearchParams();
+
+    if (selectedCity) params.append("city", selectedCity.trim());
+
+    selectedFoodType.forEach((type) => {
+      params.append("foodTypes", type);
+    });
+
+    selectedBusinessTypes.forEach((type) => {
+      params.append("businessTypes", type);
+    });
+
+    selectedKosherTypes.forEach((type) => {
+      params.append("kosherTypes", type);
+    });
+
+    selectedFoodItems.forEach((item) => {
+      params.append("foodItems", item);
+    });
+
+    // Use Next.js router to update the URL without refreshing the page
+    const paramsString = params.toString();
+    const newUrl = paramsString ? `?${paramsString}` : "";
+
+    // Replace current URL with the new one
+    router.replace(newUrl, { scroll: false });
   };
 
   const loadMore = async () => {
@@ -121,12 +220,12 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
     if (inView && !isLoading && hasMore && !isFiltering) {
       loadMore();
     }
-  }, [inView, isLoading, hasMore, isFiltering]);
+  }, [inView, isLoading, hasMore, isFiltering]); // Removed loadMore to dependencies
 
   function handleSelectFoodType(selectedType: string) {
-    selectedFoodType.includes(selectedType)
-      ? setSelectedFoodType(selectedFoodType.filter((type) => type !== selectedType))
-      : setSelectedFoodType(selectedFoodType.concat(selectedType));
+    setSelectedFoodType((prev) =>
+      prev.includes(selectedType) ? prev.filter((type) => type !== selectedType) : [...prev, selectedType]
+    );
   }
 
   const resetFilters = async () => {
@@ -137,23 +236,47 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
     setSelectedFoodItems([]);
     setIsFiltering(false);
     setPage(2); // Reset pagination to start loading from page 2 (after initial)
-    setRestaurants(await getRestaurantsAction());
-    setHasMore(true);
+
+    // Reset URL to remove all query parameters
+    router.replace("/", { scroll: false });
+
+    // Load initial restaurants
+    try {
+      setLoading(true);
+      const initialData = await getRestaurantsAction();
+      setRestaurants(initialData);
+      setHasMore(true);
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      toast.error("שגיאה בטעינת הנתונים", {
+        description: "אירעה שגיאה בטעינת נתונים ראשוניים.",
+      });
+    } finally {
+      setLoading(false);
+    }
+
     // Optionally close the filter panel
     setIsOpen(false);
   };
 
   const handleSearch = async () => {
+    // Don't do anything if no filters are selected
+    if (!hasActiveFilters()) {
+      return;
+    }
+
     setLoading(true);
+
+    // Update URL with current filters
+    updateUrl();
 
     // Clear current results before searching
     setRestaurants([]);
 
     // Set filtering state
-    setIsFiltering(hasActiveFilters());
+    setIsFiltering(true);
 
     try {
-      //TODO: Save params in url of website
       const params = new URLSearchParams();
 
       if (selectedCity) params.append("city", selectedCity.trim());
@@ -180,27 +303,12 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
       setRestaurants(response);
 
       // If no results or very few results, disable "load more"
-      if (response.length === 0) {
-        setHasMore(false);
-      }
-
-      // If no filters are applied and we got results, enable pagination again
-      if (!hasActiveFilters() && response.length > 0) {
-        setIsFiltering(false);
-        setPage(2);
-        setHasMore(true);
-      }
+      setHasMore(response.length > 0); //Corrected this line to accurately reflect hasMore state
     } catch (error) {
       console.error("Error searching restaurants:", error);
       toast.error("שגיאה בטעינת הנתונים", {
         description: "אירעה שגיאה בחיפוש. אנא נסה שנית.",
       });
-
-      // On error, return to initial state
-      if (!hasActiveFilters()) {
-        setRestaurants(await getRestaurantsAction());
-        setIsFiltering(false);
-      }
     } finally {
       setLoading(false);
     }
@@ -210,7 +318,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
     if (selectedFoodType.length === foodTypes.length) {
       setSelectedFoodType([]); // Uncheck all if all are already selected
     } else {
-      setSelectedFoodType(foodTypes); // Check all
+      setSelectedFoodType([...foodTypes]); // Check all
     }
   };
 
@@ -230,8 +338,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
                 size="lg"
                 dir="rtl"
                 className="w-full flex justify-between items-center p-6 text-lg font-medium
-        text-[#2D4A6D] hover:bg-[#1A365D]/5 transition-all
-        rounded-lg mt-2 mb-4"
+                text-[#2D4A6D] hover:bg-[#1A365D]/5 transition-all rounded-lg mt-2 mb-4"
               >
                 <span>סינון תוצאות</span>
                 <ChevronDown className={cn("h-6 w-6 transition-transform duration-200", isOpen && "rotate-180")} />
@@ -264,7 +371,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
                   <Button
                     key="check-all"
                     variant="outline"
-                    className="flex-1 p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg  h-full hebrew-side hover:bg-gray-500 hover:text-white"
+                    className="flex-1 p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg h-full hebrew-side hover:bg-gray-500 hover:text-white"
                     onClick={handleCheckAll}
                     disabled={loading}
                   >
@@ -290,7 +397,11 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
                     </Button>
                   ))}
                 </div>
-                <CityFilter onSelectCity={(city) => setSelectedCity(city)} loading={loading} />
+                <CityFilter
+                  onSelectCity={(city) => setSelectedCity(city)}
+                  loading={loading}
+                  selectedCity={selectedCity}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -299,7 +410,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
             <Button
               className="w-full bg-[#1A365D] hover:bg-[#2D4A6D] text-white text-md lg:text-lg py-6 mt-4"
               onClick={handleSearch}
-              disabled={loading}
+              disabled={loading || !hasActiveFilters()} // Disable if no filters are selected
             >
               <Search className="w-6 h-6 mr-2" />
               {loading ? "מחפש..." : "חפש"}
@@ -319,6 +430,12 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
         </div>
       </div>
       <div className="px-4 py-8 flex justify-center flex-col">
+        {loading && (
+          <div className="self-center h-60 w-60">
+            <GpsSearchAnimation />
+          </div>
+        )}
+
         {restaurants.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-2xl text-gray-600">לא נמצאו תוצאות</p>
@@ -338,7 +455,7 @@ export default function HomePage({ initialRestaurants }: homePageProps) {
           ))}
         </div>
 
-        {hasMore && !isFiltering && (
+        {hasMore && !isFiltering && !loading && (
           <div ref={ref} className="self-center h-60 w-60">
             <GpsSearchAnimation />
           </div>
