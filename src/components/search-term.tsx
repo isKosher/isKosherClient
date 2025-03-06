@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Search as SearchIcon, XCircle } from "lucide-react";
-import { BusinessSearchResult } from "@/types";
+import { Loader2, SearchIcon, XCircle } from "lucide-react";
+import type { BusinessSearchResult } from "@/types";
 import { getSearchTrem } from "@/app/actions/getRestaurantAction";
 import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -63,7 +63,7 @@ export default function SearchComponent() {
           .filter((business: BusinessSearchResult) => business.match_score != null && !isNaN(business.match_score))
           .map((business: BusinessSearchResult) => ({
             ...business,
-            match_score: parseFloat(business.match_score.toString()),
+            match_score: Number.parseFloat(business.match_score.toString()),
           }))
           .sort((a: BusinessSearchResult, b: BusinessSearchResult) => b.match_score - a.match_score)
           .slice(0, 50);
@@ -156,7 +156,7 @@ export default function SearchComponent() {
         <Input
           ref={inputRef}
           dir="rtl"
-          className="w-full pr-10 pl-10 py-6 text-md border-2 border-gray-300 rounded-lg focus-visible:ring-blue-500"
+          className="w-full pr-10 pl-10 py-6 text-md rounded-full border border-gray-300 focus-visible:ring-indigo-500"
           placeholder="חפש לפי מיקום או שם בית עסק..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}

@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Option } from "@/lib/schemaCreateBusiness";
+import type { Option } from "@/lib/schemaCreateBusiness";
 
 interface FilterProps {
   filterOptions: Option[];
@@ -74,7 +73,7 @@ export default function FilterDropdown(props: FilterProps) {
       <DropdownMenuTrigger asChild className="hebrew-side">
         <Button
           variant="outline"
-          className="w-full justify-between p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg text-wrap h-full"
+          className="w-full justify-between p-3 text-md border border-gray-300 rounded-lg text-wrap h-full"
           disabled={props.loading}
         >
           {selectedFilters.length > 0 ? `נבחרו ${selectedFilters.length} פריטים` : props.filterPlaceholder}

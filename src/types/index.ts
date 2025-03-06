@@ -23,6 +23,14 @@ export type KosherCertificate = {
   expiration_date: string | null;
 };
 
+export interface PageResponse<T> {
+  content: T[];
+  page_number: number;
+  page_size: number;
+  total_elements: number;
+  total_pages: number;
+}
+
 export interface BusinessDetails {
   business_id: string;
   business_name: string;
@@ -81,6 +89,16 @@ export interface BusinessPreview {
   business_photos: BusinessPhoto[];
   kosher_types: KosherType[];
   business_type: string;
+  travel_info?: {
+    driving_duration: string;
+    driving_distance: string;
+    walking_duration: string;
+    walking_distance: string;
+  };
+  dest_loc?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface LoginResponse {

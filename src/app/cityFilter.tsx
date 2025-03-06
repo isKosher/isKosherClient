@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import type React from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 
@@ -26,7 +29,7 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading, selected
         const { data } = await axios.get(
           "https://data.gov.il/api/3/action/package_search?q=%D7%A8%D7%A9%D7%99%D7%9E%D7%AA%20%D7%99%D7%A9%D7%95%D7%91%D7%99%D7%9D&rows=20"
         );
-        let fetchedId = data.result.results[0].resources[0].id;
+        const fetchedId = data.result.results[0].resources[0].id;
         if (fetchedId) resource_id = fetchedId;
       } catch (error) {
         console.error("Error fetching resource_id:", error);
@@ -67,7 +70,7 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading, selected
   return (
     <div className="relative">
       <Input
-        className="w-full p-6 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg hebrew-side"
+        className="w-full p-4 text-md border border-gray-300 rounded-lg hebrew-side"
         placeholder="חפש עיר"
         value={searchTerm}
         onChange={(e) => {
@@ -97,5 +100,4 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading, selected
     </div>
   );
 };
-
 export default CityFilter;
