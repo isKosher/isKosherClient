@@ -1,22 +1,21 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
-import FilterDropdown from "../app/filterDropdown";
-import RestaurantCard from "../app/restaurantCard";
-import { cn } from "@/lib/utils";
-import CityFilter from "../app/cityFilter";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
-import GpsSearchAnimation from "@/components/gpsSearchAnimation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, MapPin, Filter, Loader2, X } from "lucide-react";
 import { useInView } from "react-intersection-observer";
-import type { BusinessPreview } from "@/types";
-import { getFilterParams, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
-import SearchComponent from "./search-term";
-import { toast } from "sonner";
-import { fetchLookupData } from "@/services/lookup-service";
-import type { Option } from "@/lib/schemaCreateBusiness";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { fetchLookupData } from "@/services/lookup-service";
+import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
+import type { BusinessPreview } from "@/types";
+import type { Option } from "@/lib/schemaCreateBusiness";
+import SearchComponent from "./search-term";
+import CityFilter from "@/app/cityFilter";
+import FilterDropdown from "@/app/filterDropdown";
+import GpsSearchAnimation from "./gpsSearchAnimation";
+import RestaurantCard from "@/app/restaurantCard";
 
 // TODO: Remove foodTypes from here and more load to params...
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
@@ -24,6 +23,7 @@ const foodTypes = ["בשרי", "חלבי", "פרווה"];
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">("text");
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<BusinessPreview[]>([]);
@@ -35,7 +35,6 @@ export default function HomePage() {
   const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
   const [selectedKosherTypes, setSelectedKosherTypes] = useState<string[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<string[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
   const [page, setPage] = useState(2);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +42,8 @@ export default function HomePage() {
   const { ref, inView } = useInView();
   const [dataInitialized, setDataInitialized] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-
+  const [searchRadius, setSearchRadius] = useState(15);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   // Check if any filters are applied
   const hasActiveFilters = useCallback(() => {
     return (
@@ -110,6 +110,7 @@ export default function HomePage() {
       const businessTypeParams = searchParams.getAll("businessTypes");
       const kosherTypeParams = searchParams.getAll("kosherTypes");
       const foodItemParams = searchParams.getAll("foodItems");
+      const tabParam = searchParams.get("tab") as "text" | "location" | "filter" | null;
 
       // Set the filter values from URL
       setSelectedCity(city);
@@ -117,6 +118,11 @@ export default function HomePage() {
       setSelectedBusinessTypes(businessTypeParams);
       setSelectedKosherTypes(kosherTypeParams);
       setSelectedFoodItems(foodItemParams);
+
+      // Set active tab from URL or default to text
+      if (tabParam && ["text", "location", "filter"].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
 
       const hasUrlFilters =
         city ||
@@ -129,7 +135,6 @@ export default function HomePage() {
         if (hasUrlFilters) {
           // If we have URL filters, fetch filtered results directly
           setIsFiltering(true);
-          setIsOpen(true); // Open filter panel
 
           const params = new URLSearchParams(searchParams.toString());
           const filteredRestaurants = await getFilterParams(params.toString());
@@ -163,6 +168,9 @@ export default function HomePage() {
   // Update URL based on current filters
   const updateUrl = () => {
     const params = new URLSearchParams();
+
+    // Add the active tab to URL
+    params.append("tab", activeTab);
 
     if (selectedCity) params.append("city", selectedCity.trim());
 
@@ -220,7 +228,7 @@ export default function HomePage() {
     if (inView && !isLoading && hasMore && !isFiltering) {
       loadMore();
     }
-  }, [inView, isLoading, hasMore, isFiltering]); // Removed loadMore to dependencies
+  }, [inView, isLoading, hasMore, isFiltering]);
 
   function handleSelectFoodType(selectedType: string) {
     setSelectedFoodType((prev) =>
@@ -254,14 +262,11 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-
-    // Optionally close the filter panel
-    setIsOpen(false);
   };
 
   const handleSearch = async () => {
-    // Don't do anything if no filters are selected
-    if (!hasActiveFilters()) {
+    // Don't do anything if no filters are selected in filter tab
+    if (activeTab === "filter" && !hasActiveFilters()) {
       return;
     }
 
@@ -278,6 +283,7 @@ export default function HomePage() {
 
     try {
       const params = new URLSearchParams();
+      params.append("tab", activeTab);
 
       if (selectedCity) params.append("city", selectedCity.trim());
 
@@ -303,7 +309,7 @@ export default function HomePage() {
       setRestaurants(response);
 
       // If no results or very few results, disable "load more"
-      setHasMore(response.length > 0); //Corrected this line to accurately reflect hasMore state
+      setHasMore(response.length > 0);
     } catch (error) {
       console.error("Error searching restaurants:", error);
       toast.error("שגיאה בטעינת הנתונים", {
@@ -322,145 +328,286 @@ export default function HomePage() {
     }
   };
 
+  const handleLocationSearch = async () => {
+    setLoading(true);
+    setRestaurants([]);
+
+    if (!navigator.geolocation) {
+      toast.error("שגיאה בקבלת המיקום", {
+        description: "הדפדפן שלך אינו תומך באיתור מיקום.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ latitude, longitude });
+
+      const response = await getNearbyBusinesses(latitude, longitude, searchRadius, 1, 10);
+      setRestaurants(response.content);
+
+      updateUrl();
+    } catch (error) {
+      console.error("Error getting location or nearby businesses:", error);
+      toast.error("שגיאה בקבלת המיקום או בחיפוש עסקים קרובים", {
+        description: "אנא נסה שוב או הזן מיקום ידנית.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cover bg-center">
+    <div className="min-h-screen bg-cover bg-center text-right" dir="rtl">
       <div className="mx-auto px-4 py-20 bg-pattern text-sm">
         <div className="max-w-3xl mx-auto bg-white/95 rounded-lg shadow-xl p-8 backdrop-blur-sm">
-          <div className="text-center mb-8">
+          <header className="text-center mb-8">
             <h2 className="text-5xl is-kosher-font text-[#1A365D] font-bold mb-2">isKosher</h2>
             <p className="text-[#2D4A6D] text-md lg:text-lg">מצא מסעדות כשרות בסביבתך</p>
-          </div>
-          <SearchComponent />
-          <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-4 mt-4">
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="lg"
-                dir="rtl"
-                className="w-full flex justify-between items-center p-6 text-lg font-medium
-                text-[#2D4A6D] hover:bg-[#1A365D]/5 transition-all rounded-lg mt-2 mb-4"
-              >
-                <span>סינון תוצאות</span>
-                <ChevronDown className={cn("h-6 w-6 transition-transform duration-200", isOpen && "rotate-180")} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="collapsible-content space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FilterDropdown
-                  filterOptions={kosherTypes}
-                  loading={loading}
-                  filterPlaceholder="תבחר תעודת כשרות"
-                  onSelectFilters={(selectedFilters) => setSelectedKosherTypes(selectedFilters)}
-                  selectedFilters={selectedKosherTypes}
-                />
-                <FilterDropdown
-                  filterOptions={foodItems}
-                  loading={loading}
-                  filterPlaceholder="תבחר סוג אוכל"
-                  onSelectFilters={(selectedFilters) => setSelectedFoodItems(selectedFilters)}
-                  selectedFilters={selectedFoodItems}
-                />
-                <FilterDropdown
-                  filterOptions={businessTypes}
-                  loading={loading}
-                  filterPlaceholder="תבחר סוג עסק"
-                  onSelectFilters={(selectedFilters) => setSelectedBusinessTypes(selectedFilters)}
-                  selectedFilters={selectedBusinessTypes}
-                />
-                <div className="grid grid-cols-2 row-span-2 gap-2 w-full">
-                  <Button
-                    key="check-all"
-                    variant="outline"
-                    className="flex-1 p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg h-full hebrew-side hover:bg-gray-500 hover:text-white"
-                    onClick={handleCheckAll}
-                    disabled={loading}
-                  >
-                    בחר הכל{" "}
-                  </Button>
-                  {foodTypes.map((type) => (
-                    <Button
-                      key={type}
-                      variant="outline"
-                      className={cn(
-                        "flex-1 p-4 text-md lg:text-lg border-2 border-[#1A365D]/20 rounded-lg h-full hebrew-side",
-
-                        selectedFoodType.includes(type) && {
-                          "border-blue-500 ": type === "חלבי",
-                          "border-red-500 ": type === "בשרי",
-                          "border-green-500 ": type === "פרווה",
-                        }
-                      )}
-                      onClick={() => handleSelectFoodType(type)}
-                      disabled={loading}
-                    >
-                      {type}
-                    </Button>
-                  ))}
-                </div>
-                <CityFilter
-                  onSelectCity={(city) => setSelectedCity(city)}
-                  loading={loading}
-                  selectedCity={selectedCity}
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          <div className="flex items-center justify-center space-x-2">
-            <Button
-              className="w-full bg-[#1A365D] hover:bg-[#2D4A6D] text-white text-md lg:text-lg py-6 mt-4"
-              onClick={handleSearch}
-              disabled={loading || !hasActiveFilters()} // Disable if no filters are selected
-            >
-              <Search className="w-6 h-6 mr-2" />
-              {loading ? "מחפש..." : "חפש"}
-            </Button>
-
-            {hasActiveFilters() && (
-              <Button
-                className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 text-md lg:text-lg py-6"
-                onClick={resetFilters}
-                disabled={loading}
-              >
-                <X className="w-6 h-6 mr-2" />
-                נקה סינון
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="px-4 py-8 flex justify-center flex-col">
-        {loading && (
-          <div className="self-center h-60 w-60">
-            <GpsSearchAnimation />
-          </div>
-        )}
-
-        {restaurants.length === 0 && !loading && (
-          <div className="text-center py-8">
-            <p className="text-2xl text-gray-600">לא נמצאו תוצאות</p>
-            {isFiltering && (
-              <Button className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800" onClick={resetFilters}>
-                נקה סינון ונסה שוב
-              </Button>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurants.map((restaurant) => (
-            <div key={restaurant.business_id}>
-              <RestaurantCard restaurant={restaurant} />
+          </header>
+          <div className="bg-white bg-opacity-70 backdrop-filter backdrop-blur-lg rounded-xl shadow-lg p-6 mb-8">
+            <div className="flex justify-center mb-6 space-x-2 space-x-reverse">
+              <TabButton
+                icon={<Search />}
+                label="חיפוש טקסט"
+                isActive={activeTab === "text"}
+                onClick={() => setActiveTab("text")}
+              />
+              <TabButton
+                icon={<MapPin />}
+                label="חיפוש לפי מיקום"
+                isActive={activeTab === "location"}
+                onClick={() => setActiveTab("location")}
+              />
+              <TabButton
+                icon={<Filter />}
+                label="סינון מתקדם"
+                isActive={activeTab === "filter"}
+                onClick={() => setActiveTab("filter")}
+              />
             </div>
-          ))}
-        </div>
 
-        {hasMore && !isFiltering && !loading && (
-          <div ref={ref} className="self-center h-60 w-60">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {activeTab === "text" && (
+                  <div className="relative">
+                    <SearchComponent />
+                  </div>
+                )}
+
+                {activeTab === "location" && (
+                  <div className="space-y-4">
+                    <button
+                      onClick={handleLocationSearch}
+                      disabled={loading}
+                      className="w-full bg-[#2D4A6D] text-white py-3 rounded-full hover:bg-[#2D4A6D] transition-colors flex items-center justify-center disabled:opacity-70"
+                    >
+                      {loading ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <MapPin className="ml-2" />}
+                      קבל מיקום נוכחי וחפש
+                    </button>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        טווח חיפוש: {searchRadius} ק"מ
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="50"
+                        value={searchRadius}
+                        onChange={(e) => setSearchRadius(Number.parseInt(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "filter" && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FilterDropdown
+                        filterOptions={kosherTypes}
+                        loading={loading}
+                        filterPlaceholder="סוג כשרות"
+                        onSelectFilters={(selectedFilters) => setSelectedKosherTypes(selectedFilters)}
+                        selectedFilters={selectedKosherTypes}
+                      />
+                      <FilterDropdown
+                        filterOptions={foodItems}
+                        loading={loading}
+                        filterPlaceholder="סוג אוכל"
+                        onSelectFilters={(selectedFilters) => setSelectedFoodItems(selectedFilters)}
+                        selectedFilters={selectedFoodItems}
+                      />
+                      <FilterDropdown
+                        filterOptions={businessTypes}
+                        loading={loading}
+                        filterPlaceholder="סוג עסק"
+                        onSelectFilters={(selectedFilters) => setSelectedBusinessTypes(selectedFilters)}
+                        selectedFilters={selectedBusinessTypes}
+                      />
+                      <div className="grid grid-cols-2 gap-2 w-full">
+                        <Button
+                          key="check-all"
+                          variant="outline"
+                          className="p-3 text-md border border-gray-300 rounded-lg hebrew-side hover:bg-gray-50"
+                          onClick={handleCheckAll}
+                          disabled={loading}
+                        >
+                          בחר הכל
+                        </Button>
+                        {foodTypes.map((type) => (
+                          <Button
+                            key={type}
+                            variant="outline"
+                            className={`p-3 text-md border rounded-lg hebrew-side ${
+                              selectedFoodType.includes(type)
+                                ? type === "חלבי"
+                                  ? "border-blue-500 bg-blue-50"
+                                  : type === "בשרי"
+                                  ? "border-red-500 bg-red-50"
+                                  : "border-green-500 bg-green-50"
+                                : "border-gray-300 hover:bg-gray-50"
+                            }`}
+                            onClick={() => handleSelectFoodType(type)}
+                            disabled={loading}
+                          >
+                            {type}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <CityFilter
+                      onSelectCity={(city) => setSelectedCity(city)}
+                      loading={loading}
+                      selectedCity={selectedCity}
+                    />
+                    <div className="flex justify-between space-x-2 space-x-reverse">
+                      {hasActiveFilters() && (
+                        <Button
+                          className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-2 px-4 rounded-full"
+                          onClick={resetFilters}
+                          disabled={loading}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          נקה סינון
+                        </Button>
+                      )}
+                      <Button
+                        onClick={handleSearch}
+                        disabled={loading || !hasActiveFilters()}
+                        className="bg-[#2D4A6D] text-white py-3 px-6 rounded-full hover:bg-[#2D4A6D] transition-colors disabled:opacity-70 flex-grow"
+                      >
+                        {loading ? (
+                          <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                        ) : (
+                          <Search className="ml-2 h-5 w-5" />
+                        )}
+                        חפש לפי סינון
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+      {/* Results List */}
+      <ResultsList
+        results={restaurants}
+        isLoading={loading}
+        hasActiveFilters={hasActiveFilters()}
+        resetFilters={resetFilters}
+        loadMoreRef={ref}
+        hasMore={hasMore && !isFiltering && !loading}
+      />
+    </div>
+  );
+}
+
+interface TabButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+function TabButton({ icon, label, isActive, onClick }: TabButtonProps) {
+  return (
+    <button
+      className={`flex items-center px-4 py-2 rounded-full transition-all ${
+        isActive ? "bg-[#2D4A6D] text-white" : "bg-white text-[#2D4A6D] hover:bg-indigo-100"
+      }`}
+      onClick={onClick}
+    >
+      {icon}
+      <span className="mr-2">{label}</span>
+    </button>
+  );
+}
+
+interface ResultsListProps {
+  results: BusinessPreview[];
+  isLoading: boolean;
+  hasActiveFilters: boolean;
+  resetFilters: () => void;
+  loadMoreRef: React.RefCallback<HTMLDivElement>;
+  hasMore: boolean;
+}
+
+function ResultsList({ results, isLoading, hasActiveFilters, resetFilters, loadMoreRef, hasMore }: ResultsListProps) {
+  if (isLoading) {
+    return (
+      <div className="self-center h-60 w-60 mx-auto">
+        <GpsSearchAnimation />
+      </div>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <div className="text-center py-8 bg-white bg-opacity-70 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg p-6">
+        <p className="text-2xl text-gray-600">לא נמצאו תוצאות</p>
+        {hasActiveFilters && (
+          <Button className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800" onClick={resetFilters}>
+            נקה סינון ונסה שוב
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 mx-4">
+        {results.map((result, index) => (
+          <motion.div
+            key={result.business_id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
+            <RestaurantCard key={result.business_id} restaurant={result} />
+          </motion.div>
+        ))}
+
+        {hasMore && (
+          <div ref={loadMoreRef} className="col-span-full self-center h-60 w-60 mx-auto">
             <GpsSearchAnimation />
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

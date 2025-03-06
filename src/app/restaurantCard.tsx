@@ -1,10 +1,10 @@
+"use client";
+import { Car, Footprints, MapPin } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin } from "lucide-react";
-import { BusinessPreview } from "@/types";
 import { foodTypes } from "@/data/staticData";
+import { BusinessPreview } from "@/types";
 
 interface RestaurantCardProps {
   restaurant: BusinessPreview;
@@ -14,24 +14,19 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
   const router = useRouter();
 
   return (
-    <Card
-      className="hover:shadow-lg transition-shadow rounded-lg cursor-pointer"
+    <div
+      className="bg-white bg-opacity-70 backdrop-filter backdrop-blur-sm rounded-lg shadow p-4 hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => router.push(`/business/${restaurant.business_id}`)}
     >
-      {/* <Image
-        src={restaurant.business_photos?.[0]?.url || "/default-restaurant.jpg"}
-        alt={restaurant.business_name}
-        width={400}
-        height={200}
-        className="w-full h-48 object-cover rounded-t-lg" // Apply rounded class here
-      /> */}
-      <CardHeader>
-        <div className="flex justify-between items-start flex-row-reverse">
-          <div>
-            <CardTitle className="text-xl">{restaurant.business_name}</CardTitle>
-            <CardDescription dir="rtl">{restaurant.business_type}</CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-semibold text-indigo-900">{restaurant.business_name}</h3>
+          <p className="text-indigo-700">{restaurant.business_type}</p>
+          <p className="text-gray-600 flex items-center mt-2">
+            <MapPin className="w-4 h-4 ml-1" />
+            {`${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`}
+          </p>
+          <div className="flex items-center gap-2 mt-2">
             {restaurant.food_types.includes(foodTypes[0].name) && (
               <Badge variant="outline" className="text-xs text-blue-600 border-blue-600">
                 חלבי
@@ -48,28 +43,38 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
               </Badge>
             )}
           </div>
+          {restaurant?.travel_info && (
+            <div className="mt-2 text-sm text-gray-600">
+              <div className="flex items-center mr-1">
+                <Car className="w-4 h-4 ml-1" />
+                <span>
+                  {restaurant.travel_info.driving_distance} ({restaurant.travel_info.driving_duration})
+                </span>
+              </div>
+              <div className="flex items-center mr-1">
+                <Footprints className="w-4 h-4 ml-1" />
+                <span>
+                  {restaurant.travel_info.walking_distance} ({restaurant.travel_info.walking_duration})
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center flex-row-reverse">
-          <div className="flex items-center gap-2 text-gray-600 mb-2 flex-row-reverse">
-            <MapPin className="h-4 w-4" />
-            <span className="text-sm text-end">{`${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`}</span>
-          </div>
-          <Badge className="text-sm flex justify-between align-center" variant="outline">
+        <div className="flex flex-col items-end">
+          <Badge className="text-sm flex justify-between items-center" variant="outline">
             {restaurant.kosher_types?.[0]?.kosher_icon_url && (
               <Image
-                src={restaurant.kosher_types[0].kosher_icon_url}
+                src={restaurant.kosher_types[0].kosher_icon_url || "/placeholder.svg"}
                 alt="kosher icon"
                 width={40}
                 height={40}
-                className="mr-2"
+                className="mr-1"
               />
             )}
-            {restaurant.kosher_types[0].name || "ללא תעודה"}
+            <span className="mr-1">{restaurant.kosher_types[0]?.name || "ללא תעודה"}</span>
           </Badge>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
