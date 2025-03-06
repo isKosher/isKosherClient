@@ -4,7 +4,7 @@ import { refreshAccessTokenAction } from "@/app/actions/actionsAuth";
 import { AXIOS_DEFAULT_TIMEOUT, BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
 import axios, { AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
-
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<AxiosInstance> => {
   const instance = axios.create({
     baseURL: BASE_URL_IS_KOSHER_MANAGER,
@@ -44,7 +44,15 @@ export async function apiFetch<T>(
     timeout?: number;
   } = {}
 ): Promise<AxiosResponse<T>> {
-  const { method = "GET", data, params, includeCookies = false, retry = true, headers = {}, timeout } = options;
+  const {
+    method = "GET",
+    data,
+    params,
+    includeCookies = false,
+    retry = true,
+    headers = {},
+    timeout,
+  } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
 

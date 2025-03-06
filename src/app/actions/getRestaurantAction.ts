@@ -3,6 +3,7 @@
 import { BusinessSearchResult, BusinessPreview } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 
+//TODO: Add useing in cache for the data
 export async function getRestaurantsAction(page: Number = 1): Promise<BusinessPreview[]> {
   try {
     const response = await serverApi.get<{

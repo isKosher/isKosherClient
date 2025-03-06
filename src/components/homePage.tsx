@@ -18,7 +18,7 @@ import { fetchLookupData } from "@/services/lookup-service";
 import type { Option } from "@/lib/schemaCreateBusiness";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// TODO: Remove foodTypes from here and props
+// TODO: Remove foodTypes from here and more load to params...
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
 export default function HomePage() {
