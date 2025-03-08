@@ -7,20 +7,19 @@ import { Input } from "@/components/ui/input";
 
 interface CityFilterProps {
   onSelectCity: (city: string) => void;
+  onClearCity: () => void;
   loading: boolean;
   selectedCity?: string;
 }
 
-const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading, selectedCity = "" }) => {
+const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, onClearCity, loading, selectedCity = "" }) => {
   const [searchTerm, setSearchTerm] = useState(selectedCity);
   const [cities, setCities] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   let resource_id = "5c78e9fa-c2e2-4771-93ff-7f400a12f7ba";
 
   useEffect(() => {
-    if (selectedCity) {
-      setSearchTerm(selectedCity);
-    }
+    setSearchTerm(selectedCity);
   }, [selectedCity]);
 
   useEffect(() => {
@@ -74,8 +73,12 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, loading, selected
         placeholder="חפש עיר"
         value={searchTerm}
         onChange={(e) => {
-          setSearchTerm(e.target.value);
+          const value = e.target.value;
+          setSearchTerm(value);
           setIsDropdownOpen(true);
+          if (value === "") {
+            onClearCity();
+          }
         }}
         onFocus={() => searchTerm && setIsDropdownOpen(true)}
         disabled={loading}
