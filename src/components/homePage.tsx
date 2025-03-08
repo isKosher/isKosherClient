@@ -1,15 +1,15 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import type React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, Filter, Loader2, X } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { fetchLookupData } from "@/services/lookup-service";
 import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
-import type { BusinessPreview } from "@/types";
+import type { BusinessPreview, Coordinates } from "@/types";
 import type { Option } from "@/lib/schemaCreateBusiness";
 import SearchComponent from "./search-term";
 import CityFilter from "@/app/cityFilter";
@@ -17,14 +17,14 @@ import FilterDropdown from "@/app/filterDropdown";
 import GpsSearchAnimation from "./gpsSearchAnimation";
 import RestaurantCard from "@/app/restaurantCard";
 
-// TODO: Remove foodTypes from here and more load to params...
+// TODO: Remove foodTypes from here
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
 
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  //TODO: replace to enum
   const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">("text");
-
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<BusinessPreview[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
@@ -35,15 +35,20 @@ export default function HomePage() {
   const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
   const [selectedKosherTypes, setSelectedKosherTypes] = useState<string[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<string[]>([]);
-  const [page, setPage] = useState(2);
+  const [previewPage, setPreviewPage] = useState(2);
+  const [locationPage, setLocationPage] = useState(2);
+  const [filterPage, setFilterPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [locationHasMore, setLocationHasMore] = useState(true);
+  const [filterHasMore, setFilterHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const { ref, inView } = useInView();
   const [dataInitialized, setDataInitialized] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [searchRadius, setSearchRadius] = useState(15);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+
   // Check if any filters are applied
   const hasActiveFilters = useCallback(() => {
     return (
@@ -112,6 +117,11 @@ export default function HomePage() {
       const foodItemParams = searchParams.getAll("foodItems");
       const tabParam = searchParams.get("tab") as "text" | "location" | "filter" | null;
 
+      // Check for location parameters
+      const lat = searchParams.get("lat");
+      const lng = searchParams.get("lng");
+      const radius = searchParams.get("radius");
+
       // Set the filter values from URL
       setSelectedCity(city);
       setSelectedFoodType(foodTypeParams.filter((type) => foodTypes.includes(type)));
@@ -132,7 +142,20 @@ export default function HomePage() {
         foodItemParams.length > 0;
 
       try {
-        if (hasUrlFilters) {
+        // If we have location parameters and we're in the location tab
+        if (tabParam === "location" && lat && lng && radius) {
+          const latitude = Number.parseFloat(lat);
+          const longitude = Number.parseFloat(lng);
+          const searchRadius = Number.parseInt(radius);
+
+          setUserLocation({ latitude, longitude });
+          setSearchRadius(searchRadius);
+
+          // Perform location search with saved coordinates
+          const response = await getNearbyBusinesses(latitude, longitude, searchRadius);
+          setRestaurants(response.content);
+          setLocationHasMore(response.content.length > 0);
+        } else if (hasUrlFilters) {
           // If we have URL filters, fetch filtered results directly
           setIsFiltering(true);
 
@@ -164,6 +187,81 @@ export default function HomePage() {
 
     initializeData();
   }, [searchParams, dataInitialized, initialLoadComplete]);
+
+  // Add this new function to handle tab changes
+  const handleTabChange = async (tab: "text" | "location" | "filter") => {
+    // Don't do anything if we're already on this tab
+    if (tab === activeTab) return;
+
+    setLoading(true);
+
+    // Reset all filters when changing tabs
+    setSelectedCity("");
+    setSelectedFoodType([]);
+    setSelectedBusinessTypes([]);
+    setSelectedKosherTypes([]);
+    setSelectedFoodItems([]);
+
+    // Reset pagination states
+    setPreviewPage(2);
+    setLocationPage(2);
+    setFilterPage(0);
+    setHasMore(true);
+    setLocationHasMore(true);
+    setFilterHasMore(true);
+
+    // Update the active tab
+    setActiveTab(tab);
+
+    try {
+      // If switching to text tab, reset URL and load initial data
+      if (tab === "text") {
+        router.replace("/", { scroll: false });
+        const initialData = await getRestaurantsAction();
+        setRestaurants(initialData);
+        setIsFiltering(false);
+      }
+      // If switching to location tab, clear results until location search is performed
+      else if (tab === "location") {
+        // Check if we already have location params in the URL
+        const lat = searchParams.get("lat");
+        const lng = searchParams.get("lng");
+        const radius = searchParams.get("radius");
+
+        if (lat && lng && radius) {
+          // If we have location params, use them to perform a search
+          const latitude = Number.parseFloat(lat);
+          const longitude = Number.parseFloat(lng);
+          const searchRadius = Number.parseInt(radius);
+
+          setUserLocation({ latitude, longitude });
+          setSearchRadius(searchRadius);
+
+          // Perform location search with saved coordinates
+          const response = await getNearbyBusinesses(latitude, longitude, searchRadius);
+          setRestaurants(response.content);
+          setLocationHasMore(response.content.length > 0);
+        } else {
+          // No location params, just update the URL and clear results
+          router.replace(`?tab=${tab}`, { scroll: false });
+          setRestaurants([]);
+          setUserLocation(null);
+        }
+      }
+      // If switching to filter tab, clear results until filters are applied
+      else if (tab === "filter") {
+        router.replace(`?tab=${tab}`, { scroll: false });
+        setRestaurants([]);
+      }
+    } catch (error) {
+      console.error("Error changing tabs:", error);
+      toast.error("שגיאה בטעינת הנתונים", {
+        description: "אירעה שגיאה בטעינת נתונים בעת החלפת לשונית.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Update URL based on current filters
   const updateUrl = () => {
@@ -198,24 +296,96 @@ export default function HomePage() {
     router.replace(newUrl, { scroll: false });
   };
 
+  // Update URL with location parameters
+  const updateLocationUrl = (latitude: number, longitude: number, radius: number) => {
+    const params = new URLSearchParams();
+
+    // Add the active tab to URL
+    params.append("tab", "location");
+
+    // Add location parameters
+    params.append("lat", latitude.toString());
+    params.append("lng", longitude.toString());
+    params.append("radius", radius.toString());
+
+    // Replace current URL with the new one
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
   const loadMore = async () => {
-    // Don't load more if we're filtering or already loading
-    if (isFiltering || isLoading || !hasMore) {
+    // Don't load more if we're already loading
+    if (isLoading) {
       return;
     }
 
     try {
       setIsLoading(true);
-      const newRestaurants = await getRestaurantsAction(page);
 
-      if (newRestaurants.length === 0) {
-        setHasMore(false);
-      } else {
-        setRestaurants((prev) => [...prev, ...newRestaurants]);
-        setPage((prev) => prev + 1);
+      // Load more based on active tab
+      if (activeTab === "text") {
+        if (!hasMore) return;
+
+        const newRestaurants = await getRestaurantsAction(previewPage);
+
+        if (newRestaurants.length === 0) {
+          setHasMore(false);
+        } else {
+          setRestaurants((prev) => [...prev, ...newRestaurants]);
+          setPreviewPage((prev) => prev + 1);
+        }
+      } else if (activeTab === "location" && userLocation) {
+        if (!locationHasMore) return;
+
+        // Use only location parameters, no filters
+        const response = await getNearbyBusinesses(
+          userLocation.latitude,
+          userLocation.longitude,
+          searchRadius,
+          locationPage
+        );
+
+        if (response.content.length === 0) {
+          setLocationHasMore(false);
+        } else {
+          setRestaurants((prev) => [...prev, ...response.content]);
+          setLocationPage((prev) => prev + 1);
+        }
+      } else if (activeTab === "filter" && hasActiveFilters()) {
+        if (!filterHasMore) return;
+
+        const params = new URLSearchParams();
+        params.append("tab", activeTab);
+        params.append("page", (filterPage + 1).toString());
+
+        if (selectedCity) params.append("city", selectedCity.trim());
+
+        selectedFoodType.forEach((type) => {
+          params.append("foodTypes", type);
+        });
+
+        selectedBusinessTypes.forEach((type) => {
+          params.append("businessTypes", type);
+        });
+
+        selectedKosherTypes.forEach((type) => {
+          params.append("kosherTypes", type);
+        });
+
+        selectedFoodItems.forEach((item) => {
+          params.append("foodItems", item);
+        });
+
+        const newRestaurants = await getFilterParams(params.toString());
+
+        if (newRestaurants.length === 0) {
+          setFilterHasMore(false);
+        } else {
+          setRestaurants((prev) => [...prev, ...newRestaurants]);
+          setFilterPage((prev) => prev + 1);
+        }
       }
     } catch (error) {
-      console.error("Error fetching restaurants:", error);
+      console.error("Error fetching more restaurants:", error);
       toast.error("שגיאה בטעינת הנתונים", {
         description: "אירעה שגיאה בטעינת מסעדות נוספות.",
       });
@@ -225,16 +395,32 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    if (inView && !isLoading && hasMore && !isFiltering) {
-      loadMore();
+    if (inView && !isLoading) {
+      if (activeTab === "text" && hasMore && !isFiltering) {
+        loadMore();
+      } else if (activeTab === "location" && locationHasMore && userLocation) {
+        loadMore();
+      } else if (activeTab === "filter" && filterHasMore && hasActiveFilters()) {
+        loadMore();
+      }
     }
-  }, [inView, isLoading, hasMore, isFiltering]);
+  }, [
+    inView,
+    isLoading,
+    hasMore,
+    locationHasMore,
+    filterHasMore,
+    activeTab,
+    isFiltering,
+    userLocation,
+    hasActiveFilters,
+  ]);
 
-  function handleSelectFoodType(selectedType: string) {
+  const handleSelectFoodType = (selectedType: string) => {
     setSelectedFoodType((prev) =>
       prev.includes(selectedType) ? prev.filter((type) => type !== selectedType) : [...prev, selectedType]
     );
-  }
+  };
 
   const resetFilters = async () => {
     setSelectedCity("");
@@ -243,25 +429,23 @@ export default function HomePage() {
     setSelectedKosherTypes([]);
     setSelectedFoodItems([]);
     setIsFiltering(false);
-    setPage(2); // Reset pagination to start loading from page 2 (after initial)
+
+    // Reset all pagination states
+    setPreviewPage(2);
+    setLocationPage(2);
+    setFilterPage(0);
+    setHasMore(true);
+    setLocationHasMore(true);
+    setFilterHasMore(true);
 
     // Reset URL to remove all query parameters
-    router.replace("/", { scroll: false });
+    router.replace("/?tab=filter", { scroll: false });
+    setRestaurants([]);
+  };
 
-    // Load initial restaurants
-    try {
-      setLoading(true);
-      const initialData = await getRestaurantsAction();
-      setRestaurants(initialData);
-      setHasMore(true);
-    } catch (error) {
-      console.error("Error resetting data:", error);
-      toast.error("שגיאה בטעינת הנתונים", {
-        description: "אירעה שגיאה בטעינת נתונים ראשוניים.",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleClearCity = () => {
+    setSelectedCity("");
+    updateUrl();
   };
 
   const handleSearch = async () => {
@@ -271,6 +455,8 @@ export default function HomePage() {
     }
 
     setLoading(true);
+    setFilterPage(0); // Reset filter page
+    setFilterHasMore(true); // Reset hasMore flag
 
     // Update URL with current filters
     updateUrl();
@@ -309,7 +495,7 @@ export default function HomePage() {
       setRestaurants(response);
 
       // If no results or very few results, disable "load more"
-      setHasMore(response.length > 0);
+      setFilterHasMore(response.length > 0);
     } catch (error) {
       console.error("Error searching restaurants:", error);
       toast.error("שגיאה בטעינת הנתונים", {
@@ -331,6 +517,8 @@ export default function HomePage() {
   const handleLocationSearch = async () => {
     setLoading(true);
     setRestaurants([]);
+    setLocationPage(2); // Reset location page
+    setLocationHasMore(true); // Reset hasMore flag
 
     if (!navigator.geolocation) {
       toast.error("שגיאה בקבלת המיקום", {
@@ -348,10 +536,13 @@ export default function HomePage() {
       const { latitude, longitude } = position.coords;
       setUserLocation({ latitude, longitude });
 
-      const response = await getNearbyBusinesses(latitude, longitude, searchRadius, 1, 10);
+      // Use only location parameters, no filters from other tabs
+      const response = await getNearbyBusinesses(latitude, longitude, searchRadius);
       setRestaurants(response.content);
+      setLocationHasMore(response.content.length > 0);
 
-      updateUrl();
+      // Update URL with location parameters
+      updateLocationUrl(latitude, longitude, searchRadius);
     } catch (error) {
       console.error("Error getting location or nearby businesses:", error);
       toast.error("שגיאה בקבלת המיקום או בחיפוש עסקים קרובים", {
@@ -361,6 +552,13 @@ export default function HomePage() {
       setLoading(false);
     }
   };
+
+  // Update URL when search radius changes and we have a location
+  useEffect(() => {
+    if (activeTab === "location" && userLocation) {
+      updateLocationUrl(userLocation.latitude, userLocation.longitude, searchRadius);
+    }
+  }, [searchRadius, activeTab, userLocation]);
 
   return (
     <div className="min-h-screen bg-cover bg-center text-right" dir="rtl">
@@ -376,19 +574,19 @@ export default function HomePage() {
                 icon={<Search />}
                 label="חיפוש טקסט"
                 isActive={activeTab === "text"}
-                onClick={() => setActiveTab("text")}
+                onClick={() => handleTabChange("text")}
               />
               <TabButton
                 icon={<MapPin />}
                 label="חיפוש לפי מיקום"
                 isActive={activeTab === "location"}
-                onClick={() => setActiveTab("location")}
+                onClick={() => handleTabChange("location")}
               />
               <TabButton
                 icon={<Filter />}
                 label="סינון מתקדם"
                 isActive={activeTab === "filter"}
-                onClick={() => setActiveTab("filter")}
+                onClick={() => handleTabChange("filter")}
               />
             </div>
 
@@ -489,6 +687,7 @@ export default function HomePage() {
                     </div>
                     <CityFilter
                       onSelectCity={(city) => setSelectedCity(city)}
+                      onClearCity={handleClearCity}
                       loading={loading}
                       selectedCity={selectedCity}
                     />
@@ -530,7 +729,11 @@ export default function HomePage() {
         hasActiveFilters={hasActiveFilters()}
         resetFilters={resetFilters}
         loadMoreRef={ref}
-        hasMore={hasMore && !isFiltering && !loading}
+        hasMore={
+          (activeTab === "text" && hasMore && !isFiltering) ||
+          (activeTab === "location" && locationHasMore && userLocation !== null) ||
+          (activeTab === "filter" && filterHasMore && hasActiveFilters())
+        }
       />
     </div>
   );
