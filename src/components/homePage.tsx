@@ -14,8 +14,9 @@ import type { Option } from "@/lib/schemaCreateBusiness";
 import SearchComponent from "./search-term";
 import CityFilter from "@/app/cityFilter";
 import FilterDropdown from "@/app/filterDropdown";
-import GpsSearchAnimation from "./gpsSearchAnimation";
-import RestaurantCard from "@/app/restaurantCard";
+import LoadingPage from "@/app/loading";
+import ResultsList from "./results-list";
+import TabButton from "./tab-button";
 
 // TODO: Remove foodTypes from here
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
@@ -61,6 +62,7 @@ export default function HomePage() {
   }, [selectedCity, selectedFoodType, selectedBusinessTypes, selectedKosherTypes, selectedFoodItems]);
 
   // Load lookup data on component mount
+  // TODO: replace to context
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -560,6 +562,10 @@ export default function HomePage() {
     }
   }, [searchRadius, activeTab, userLocation]);
 
+  if (loading) {
+    return <LoadingPage />;
+  }
+
   return (
     <div className="min-h-screen bg-cover bg-center text-right" dir="rtl">
       <div className="mx-auto px-4 py-20 bg-pattern text-sm">
@@ -736,81 +742,5 @@ export default function HomePage() {
         }
       />
     </div>
-  );
-}
-
-interface TabButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}
-
-function TabButton({ icon, label, isActive, onClick }: TabButtonProps) {
-  return (
-    <button
-      className={`flex items-center px-4 py-2 rounded-full transition-all ${
-        isActive ? "bg-[#2D4A6D] text-white" : "bg-white text-[#2D4A6D] hover:bg-indigo-100"
-      }`}
-      onClick={onClick}
-    >
-      {icon}
-      <span className="mr-2">{label}</span>
-    </button>
-  );
-}
-
-interface ResultsListProps {
-  results: BusinessPreview[];
-  isLoading: boolean;
-  hasActiveFilters: boolean;
-  resetFilters: () => void;
-  loadMoreRef: React.RefCallback<HTMLDivElement>;
-  hasMore: boolean;
-}
-
-function ResultsList({ results, isLoading, hasActiveFilters, resetFilters, loadMoreRef, hasMore }: ResultsListProps) {
-  if (isLoading) {
-    return (
-      <div className="self-center h-60 w-60 mx-auto">
-        <GpsSearchAnimation />
-      </div>
-    );
-  }
-
-  if (results.length === 0) {
-    return (
-      <div className="text-center py-8 bg-white bg-opacity-70 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg p-6">
-        <p className="text-2xl text-gray-600">לא נמצאו תוצאות</p>
-        {hasActiveFilters && (
-          <Button className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800" onClick={resetFilters}>
-            נקה סינון ונסה שוב
-          </Button>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 mx-4">
-        {results.map((result, index) => (
-          <motion.div
-            key={result.business_id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-          >
-            <RestaurantCard key={result.business_id} restaurant={result} />
-          </motion.div>
-        ))}
-
-        {hasMore && (
-          <div ref={loadMoreRef} className="col-span-full self-center h-60 w-60 mx-auto">
-            <GpsSearchAnimation />
-          </div>
-        )}
-      </div>
-    </>
   );
 }
