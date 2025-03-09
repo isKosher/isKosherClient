@@ -1,6 +1,6 @@
 "use client";
 
-import { KosherBusinessForm } from "@/app/(private)/create-business/kosher-business-form";
+import { KosherBusinessForm } from "@/app/(private)/dashboard/create-business/kosher-business-form";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { KosherBusinessFormWrapper } from "./kosher-business-form-wrapper";

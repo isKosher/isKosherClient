@@ -58,10 +58,7 @@ export default function Navbar() {
             <div className="grid gap-2 py-6 hebrew-side">
               {menuLinks.map((link) => (
                 <SheetClose asChild key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="flex w-full items-center py-2 text-lg lg:text-2xl font-semibold"
-                  >
+                  <Link href={link.href} className="flex w-full items-center py-2 text-lg lg:text-2xl font-semibold">
                     {link.label}
                   </Link>
                 </SheetClose>
@@ -87,18 +84,14 @@ export default function Navbar() {
                 </SheetClose>
                 <div className="flex flex-row-reverse items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
-                    <img
-                      src={user.photoURL}
-                      alt={`${user.name}'s profile`}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={user.photoURL} alt={`${user.name}'s profile`} className="h-full w-full object-cover" />
                   </div>
                   <span className="text-[#1A365D] font-medium">{user.name}</span>
                 </div>
               </div>
 
               <SheetClose asChild>
-                <Link href="/create-business">
+                <Link href="/dashboard/create-business">
                   <Button className="w-full mt-4" variant="outline">
                     הוסף עסק כשר
                   </Button>
