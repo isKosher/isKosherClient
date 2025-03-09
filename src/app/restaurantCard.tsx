@@ -15,7 +15,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
 
   return (
     <div
-      className="bg-white bg-opacity-70 backdrop-filter backdrop-blur-sm rounded-lg shadow p-4 hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white bg-opacity-70 backdrop-filter rounded-lg shadow p-4 hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => router.push(`/business/${restaurant.business_id}`)}
     >
       <div className="flex justify-between items-start">
