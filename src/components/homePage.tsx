@@ -7,7 +7,7 @@ import { useInView } from "react-intersection-observer";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { fetchLookupData } from "@/services/lookup-service";
+import { fetchLookupDataAction } from "@/services/lookup-service";
 import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
 import type { BusinessPreview, Coordinates } from "@/types";
 import type { Option } from "@/lib/schemaCreateBusiness";
@@ -67,7 +67,7 @@ export default function HomePage() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const data = await fetchLookupData();
+        const data = await fetchLookupDataAction();
 
         setBusinessTypes(
           data.business_types.map((item) => ({

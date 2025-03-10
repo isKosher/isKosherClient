@@ -7,7 +7,7 @@ import { DynamicCombobox } from "@/components/dynamic-combobox";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { FormData, Option } from "@/lib/schemaCreateBusiness";
-import { fetchLookupData } from "@/services/lookup-service";
+import { fetchLookupDataAction } from "@/services/lookup-service";
 import { foodTypes } from "@/data/staticData";
 
 export function Step3FoodAndKosher() {
@@ -21,7 +21,7 @@ export function Step3FoodAndKosher() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const data = await fetchLookupData();
+        const data = await fetchLookupDataAction();
 
         // Transform and merge API data with existing options
         setBusinessTypes(

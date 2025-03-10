@@ -1,4 +1,6 @@
+"use server";
 import { regions } from "@/data/staticData";
+import { serverApi } from "@/utils/apiClient";
 
 interface LookupData {
   food_types: Array<{ id: string; name: string }>;
@@ -7,16 +9,10 @@ interface LookupData {
   food_item_types: Array<{ id: string; name: string }>;
 }
 
-export async function fetchLookupData(): Promise<LookupData> {
+export async function fetchLookupDataAction(): Promise<LookupData> {
   try {
-    const response = await fetch("https://iskoshermanager.onrender.com/api/v1/lookup");
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-    const data = await response.json();
-    console.log(data);
-
-    return data;
+    const response = await serverApi.get<LookupData>("lookup");
+    return response.data;
   } catch (error) {
     console.error("Error fetching lookup data:", error);
     // Return empty arrays as fallback

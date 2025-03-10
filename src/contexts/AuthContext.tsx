@@ -42,6 +42,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     try {
       await logoutAction();
+      localStorage.removeItem("user_data");
       setUser(null);
       router.push("/");
     } catch (error) {
