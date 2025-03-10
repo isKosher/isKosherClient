@@ -1,3 +1,4 @@
+"use client";
 import { Coordinates, GovmapResult } from "@/types";
 import { convertITMToWGS84 } from "@/utils/convertCoordinates";
 

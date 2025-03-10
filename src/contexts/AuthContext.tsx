@@ -43,6 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await logoutAction();
       setUser(null);
+      router.push("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }

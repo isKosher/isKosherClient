@@ -1,13 +1,13 @@
 "use server";
 
 import { refreshAccessTokenAction } from "@/app/actions/actionsAuth";
-import { AXIOS_DEFAULT_TIMEOUT, BASE_URL_IS_KOSHER_MANAGER } from "@/lib/constants";
+import { AXIOS_DEFAULT_TIMEOUT } from "@/lib/constants";
 import axios, { AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<AxiosInstance> => {
   const instance = axios.create({
-    baseURL: BASE_URL_IS_KOSHER_MANAGER,
+    baseURL: process.env.IS_KOSHER_MANAGER_URL,
     headers: {
       "Content-Type": "application/json",
     },
@@ -39,21 +39,12 @@ export async function apiFetch<T>(
     data?: any;
     params?: Record<string, any>;
     includeCookies?: boolean;
-    retry?: boolean;
     headers?: Record<string, string>;
     timeout?: number;
   } = {}
 ): Promise<AxiosResponse<T>> {
-  const {
-    method = "GET",
-    data,
-    params,
-    includeCookies = false,
-    retry = true,
-    headers = {},
-    timeout,
-  } = options;
-
+  const { method = "GET", data, params, includeCookies = false, headers = {}, timeout } = options;
+  let retry = true;
   const requestHeaders: Record<string, string> = { ...headers };
 
   if (includeCookies) {
@@ -88,12 +79,15 @@ export async function apiFetch<T>(
         const refreshed = await refreshAccessTokenAction();
 
         if (refreshed) {
-          return apiFetch(endpoint, { ...options, retry: false });
+          retry = true;
+          return apiFetch(endpoint, { ...options });
         } else {
+          retry = false;
           console.error("Failed to refresh token");
           throw new Error("Session expired. Please log in again.");
         }
       } catch (refreshError: any) {
+        retry = false;
         console.error("Error refreshing token:", refreshError.message);
         throw new Error("Authentication failed. Please log in again.");
       }
