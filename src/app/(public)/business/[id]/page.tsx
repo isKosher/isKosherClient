@@ -23,23 +23,6 @@ export async function getRestaurant(id: string): Promise<BusinessDetails> {
   return res.data;
 }
 
-export async function getCoordinates(address: string): Promise<LatLngExpression> {
-  let url = `https://nominatim.openstreetmap.org/search?q=${address}&format=json`;
-  console.log(url);
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch coordinates");
-  }
-
-  const data = await res.json();
-  if (data.length === 0) {
-    return [31.25181, 34.7913];
-  }
-
-  return { lat: data[0].lat, lng: data[0].lon };
-}
-
 export default async function RestaurantPage({ params }: { params: { id: string } }) {
   const { id } = await params;
   let restaurant;
@@ -47,9 +30,7 @@ export default async function RestaurantPage({ params }: { params: { id: string 
 
   try {
     restaurant = await getRestaurant(id);
-    coordinates = await getCoordinates(
-      `${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`
-    );
+    coordinates = { lat: restaurant.location.latitude, lng: restaurant.location.longitude };
   } catch (error) {
     console.error("Error fetching data:", error);
     return <div>Error</div>;

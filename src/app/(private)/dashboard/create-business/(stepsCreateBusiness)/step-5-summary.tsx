@@ -5,16 +5,7 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Building2,
-  Phone,
-  MapPin,
-  UtensilsCrossed,
-  Star,
-  Calendar,
-  ScrollText,
-  User,
-} from "lucide-react";
+import { Building2, Phone, MapPin, UtensilsCrossed, Star, Calendar, ScrollText, User } from "lucide-react";
 import { FormData } from "@/lib/schemaCreateBusiness";
 
 const fadeInUp = {
@@ -29,9 +20,7 @@ export function Step5Summary() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-[#1A365D] text-center mb-8">
-        סיכום פרטי העסק
-      </h2>
+      <h2 className="text-2xl font-semibold text-[#1A365D] text-center mb-8">סיכום פרטי העסק</h2>
       <motion.div
         className="mt-8 p-4 bg-sky-50 rounded-lg text-[#1A365D] text-center"
         initial={{ opacity: 0, y: 20 }}
@@ -57,9 +46,7 @@ export function Step5Summary() {
                 <Phone className="h-4 w-4 text-sky-500" />
                 <span>{formData.business_phone}</span>
               </div>
-              <div className="mt-2 text-sm text-gray-600 border-t pt-2">
-                {formData.business_details}
-              </div>
+              <div className="mt-2 text-sm text-gray-600 border-t pt-2">{formData.business_details}</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -75,22 +62,17 @@ export function Step5Summary() {
               <div className="flex items-center space-x-4 space-x-reverse">
                 <MapPin className="h-4 w-4 text-sky-500" />
                 <span>
-                  {formData.location.address} {formData.location.street_number},{" "}
-                  {formData.location.city}
+                  {formData.location.address} {formData.location.street_number}, {formData.location.city}
                 </span>
               </div>
-              {formData.location.area && (
+              {formData.location.region && (
                 <div className="flex items-center space-x-4 space-x-reverse">
                   <MapPin className="h-4 w-4 text-sky-500 opacity-50" />
-                  <span className="text-gray-600">
-                    {formData.location.area.name}
-                  </span>
+                  <span className="text-gray-600">{formData.location.region}</span>
                 </div>
               )}
               {formData.location.location_details && (
-                <div className="mt-2 text-sm text-gray-600 border-t pt-2">
-                  {formData.location.location_details}
-                </div>
+                <div className="mt-2 text-sm text-gray-600 border-t pt-2">{formData.location.location_details}</div>
               )}
             </CardContent>
           </Card>
@@ -100,9 +82,7 @@ export function Step5Summary() {
         <motion.div {...fadeInUp} transition={{ delay: 0.2 }}>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">
-                אוכל וכשרות
-              </CardTitle>
+              <CardTitle className="text-lg font-semibold">אוכל וכשרות</CardTitle>
               <UtensilsCrossed className="h-5 w-5 text-[#1A365D]" />
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
@@ -114,11 +94,7 @@ export function Step5Summary() {
                 <div className="text-sm font-medium mb-2">סוגי כשרות</div>
                 <div className="flex flex-wrap gap-2">
                   {formData.kosher_types.map((type) => (
-                    <Badge
-                      key={type.id}
-                      variant="outline"
-                      className="bg-sky-50"
-                    >
+                    <Badge key={type.id} variant="outline" className="bg-sky-50">
                       {type.name}
                     </Badge>
                   ))}
@@ -128,11 +104,7 @@ export function Step5Summary() {
                 <div className="text-sm font-medium mb-2">סוגי אוכל</div>
                 <div className="flex flex-wrap gap-2">
                   {formData.food_types.map((type) => (
-                    <Badge
-                      key={type.id}
-                      variant="outline"
-                      className="bg-sky-50"
-                    >
+                    <Badge key={type.id} variant="outline" className="bg-sky-50">
                       {type.name}
                     </Badge>
                   ))}
@@ -142,11 +114,7 @@ export function Step5Summary() {
                 <div className="text-sm font-medium mb-2">פריטי מזון</div>
                 <div className="flex flex-wrap gap-2">
                   {formData.food_items.map((item) => (
-                    <Badge
-                      key={item.id}
-                      variant="outline"
-                      className="bg-sky-50"
-                    >
+                    <Badge key={item.id} variant="outline" className="bg-sky-50">
                       {item.name}
                     </Badge>
                   ))}
@@ -160,9 +128,7 @@ export function Step5Summary() {
         <motion.div {...fadeInUp} transition={{ delay: 0.3 }}>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">
-                פיקוח וכשרות
-              </CardTitle>
+              <CardTitle className="text-lg font-semibold">פיקוח וכשרות</CardTitle>
               <ScrollText className="h-5 w-5 text-[#1A365D]" />
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
@@ -176,13 +142,7 @@ export function Step5Summary() {
               </div>
               <div className="flex items-center space-x-4 space-x-reverse">
                 <Calendar className="h-4 w-4 text-sky-500" />
-                <span>
-                  תוקף תעודה:{" "}
-                  {format(
-                    new Date(formData.kosher_certificate.expiration_date),
-                    "dd/MM/yyyy"
-                  )}
-                </span>
+                <span>תוקף תעודה: {format(new Date(formData.kosher_certificate.expiration_date), "dd/MM/yyyy")}</span>
               </div>
             </CardContent>
           </Card>

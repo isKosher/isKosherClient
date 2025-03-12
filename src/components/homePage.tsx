@@ -562,10 +562,6 @@ export default function HomePage() {
     }
   }, [searchRadius, activeTab, userLocation]);
 
-  if (loading) {
-    return <LoadingPage />;
-  }
-
   return (
     <div className="min-h-screen bg-cover bg-center text-right" dir="rtl">
       <div className="mx-auto px-4 py-20 bg-pattern text-sm">
