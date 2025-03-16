@@ -11,9 +11,13 @@ import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { FormData } from "@/lib/schemaCreateBusiness";
+import { useState } from "react";
+import { ImageUploader } from "@/components/image-uploader";
+import { FolderGoogleType } from "@/types";
 
 export function Step4Supervision() {
-  const { control } = useFormContext<FormData>();
+  const { control, setValue } = useFormContext<FormData>();
+  const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
 
   const formatDateInHebrew = (date: Date | null): string => {
     if (!date) return "";
@@ -68,25 +72,40 @@ export function Step4Supervision() {
           </FormItem>
         )}
       />
+
+      {/* Certificate upload with ImageUploader */}
       <FormField
         control={control}
         name="kosher_certificate.certificate"
-        render={({ field: { value, onChange, ...field } }) => (
-          <FormItem>
-            <FormLabel>אישור כשרות</FormLabel>
-            <FormControl>
-              <Input
-                type="file"
-                accept=".pdf,image/*"
-                onChange={(e) => onChange(e.target.files?.[0])}
-                className="border-sky-200 focus:border-sky-500 transition-all duration-300"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+        render={({ field }) => (
+          <ImageUploader
+            label="אישור כשרות"
+            value={field.value}
+            onChange={(file, uploadInfo) => {
+              // Set the file object in the form
+              field.onChange(file);
+
+              // If we have upload info with URL, store it
+              if (uploadInfo?.webViewLink) {
+                // Store the URL in the state
+                setCertificateUrl(uploadInfo.webViewLink);
+
+                // Store the URL in a hidden form field
+                setValue("kosher_certificate.certificate", uploadInfo.webViewLink);
+              }
+            }}
+            folderType={FolderGoogleType.CERTIFICATES}
+            accept="image/*"
+            maxSizeMB={10}
+            autoUpload={true}
+            className="w-full"
+          />
         )}
       />
+
+      {/* Hidden input to store the certificate URL */}
+      {certificateUrl && <input type="hidden" name="certificate_url" value={certificateUrl} />}
+
       <FormField
         control={control}
         name="kosher_certificate.expiration_date"
