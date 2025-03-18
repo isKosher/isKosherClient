@@ -41,9 +41,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      setUser(null);
       await logoutAction();
       localStorage.removeItem("user_data");
-      setUser(null);
       router.push("/");
     } catch (error) {
       console.error("Error logging out:", error);
