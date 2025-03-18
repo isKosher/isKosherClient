@@ -16,7 +16,8 @@ import { ImageUploader } from "@/components/image-uploader";
 import { FolderGoogleType } from "@/types";
 
 export function Step4Supervision() {
-  const { control, setValue } = useFormContext<FormData>();
+  const { control } = useFormContext<FormData>();
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
 
   const formatDateInHebrew = (date: Date | null): string => {
@@ -80,24 +81,25 @@ export function Step4Supervision() {
         render={({ field }) => (
           <ImageUploader
             label="אישור כשרות"
-            value={field.value}
+            value={certificateFile}
             onChange={(file, uploadInfo) => {
-              // Set the file object in the form
-              field.onChange(file);
+              // Set the file object in the local state
+              setCertificateFile(file);
 
               // If we have upload info with URL, store it
               if (uploadInfo?.webViewLink) {
                 // Store the URL in the state
                 setCertificateUrl(uploadInfo.webViewLink);
 
-                // Store the URL in a hidden form field
-                setValue("kosher_certificate.certificate", uploadInfo.webViewLink);
+                // Store the URL in the form field
+                field.onChange(uploadInfo.webViewLink);
+              } else if (!file) {
+                // If no upload info, clear the form field
+                setCertificateUrl(null);
+                field.onChange("");
               }
             }}
             folderType={FolderGoogleType.CERTIFICATES}
-            accept="image/*"
-            maxSizeMB={10}
-            autoUpload={true}
             className="w-full"
           />
         )}

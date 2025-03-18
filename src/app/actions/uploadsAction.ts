@@ -25,3 +25,20 @@ export const uploadImage = async (file: File, folderType: FolderGoogleType): Pro
     throw error;
   }
 };
+
+export async function deleteImage(fileId: string): Promise<boolean> {
+  try {
+    if (!fileId) {
+      throw new Error("No file ID provided");
+    }
+
+    const response = await serverApi.delete<FileUploadResponse>(`/admin/files/${fileId}`);
+
+    if (response.status === 200) return true;
+
+    return false;
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    throw new Error("Failed to delete file");
+  }
+}
