@@ -32,8 +32,8 @@ export interface PageResponse<T> {
 }
 
 export enum FolderGoogleType {
-  CERTIFICATES,
-  SUPERVISORS,
+  CERTIFICATES = "CERTIFICATES",
+  SUPERVISORS = "SUPERVISORS",
 }
 
 export interface FileUploadResponse {

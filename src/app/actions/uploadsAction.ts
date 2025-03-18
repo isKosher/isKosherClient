@@ -9,11 +9,16 @@ export const uploadImage = async (file: File, folderType: FolderGoogleType): Pro
     formData.append("file", file);
 
     // Send the request to the server
-    const response = await serverApi.post<FileUploadResponse>(`/admin/files/upload/${folderType}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await serverApi.post<FileUploadResponse>(
+      `/admin/files/upload/${FolderGoogleType[folderType]}`,
+      formData,
+      {
+        includeCookies: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     if (!response.data) {
       throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
@@ -31,8 +36,9 @@ export async function deleteImage(fileId: string): Promise<boolean> {
     if (!fileId) {
       throw new Error("No file ID provided");
     }
-
-    const response = await serverApi.delete<FileUploadResponse>(`/admin/files/${fileId}`);
+    const response = await serverApi.delete<void>(`/admin/files/${fileId}`, {
+      includeCookies: true,
+    });
 
     if (response.status === 200) return true;
 
