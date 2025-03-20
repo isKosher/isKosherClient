@@ -22,6 +22,7 @@ interface FileUploaderProps {
   folderType: FolderGoogleType;
   uploaderType?: FileUploaderType;
   rtl?: boolean;
+  uploadedInfo?: FileUploadResponse | null; // New prop to pass existing upload info
 }
 
 export function FileUploader({
@@ -35,6 +36,7 @@ export function FileUploader({
   folderType,
   uploaderType = FileUploaderType.ANY,
   rtl = true,
+  uploadedInfo = null,
 }: FileUploaderProps) {
   // State variables
   const [dragActive, setDragActive] = useState(false);
@@ -42,7 +44,7 @@ export function FileUploader({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [uploadedInfo, setUploadedInfo] = useState<FileUploadResponse | null>(null);
+  const [fileInfo, setFileInfo] = useState<FileUploadResponse | null>(uploadedInfo);
   const [lastUploadTime, setLastUploadTime] = useState<number>(0);
   const [uploadTimeout, setUploadTimeout] = useState<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +67,20 @@ export function FileUploader({
     uploadError: rtl ? "שגיאה בהעלאת הקובץ. אנא נסה שנית." : "Error uploading file. Please try again.",
     deleteError: rtl ? "שגיאה במחיקת הקובץ. אנא נסה שנית." : "Error deleting file. Please try again.",
   };
+
+  // Effect to initialize preview from uploadedInfo
+  useEffect(() => {
+    if (uploadedInfo && uploadedInfo.web_view_link && !preview) {
+      if (uploaderType === FileUploaderType.IMAGE) {
+        // For images, set the web view link as the preview
+        setPreview(uploadedInfo.web_view_link);
+      } else {
+        // For non-images, use document-preview
+        setPreview("document-preview");
+      }
+      setFileInfo(uploadedInfo);
+    }
+  }, [uploadedInfo, preview, uploaderType]);
 
   // Helper functions for message generation
   function getFileTypesText() {
@@ -112,7 +128,8 @@ export function FileUploader({
       if (uploadTimeout) {
         clearTimeout(uploadTimeout);
       }
-      if (preview && preview !== "document-preview") {
+      // Only revoke URLs that we created with createObjectURL (not the web_view_link URLs)
+      if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
         URL.revokeObjectURL(preview);
       }
     };
@@ -176,9 +193,10 @@ export function FileUploader({
     }
 
     // Check if we need to delete existing file first
-    if (uploadedInfo && !isDeleting) {
+    if (fileInfo && !isDeleting) {
       setError(messages.deleteExistingFirst);
-      if (preview && preview !== "document-preview") {
+      // Only revoke URLs that we created with createObjectURL
+      if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
         URL.revokeObjectURL(preview);
       }
       setPreview(null);
@@ -203,7 +221,7 @@ export function FileUploader({
     try {
       setIsUploading(true);
       const uploadResult = await uploadImage(file, folderType);
-      setUploadedInfo(uploadResult);
+      setFileInfo(uploadResult);
       onChange(file, uploadResult);
     } catch (error) {
       console.error("Upload error:", error);
@@ -272,8 +290,8 @@ export function FileUploader({
       setUploadTimeout(null);
     }
 
-    if (uploadedInfo?.id) {
-      const success = await deleteFileFromServer(uploadedInfo.id);
+    if (fileInfo?.id) {
+      const success = await deleteFileFromServer(fileInfo.id);
       if (!success) {
         return;
       }
@@ -283,11 +301,13 @@ export function FileUploader({
       inputRef.current.value = "";
     }
 
-    if (preview && preview !== "document-preview") {
+    // Only revoke URLs that we created with createObjectURL
+    if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
       URL.revokeObjectURL(preview);
     }
+
     setPreview(null);
-    setUploadedInfo(null);
+    setFileInfo(null);
     onChange(null);
   };
 
@@ -351,7 +371,7 @@ export function FileUploader({
                   <div className="flex items-center justify-center h-full bg-gray-100">
                     <div className="text-center">
                       <div className="flex justify-center">{getFileIcon()}</div>
-                      <p className="mt-2 text-sm text-gray-600">{value?.name}</p>
+                      <p className="mt-2 text-sm text-gray-600">{value?.name || "מסמך"}</p>
                     </div>
                   </div>
                 ) : (
@@ -390,7 +410,7 @@ export function FileUploader({
                 </div>
               )}
 
-              {uploadedInfo && !isBusy && (
+              {fileInfo && !isBusy && (
                 <div className="absolute bottom-2 left-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md">
                   {messages.uploadSuccess}
                 </div>
@@ -402,7 +422,7 @@ export function FileUploader({
           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
           {/* Hidden field for form submission */}
-          {uploadedInfo && <input type="hidden" name="uploadedFileId" value={uploadedInfo.id} />}
+          {fileInfo && <input type="hidden" name="uploadedFileId" value={fileInfo.id} />}
         </div>
       </FormControl>
       <FormMessage />

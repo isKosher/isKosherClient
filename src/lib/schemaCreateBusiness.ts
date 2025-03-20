@@ -64,6 +64,7 @@ export const formSchema = z.object({
   kosher_certificate: z.object({
     certificate: z.string().min(1, { message: "נדרש להעלות אישור כשרות" }),
     expiration_date: z.any().refine((date) => date > new Date(), { message: "תאריך תפוגה חייב להיות בעתיד" }),
+    file_id: z.string().optional(),
   }),
 });
 

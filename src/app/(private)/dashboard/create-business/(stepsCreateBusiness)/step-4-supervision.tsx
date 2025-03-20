@@ -11,18 +11,57 @@ import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { FormData } from "@/lib/schemaCreateBusiness";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileUploader } from "@/components/file-uploader";
 import { FileUploaderType, FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
-
+//TODO: preview image after back step (change url of google drive...)
 export function Step4Supervision() {
-  const { control } = useFormContext<FormData>();
+  const { control, watch, setValue } = useFormContext<FormData>();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
-  const [certificateResponse, setCertificateResponse] = useState<FileUploadResponse | null>(null);
+  const [uploadedInfo, setUploadedInfo] = useState<FileUploadResponse | null>(null);
+
+  // Watch for certificate URL and metadata to restore state when navigating back
+  const certificateUrl = watch("kosher_certificate.certificate");
+  const certificateMetadata = watch("kosher_certificate.file_id");
+
+  // Effect to restore file info when navigating back to this step
+  useEffect(() => {
+    if (certificateMetadata && !certificateFile) {
+      try {
+        setUploadedInfo({
+          id: certificateMetadata,
+          web_view_link: certificateUrl,
+        });
+      } catch (error) {
+        console.error("Failed to parse certificate file ID:", error);
+      }
+    }
+  }, [certificateMetadata, certificateUrl, certificateFile]);
 
   const formatDateInHebrew = (date: Date | null): string => {
     if (!date) return "";
     return format(date, "dd/MM/yyyy", { locale: he });
+  };
+
+  const handleCertificateChange = (file: File | null, uploadResponse?: FileUploadResponse) => {
+    // Set the file object in the local state
+    setCertificateFile(file);
+
+    if (uploadResponse) {
+      // Store the upload info for future reference
+      setUploadedInfo(uploadResponse);
+
+      // Store the URL in the form field
+      setValue("kosher_certificate.certificate", uploadResponse.web_view_link);
+
+      // Store id in a separate field to help reconstruct the state when navigating back
+      setValue("kosher_certificate.file_id", uploadResponse.id);
+    } else if (file === null) {
+      // Clear all related fields when file is removed
+      setValue("kosher_certificate.certificate", "");
+      setValue("kosher_certificate.file_id", "");
+      setUploadedInfo(null);
+    }
   };
 
   return (
@@ -74,7 +113,7 @@ export function Step4Supervision() {
         )}
       />
 
-      {/* Certificate upload with ImageUploader */}
+      {/* Certificate upload with FileUploader */}
       <FormField
         control={control}
         name="kosher_certificate.certificate"
@@ -83,31 +122,15 @@ export function Step4Supervision() {
             label="אישור כשרות"
             value={certificateFile}
             uploaderType={FileUploaderType.IMAGE}
-            onChange={(file, uploadInfo) => {
-              // Set the file object in the local state
-              setCertificateFile(file);
-
-              // If we have upload info with URL, store it
-              if (uploadInfo && file) {
-                // Store the URL in the state
-                setCertificateResponse(uploadInfo);
-
-                // Store the URL in the form field
-                field.onChange(uploadInfo.web_view_link);
-              } else {
-                // If no upload info or no file, clear the form field
-                setCertificateResponse(null);
-                field.onChange("");
-              }
-            }}
+            onChange={handleCertificateChange}
             folderType={FolderGoogleType.CERTIFICATES}
             className="w-full"
+            // Pass the uploadedInfo to the FileUploader so it can show the preview
+            // and properly handle deletion of existing file
+            uploadedInfo={uploadedInfo}
           />
         )}
       />
-
-      {/* Hidden input to store the certificate URL */}
-      {certificateResponse && <input type="hidden" name="certificate" value={certificateResponse?.web_view_link} />}
 
       <FormField
         control={control}
