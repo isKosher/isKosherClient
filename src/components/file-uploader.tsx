@@ -1,17 +1,17 @@
 "use client";
 
-import type React from "react";
-
 import { useState, useRef, useEffect } from "react";
+import type React from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Upload, X, ImageIcon, Loader2 } from "lucide-react";
-import Image from "next/image";
+import { Upload, X, FileIcon, ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/app/actions/uploadsAction";
-import { FileUploadResponse, FolderGoogleType } from "@/types";
+import { DOCUMENT_TYPES, FileUploaderType, FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
+import { UPLOAD_COOLDOWN, UPLOAD_DELAY } from "@/lib/constants";
 
-interface ImageUploaderProps {
+interface FileUploaderProps {
   label: string;
   value: File | null;
   onChange: (file: File | null, uploadInfo?: FileUploadResponse) => void;
@@ -20,18 +20,23 @@ interface ImageUploaderProps {
   className?: string;
   autoUpload?: boolean;
   folderType: FolderGoogleType;
+  uploaderType?: FileUploaderType;
+  rtl?: boolean;
 }
 
-export function ImageUploader({
+export function FileUploader({
   label,
   value,
   onChange,
-  accept = "image/*",
+  accept,
   maxSizeMB = 10,
   className,
   autoUpload = true,
   folderType,
-}: ImageUploaderProps) {
+  uploaderType = FileUploaderType.ANY,
+  rtl = true,
+}: FileUploaderProps) {
+  // State variables
   const [dragActive, setDragActive] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,21 +47,95 @@ export function ImageUploader({
   const [uploadTimeout, setUploadTimeout] = useState<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const UPLOAD_COOLDOWN = 3000;
-  const UPLOAD_DELAY = 1000;
+  // Language and filetype specific messages
+  const messages = {
+    clickToUpload: rtl ? "לחץ להעלאה" : "Click to upload",
+    dragHere: rtl ? "או גרור לכאן" : "or drag files here",
+    fileTypes: getFileTypesText(),
+    uploading: rtl ? "מעלה..." : "Uploading...",
+    deleting: rtl ? "מוחק..." : "Deleting...",
+    uploadSuccess: rtl ? "הועלה בהצלחה" : "Upload successful",
+    waitBeforeNextUpload: (seconds: number) =>
+      rtl ? `אנא המתן ${seconds} שניות לפני העלאה נוספת` : `Please wait ${seconds} seconds before next upload`,
+    deleteExistingFirst: rtl
+      ? "יש למחוק את הקובץ הקיים לפני העלאת קובץ חדש"
+      : "Delete existing file before uploading a new one",
+    invalidFileType: getInvalidFileTypeMessage(),
+    fileTooLarge: rtl ? `גודל הקובץ חייב להיות קטן מ-${maxSizeMB}MB` : `File size must be less than ${maxSizeMB}MB`,
+    uploadError: rtl ? "שגיאה בהעלאת הקובץ. אנא נסה שנית." : "Error uploading file. Please try again.",
+    deleteError: rtl ? "שגיאה במחיקת הקובץ. אנא נסה שנית." : "Error deleting file. Please try again.",
+  };
 
+  // Helper functions for message generation
+  function getFileTypesText() {
+    switch (uploaderType) {
+      case "image":
+        return rtl ? `PNG, JPG, GIF עד ${maxSizeMB}MB` : `PNG, JPG, GIF up to ${maxSizeMB}MB`;
+      case "document":
+        return rtl ? `PDF, DOC, XLS, PPT עד ${maxSizeMB}MB` : `PDF, DOC, XLS, PPT up to ${maxSizeMB}MB`;
+      case "any":
+      default:
+        return rtl ? `כל סוגי הקבצים עד ${maxSizeMB}MB` : `All file types up to ${maxSizeMB}MB`;
+    }
+  }
+
+  function getInvalidFileTypeMessage() {
+    switch (uploaderType) {
+      case "image":
+        return rtl ? "יש להעלות קובץ תמונה בלבד" : "Please upload image files only";
+      case "document":
+        return rtl ? "יש להעלות קובץ מסמך בלבד" : "Please upload document files only";
+      case "any":
+      default:
+        return rtl ? "סוג קובץ לא תקין" : "Invalid file type";
+    }
+  }
+
+  // Determine accept attribute based on uploaderType
+  const getAcceptValue = () => {
+    if (accept) return accept;
+
+    switch (uploaderType) {
+      case "image":
+        return "image/*";
+      case "document":
+        return ".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx";
+      case "any":
+      default:
+        return "*/*";
+    }
+  };
+
+  // Cleanup function for timeouts and object URLs
   useEffect(() => {
     return () => {
       if (uploadTimeout) {
         clearTimeout(uploadTimeout);
       }
-      if (preview) {
+      if (preview && preview !== "document-preview") {
         URL.revokeObjectURL(preview);
       }
     };
   }, [uploadTimeout, preview]);
 
+  // Validates file type based on uploaderType
+  const isValidFileType = (file: File): boolean => {
+    if (uploaderType === "any") return true;
+
+    if (uploaderType === "image") {
+      return file.type.startsWith("image/");
+    }
+
+    if (uploaderType === "document") {
+      return DOCUMENT_TYPES.includes(file.type);
+    }
+
+    return false;
+  };
+
+  // Handle file selection
   const handleFileChange = (file: File | null) => {
+    // Clear any existing timeout
     if (uploadTimeout) {
       clearTimeout(uploadTimeout);
       setUploadTimeout(null);
@@ -69,32 +148,44 @@ export function ImageUploader({
       return;
     }
 
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      setError("יש להעלות קובץ תמונה או PDF בלבד");
+    // Validate file type
+    if (!isValidFileType(file)) {
+      setError(messages.invalidFileType);
       return;
     }
 
+    // Validate file size
     if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`גודל הקובץ חייב להיות קטן מ-${maxSizeMB}MB`);
+      setError(messages.fileTooLarge);
       return;
     }
 
+    // Check upload cooldown
     const now = Date.now();
     if (now - lastUploadTime < UPLOAD_COOLDOWN) {
-      setError(`אנא המתן ${Math.ceil((UPLOAD_COOLDOWN - (now - lastUploadTime)) / 1000)} שניות לפני העלאה נוספת`);
+      setError(messages.waitBeforeNextUpload(Math.ceil((UPLOAD_COOLDOWN - (now - lastUploadTime)) / 1000)));
       return;
     }
 
-    const fileUrl = URL.createObjectURL(file);
-    setPreview(fileUrl);
+    // Set preview based on file type
+    if (file.type.startsWith("image/")) {
+      const fileUrl = URL.createObjectURL(file);
+      setPreview(fileUrl);
+    } else {
+      setPreview("document-preview"); // Special value for non-image files
+    }
 
+    // Check if we need to delete existing file first
     if (uploadedInfo && !isDeleting) {
-      setError("יש למחוק את התמונה הקיימת לפני העלאת תמונה חדשה");
-      URL.revokeObjectURL(fileUrl);
+      setError(messages.deleteExistingFirst);
+      if (preview && preview !== "document-preview") {
+        URL.revokeObjectURL(preview);
+      }
       setPreview(null);
       return;
     }
 
+    // Handle upload (auto or manual)
     if (autoUpload) {
       const timeout = setTimeout(() => {
         setLastUploadTime(Date.now());
@@ -107,7 +198,7 @@ export function ImageUploader({
     }
   };
 
-  // Handle file upload to server
+  // Upload file to server
   const handleUpload = async (file: File) => {
     try {
       setIsUploading(true);
@@ -116,29 +207,31 @@ export function ImageUploader({
       onChange(file, uploadResult);
     } catch (error) {
       console.error("Upload error:", error);
-      setError("שגיאה בהעלאת הקובץ. אנא נסה שנית.");
+      setError(messages.uploadError);
       setPreview(null);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const deleteImageFromServer = async (imageId: string) => {
-    if (!imageId) return false;
+  // Delete file from server
+  const deleteFileFromServer = async (fileId: string) => {
+    if (!fileId) return false;
 
     try {
       setIsDeleting(true);
-      await deleteImage(imageId);
+      await deleteImage(fileId);
       return true;
     } catch (error) {
       console.error("Delete error:", error);
-      setError("שגיאה במחיקת הקובץ. אנא נסה שנית.");
+      setError(messages.deleteError);
       return false;
     } finally {
       setIsDeleting(false);
     }
   };
 
+  // Event handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     handleFileChange(file);
@@ -180,7 +273,7 @@ export function ImageUploader({
     }
 
     if (uploadedInfo?.id) {
-      const success = await deleteImageFromServer(uploadedInfo.id);
+      const success = await deleteFileFromServer(uploadedInfo.id);
       if (!success) {
         return;
       }
@@ -190,7 +283,7 @@ export function ImageUploader({
       inputRef.current.value = "";
     }
 
-    if (preview) {
+    if (preview && preview !== "document-preview") {
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
@@ -198,8 +291,19 @@ export function ImageUploader({
     onChange(null);
   };
 
+  // Get the appropriate icon for file type
+  const getFileIcon = () => {
+    if (value?.type.startsWith("image/")) {
+      return <ImageIcon className="h-12 w-12 text-sky-500" />;
+    }
+    return <FileIcon className="h-12 w-12 text-sky-500" />;
+  };
+
+  // Determine if component is in a busy state
+  const isBusy = isUploading || isDeleting;
+
   return (
-    <FormItem className={className}>
+    <FormItem className={className} dir={rtl ? "rtl" : "ltr"}>
       <FormLabel>{label}</FormLabel>
       <FormControl>
         <div className="space-y-2">
@@ -209,14 +313,14 @@ export function ImageUploader({
               className={cn(
                 "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
                 dragActive ? "border-sky-500 bg-sky-50" : "border-sky-200 hover:border-sky-300 hover:bg-sky-50/50",
-                isUploading || isDeleting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                isBusy ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               )}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => {
-                if (!isUploading && !isDeleting) {
+                if (!isBusy) {
                   inputRef.current?.click();
                 }
               }}
@@ -224,61 +328,55 @@ export function ImageUploader({
               <div className="flex flex-col items-center justify-center gap-2">
                 <Upload className="h-10 w-10 text-sky-500" />
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium text-sky-600">לחץ להעלאה</span> או גרור לכאן
+                  <span className="font-medium text-sky-600">{messages.clickToUpload}</span> {messages.dragHere}
                 </div>
-                <p className="text-xs text-gray-500">PNG, JPG, GIF, PDF עד {maxSizeMB}MB</p>
+                <p className="text-xs text-gray-500">{messages.fileTypes}</p>
               </div>
               <input
                 ref={inputRef}
                 type="file"
-                accept={accept}
+                accept={getAcceptValue()}
                 onChange={handleInputChange}
                 className="hidden"
-                disabled={isUploading || isDeleting}
+                disabled={isBusy}
               />
             </div>
           )}
 
+          {/* File preview */}
           {preview && (
             <div className="relative border rounded-lg overflow-hidden">
               <div className="aspect-video relative">
-                {preview && value?.type === "application/pdf" ? (
+                {preview === "document-preview" ? (
                   <div className="flex items-center justify-center h-full bg-gray-100">
                     <div className="text-center">
-                      <div className="flex justify-center">
-                        <svg className="h-12 w-12 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
+                      <div className="flex justify-center">{getFileIcon()}</div>
                       <p className="mt-2 text-sm text-gray-600">{value?.name}</p>
                     </div>
                   </div>
                 ) : (
-                  <Image src={preview} alt="תצוגה מקדימה" fill className="object-contain" />
+                  <Image src={preview} alt="Preview" fill className="object-contain" />
                 )}
               </div>
+
+              {/* Remove button */}
               <Button
                 type="button"
                 variant="destructive"
                 size="icon"
                 className="absolute top-2 right-2 h-8 w-8 rounded-full"
                 onClick={handleRemove}
-                disabled={isUploading || isDeleting}
+                disabled={isBusy}
               >
                 <X className="h-4 w-4" />
               </Button>
 
-              {/* Upload status indicator */}
+              {/* Status indicators */}
               {isUploading && (
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                   <div className="bg-white p-3 rounded-md flex items-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin text-sky-500" />
-                    <span className="text-sm font-medium">מעלה...</span>
+                    <span className="text-sm font-medium">{messages.uploading}</span>
                   </div>
                 </div>
               )}
@@ -287,22 +385,24 @@ export function ImageUploader({
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                   <div className="bg-white p-3 rounded-md flex items-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin text-red-500" />
-                    <span className="text-sm font-medium">מוחק...</span>
+                    <span className="text-sm font-medium">{messages.deleting}</span>
                   </div>
                 </div>
               )}
 
-              {uploadedInfo && !isUploading && !isDeleting && (
+              {uploadedInfo && !isBusy && (
                 <div className="absolute bottom-2 left-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md">
-                  הועלה בהצלחה
+                  {messages.uploadSuccess}
                 </div>
               )}
             </div>
           )}
 
+          {/* Error message */}
           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
-          {uploadedInfo && <input type="hidden" name="uploadedImageId" value={uploadedInfo.id} />}
+          {/* Hidden field for form submission */}
+          {uploadedInfo && <input type="hidden" name="uploadedFileId" value={uploadedInfo.id} />}
         </div>
       </FormControl>
       <FormMessage />

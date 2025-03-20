@@ -12,13 +12,13 @@ import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { FormData } from "@/lib/schemaCreateBusiness";
 import { useState } from "react";
-import { ImageUploader } from "@/components/image-uploader";
-import { FolderGoogleType } from "@/types";
+import { FileUploader } from "@/components/file-uploader";
+import { FileUploaderType, FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
 
 export function Step4Supervision() {
   const { control } = useFormContext<FormData>();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
-  const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
+  const [certificateResponse, setCertificateResponse] = useState<FileUploadResponse | null>(null);
 
   const formatDateInHebrew = (date: Date | null): string => {
     if (!date) return "";
@@ -79,23 +79,24 @@ export function Step4Supervision() {
         control={control}
         name="kosher_certificate.certificate"
         render={({ field }) => (
-          <ImageUploader
+          <FileUploader
             label="אישור כשרות"
             value={certificateFile}
+            uploaderType={FileUploaderType.IMAGE}
             onChange={(file, uploadInfo) => {
               // Set the file object in the local state
               setCertificateFile(file);
 
               // If we have upload info with URL, store it
-              if (uploadInfo?.webViewLink) {
+              if (uploadInfo && file) {
                 // Store the URL in the state
-                setCertificateUrl(uploadInfo.webViewLink);
+                setCertificateResponse(uploadInfo);
 
                 // Store the URL in the form field
-                field.onChange(uploadInfo.webViewLink);
-              } else if (!file) {
-                // If no upload info, clear the form field
-                setCertificateUrl(null);
+                field.onChange(uploadInfo.web_view_link);
+              } else {
+                // If no upload info or no file, clear the form field
+                setCertificateResponse(null);
                 field.onChange("");
               }
             }}
@@ -106,7 +107,7 @@ export function Step4Supervision() {
       />
 
       {/* Hidden input to store the certificate URL */}
-      {certificateUrl && <input type="hidden" name="certificate_url" value={certificateUrl} />}
+      {certificateResponse && <input type="hidden" name="certificate" value={certificateResponse?.web_view_link} />}
 
       <FormField
         control={control}
