@@ -31,16 +31,6 @@ export interface PageResponse<T> {
   total_pages: number;
 }
 
-export enum FolderGoogleType {
-  CERTIFICATES = "CERTIFICATES",
-  SUPERVISORS = "SUPERVISORS",
-}
-
-export interface FileUploadResponse {
-  id: string;
-  webViewLink: string;
-}
-
 export interface BusinessDetailsResponse {
   business_id: string;
   business_name: string;

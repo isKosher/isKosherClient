@@ -1,5 +1,5 @@
 "use server";
-import { FileUploadResponse, FolderGoogleType } from "@/types";
+import { FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
 import { serverApi } from "@/utils/apiClient";
 
 export const uploadImage = async (file: File, folderType: FolderGoogleType): Promise<FileUploadResponse> => {
