@@ -8,22 +8,9 @@ import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/f
 import { Upload, X, FileIcon, ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/app/actions/uploadsAction";
-import { DOCUMENT_TYPES, FileUploaderType, FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
 import { UPLOAD_COOLDOWN, UPLOAD_DELAY } from "@/lib/constants";
-
-interface FileUploaderProps {
-  label: string;
-  value: File | null;
-  onChange: (file: File | null, uploadInfo?: FileUploadResponse) => void;
-  accept?: string;
-  maxSizeMB?: number;
-  className?: string;
-  autoUpload?: boolean;
-  folderType: FolderGoogleType;
-  uploaderType?: FileUploaderType;
-  rtl?: boolean;
-  uploadedInfo?: FileUploadResponse | null; // New prop to pass existing upload info
-}
+import { FileUploaderProps, FileUploaderType } from "@/types/file-upload";
+import { generateFileMessages, getAcceptValue, isValidFileType } from "@/data/file-uploader-data";
 
 export function FileUploader({
   label,
@@ -35,7 +22,7 @@ export function FileUploader({
   autoUpload = true,
   folderType,
   uploaderType = FileUploaderType.ANY,
-  rtl = true,
+  direction = "rtl",
   uploadedInfo = null,
 }: FileUploaderProps) {
   // State variables
@@ -44,29 +31,13 @@ export function FileUploader({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [fileInfo, setFileInfo] = useState<FileUploadResponse | null>(uploadedInfo);
+  const [fileInfo, setFileInfo] = useState(uploadedInfo);
   const [lastUploadTime, setLastUploadTime] = useState<number>(0);
   const [uploadTimeout, setUploadTimeout] = useState<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Language and filetype specific messages
-  const messages = {
-    clickToUpload: rtl ? "לחץ להעלאה" : "Click to upload",
-    dragHere: rtl ? "או גרור לכאן" : "or drag files here",
-    fileTypes: getFileTypesText(),
-    uploading: rtl ? "מעלה..." : "Uploading...",
-    deleting: rtl ? "מוחק..." : "Deleting...",
-    uploadSuccess: rtl ? "הועלה בהצלחה" : "Upload successful",
-    waitBeforeNextUpload: (seconds: number) =>
-      rtl ? `אנא המתן ${seconds} שניות לפני העלאה נוספת` : `Please wait ${seconds} seconds before next upload`,
-    deleteExistingFirst: rtl
-      ? "יש למחוק את הקובץ הקיים לפני העלאת קובץ חדש"
-      : "Delete existing file before uploading a new one",
-    invalidFileType: getInvalidFileTypeMessage(),
-    fileTooLarge: rtl ? `גודל הקובץ חייב להיות קטן מ-${maxSizeMB}MB` : `File size must be less than ${maxSizeMB}MB`,
-    uploadError: rtl ? "שגיאה בהעלאת הקובץ. אנא נסה שנית." : "Error uploading file. Please try again.",
-    deleteError: rtl ? "שגיאה במחיקת הקובץ. אנא נסה שנית." : "Error deleting file. Please try again.",
-  };
+  // Generate messages based on language and type
+  const messages = generateFileMessages(uploaderType, maxSizeMB, direction);
 
   // Effect to initialize preview from uploadedInfo
   useEffect(() => {
@@ -82,46 +53,6 @@ export function FileUploader({
     }
   }, [uploadedInfo, preview, uploaderType]);
 
-  // Helper functions for message generation
-  function getFileTypesText() {
-    switch (uploaderType) {
-      case "image":
-        return rtl ? `PNG, JPG, GIF עד ${maxSizeMB}MB` : `PNG, JPG, GIF up to ${maxSizeMB}MB`;
-      case "document":
-        return rtl ? `PDF, DOC, XLS, PPT עד ${maxSizeMB}MB` : `PDF, DOC, XLS, PPT up to ${maxSizeMB}MB`;
-      case "any":
-      default:
-        return rtl ? `כל סוגי הקבצים עד ${maxSizeMB}MB` : `All file types up to ${maxSizeMB}MB`;
-    }
-  }
-
-  function getInvalidFileTypeMessage() {
-    switch (uploaderType) {
-      case "image":
-        return rtl ? "יש להעלות קובץ תמונה בלבד" : "Please upload image files only";
-      case "document":
-        return rtl ? "יש להעלות קובץ מסמך בלבד" : "Please upload document files only";
-      case "any":
-      default:
-        return rtl ? "סוג קובץ לא תקין" : "Invalid file type";
-    }
-  }
-
-  // Determine accept attribute based on uploaderType
-  const getAcceptValue = () => {
-    if (accept) return accept;
-
-    switch (uploaderType) {
-      case "image":
-        return "image/*";
-      case "document":
-        return ".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx";
-      case "any":
-      default:
-        return "*/*";
-    }
-  };
-
   // Cleanup function for timeouts and object URLs
   useEffect(() => {
     return () => {
@@ -135,19 +66,12 @@ export function FileUploader({
     };
   }, [uploadTimeout, preview]);
 
-  // Validates file type based on uploaderType
-  const isValidFileType = (file: File): boolean => {
-    if (uploaderType === "any") return true;
-
-    if (uploaderType === "image") {
-      return file.type.startsWith("image/");
+  // Helper function to get file icon
+  const getFileIcon = () => {
+    if (value?.type.startsWith("image/")) {
+      return <ImageIcon className="h-12 w-12 text-sky-500" />;
     }
-
-    if (uploaderType === "document") {
-      return DOCUMENT_TYPES.includes(file.type);
-    }
-
-    return false;
+    return <FileIcon className="h-12 w-12 text-sky-500" />;
   };
 
   // Handle file selection
@@ -166,7 +90,7 @@ export function FileUploader({
     }
 
     // Validate file type
-    if (!isValidFileType(file)) {
+    if (!isValidFileType(file, uploaderType)) {
       setError(messages.invalidFileType);
       return;
     }
@@ -311,19 +235,11 @@ export function FileUploader({
     onChange(null);
   };
 
-  // Get the appropriate icon for file type
-  const getFileIcon = () => {
-    if (value?.type.startsWith("image/")) {
-      return <ImageIcon className="h-12 w-12 text-sky-500" />;
-    }
-    return <FileIcon className="h-12 w-12 text-sky-500" />;
-  };
-
   // Determine if component is in a busy state
   const isBusy = isUploading || isDeleting;
 
   return (
-    <FormItem className={className} dir={rtl ? "rtl" : "ltr"}>
+    <FormItem className={className} dir={direction}>
       <FormLabel>{label}</FormLabel>
       <FormControl>
         <div className="space-y-2">
@@ -355,7 +271,7 @@ export function FileUploader({
               <input
                 ref={inputRef}
                 type="file"
-                accept={getAcceptValue()}
+                accept={getAcceptValue(uploaderType, accept)}
                 onChange={handleInputChange}
                 className="hidden"
                 disabled={isBusy}
