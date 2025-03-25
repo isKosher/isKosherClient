@@ -11,9 +11,8 @@ export default function Navbar() {
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
   const menuLinks = [
-    { href: "/#about-section", label: "אודות" },
-    { href: "/#products-section", label: "מוצרים" },
-    { href: "/#FAQ-section", label: "שאלות ותשובות" },
+    { href: "/", label: "דף הבית" },
+    //{ href: "/#FAQ-section", label: "שאלות ותשובות" },
     { href: "/#contact-Us", label: "צרו קשר" },
   ];
 

@@ -4,6 +4,7 @@ import { refreshAccessTokenAction } from "@/app/actions/actionsAuth";
 import { AXIOS_DEFAULT_TIMEOUT } from "@/lib/constants";
 import axios, { AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<AxiosInstance> => {
   const instance = axios.create({
@@ -44,7 +45,8 @@ export async function apiFetch<T>(
   } = {}
 ): Promise<AxiosResponse<T>> {
   const { method = "GET", data, params, includeCookies = false, headers = {}, timeout } = options;
-  let retry = true;
+  let isRefreshAttempt = endpoint === "/auth/refresh-token";
+
   const requestHeaders: Record<string, string> = { ...headers };
 
   if (includeCookies) {
@@ -72,24 +74,22 @@ export async function apiFetch<T>(
 
     return response;
   } catch (error: any) {
-    if (error.response?.status === 401 && retry) {
+    // Only attempt refresh if this isn't already a refresh token request
+    if (error.response?.status === 401 && !isRefreshAttempt) {
       console.warn("Access token expired, trying to refresh...");
-
       try {
         const refreshed = await refreshAccessTokenAction();
 
         if (refreshed) {
-          retry = true;
+          // Try the original request again
           return apiFetch(endpoint, { ...options });
         } else {
-          retry = false;
           console.error("Failed to refresh token");
-          throw new Error("Session expired. Please log in again.");
+          redirect("/logout");
         }
       } catch (refreshError: any) {
-        retry = false;
         console.error("Error refreshing token:", refreshError.message);
-        throw new Error("Authentication failed. Please log in again.");
+        redirect("/logout");
       }
     }
     throw error;

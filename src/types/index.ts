@@ -31,7 +31,7 @@ export interface PageResponse<T> {
   total_pages: number;
 }
 
-export interface BusinessDetails {
+export interface BusinessDetailsResponse {
   business_id: string;
   business_name: string;
   food_types: string[];
