@@ -63,7 +63,9 @@ export const formSchema = z.object({
   }),
   kosher_certificate: z.object({
     certificate: z.string().min(1, { message: "נדרש להעלות אישור כשרות" }),
-    expiration_date: z.any().refine((date) => date > new Date(), { message: "תאריך תפוגה חייב להיות בעתיד" }),
+    expiration_date: z
+      .any()
+      .refine((date) => isDateValid(date), { message: "תאריך תפוגה חייב להיות בין היום לבין שנה מהיום" }),
     file_id: z.string().optional(),
   }),
 });
@@ -75,3 +77,9 @@ export interface Option {
   name: string;
   isCustom?: boolean;
 }
+
+export const isDateValid = (date: Date): boolean => {
+  const today = new Date();
+  const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+  return date >= today && date <= oneYearFromNow;
+};

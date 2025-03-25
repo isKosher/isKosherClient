@@ -10,7 +10,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { FormData } from "@/lib/schemaCreateBusiness";
+import { FormData, isDateValid } from "@/lib/schemaCreateBusiness";
 import { useState, useEffect } from "react";
 import { FileUploader } from "@/components/file-uploader";
 import { FileUploaderType, FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
@@ -158,7 +158,7 @@ export function Step4Supervision() {
                   mode="single"
                   selected={field.value}
                   onSelect={field.onChange}
-                  disabled={(date) => date < new Date() || date > new Date("2100-01-01")}
+                  disabled={(date) => !isDateValid(date)}
                   initialFocus
                   locale={he}
                   dir="rtl"
