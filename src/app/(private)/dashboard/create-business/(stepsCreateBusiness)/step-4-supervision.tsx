@@ -167,23 +167,14 @@ export function Step4Supervision() {
                   showOutsideDays={true}
                   fixedWeeks
                   classNames={{
-                    day_selected: "bg-sky-500 text-white",
-                    day_today: "bg-sky-100 text-sky-900",
-                    day_outside: "text-gray-300",
-                    day_disabled: "text-gray-300 opacity-50",
+                    day_selected: "bg-sky-500 text-white hover:bg-sky-600 focus:bg-sky-600",
+                    day_today: "bg-sky-100 text-sky-900 !opacity-100",
+                    day_outside: "text-gray-500",
+                    day_disabled: "text-gray-500 opacity-20",
                     day_range_middle: "bg-sky-50",
-                    day_hidden: "invisible",
-                    caption: "flex justify-center pt-1 relative items-center",
-                    caption_label: "text-sm font-medium",
-                    nav: "space-x-1 flex items-center",
                     nav_button: "h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
-                    nav_button_previous: "absolute left-1",
-                    nav_button_next: "absolute right-1",
-                    table: "w-full border-collapse space-y-1",
-                    head_row: "flex",
-                    head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
-                    row: "flex w-full mt-2",
-                    cell: "text-center text-sm relative p-0 rounded-md focus-within:relative focus-within:z-20",
+                    nav_button_previous: "absolute right-1",
+                    nav_button_next: "absolute left-1",
                     day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-sky-100 rounded-md",
                   }}
                 />
