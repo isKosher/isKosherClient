@@ -193,31 +193,12 @@ export function BusinessDetails({
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 font-heebo">
-      {/* Sticky Header */}
-      <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm"
-      >
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-[#1A365D]">{restaurant.business_name}</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-[#1A365D] hover:bg-blue-50">
-              <Heart size={20} />
-            </Button>
-            <Button onClick={shareOnWhatsApp} className="bg-[#25D366] hover:bg-[#20BD5C] text-white">
-              <span className="hidden md:inline">שתף ב-</span>WhatsApp
-            </Button>
-          </div>
-        </div>
-      </motion.div>
-
+    <div dir="rtl" className="min-h-screen bg-gray-50 font-heebo mt-12">
       <div className="container mx-auto px-4 py-6">
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Sidebar - Kosher Info */}
-          <div className="order-2 lg:order-1">
+          <div className="order-2 lg:order-2">
             <div className="sticky top-24">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <h2 className="text-xl font-bold text-[#1A365D] mb-4">תעודות כשרות</h2>
@@ -279,7 +260,7 @@ export function BusinessDetails({
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          <div className="order-1 lg:order-1 lg:col-span-2">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
               {/* Header Info */}
               <div className="bg-white rounded-2xl shadow-md p-6">
@@ -379,16 +360,6 @@ export function BusinessDetails({
                       whileHover={{ y: -5 }}
                       className="bg-blue-50 rounded-xl p-4 flex items-center gap-4 transition-all cursor-pointer"
                     >
-                      <div className="h-16 w-16 relative rounded-lg overflow-hidden">
-                        <Image
-                          src={`https://images.unsplash.com/photo-15548523${
-                            7000 + idx
-                          }0-a8ab842aef2?q=80&w=1770&auto=format&fit=crop`}
-                          alt="מסעדה מומלצת"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
                       <div>
                         <h4 className="font-medium text-[#1A365D]">מסעדה כשרה {idx + 1}</h4>
                         <p className="text-sm text-gray-600">500 מ׳ ממיקומך</p>
