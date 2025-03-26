@@ -73,7 +73,7 @@ export default function FilterDropdown(props: FilterProps) {
       <DropdownMenuTrigger asChild className="hebrew-side">
         <Button
           variant="outline"
-          className="w-full justify-between p-3 text-md border border-gray-300 rounded-lg text-wrap h-full"
+          className="w-full justify-between p-3 text-md border border-sky-200 focus:border-sky-500 rounded-lg text-wrap h-full"
           disabled={props.loading}
         >
           {selectedFilters.length > 0 ? `נבחרו ${selectedFilters.length} פריטים` : props.filterPlaceholder}

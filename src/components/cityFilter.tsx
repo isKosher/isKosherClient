@@ -38,7 +38,7 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, onClearCity, load
   }, []);
 
   useEffect(() => {
-    if (searchTerm) {
+    if (searchTerm && searchTerm !== selectedCity) {
       const fetchCities = async () => {
         try {
           const { data } = await axios.get(
@@ -52,16 +52,14 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, onClearCity, load
           setIsDropdownOpen(false);
         }
       };
-
       fetchCities();
     } else {
-      setCities([]);
       setIsDropdownOpen(false);
+      setCities([]);
     }
   }, [searchTerm]);
 
   const handleSelectCity = (city: string) => {
-    setSearchTerm(city);
     setIsDropdownOpen(false);
     onSelectCity(city);
   };
@@ -69,7 +67,7 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, onClearCity, load
   return (
     <div className="relative">
       <Input
-        className="w-full p-4 text-md border border-gray-300 rounded-lg hebrew-side"
+        className="w-full p-4 text-md border border-sky-200 focus:border-sky-500 rounded-lg hebrew-side"
         placeholder="חפש עיר"
         value={searchTerm}
         onChange={(e) => {
@@ -86,7 +84,7 @@ const CityFilter: React.FC<CityFilterProps> = ({ onSelectCity, onClearCity, load
       {isDropdownOpen && cities.length > 0 && (
         <ul
           dir="rtl"
-          className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg"
+          className="absolute z-10 w-full bg-white border border-sky-200 focus:border-sky-500 rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg"
         >
           {cities.map((city) => (
             <li
