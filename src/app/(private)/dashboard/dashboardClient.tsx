@@ -1,6 +1,6 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
-import RestaurantCard from "@/app/restaurantCard";
+import RestaurantCard from "@/components/restaurantCard";
 import Link from "next/link";
 import { BusinessPreview, RestaurantPreview } from "@/types";
 import { getMyBusinessAction } from "@/app/actions/dashboardAction";
