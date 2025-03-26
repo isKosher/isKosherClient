@@ -24,7 +24,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
           <p className="text-indigo-700">{restaurant.business_type}</p>
           <p className="text-gray-600 flex items-center mt-2">
             <MapPin className="w-4 h-4 ml-1" />
-            {`${restaurant.location.street_number} ${restaurant.location.address}, ${restaurant.location.city}`}
+            {` ${restaurant.location.address} ${restaurant.location.street_number}, ${restaurant.location.city}`}
           </p>
           <div className="flex items-center gap-2 mt-2">
             {restaurant.food_types.includes(foodTypes[0].name) && (
