@@ -1,8 +1,7 @@
 import { BusinessPreview } from "@/types";
-import { motion, AnimatePresence } from "framer-motion";
 import GpsSearchAnimation from "./gpsSearchAnimation";
 import { Button } from "./ui/button";
-import RestaurantCard from "@/app/restaurantCard";
+import RestaurantCard from "@/components/restaurantCard";
 
 interface ResultsListProps {
   results: BusinessPreview[];
@@ -11,6 +10,7 @@ interface ResultsListProps {
   resetFilters: () => void;
   loadMoreRef: React.RefCallback<HTMLDivElement>;
   hasMore: boolean;
+  page: number;
 }
 
 export default function ResultsList({
@@ -20,6 +20,7 @@ export default function ResultsList({
   resetFilters,
   loadMoreRef,
   hasMore,
+  page,
 }: ResultsListProps) {
   if (isLoading) {
     return (
@@ -42,19 +43,25 @@ export default function ResultsList({
     );
   }
 
+  // Assuming equal distribution of items per page
+  const itemsPerPage = Math.floor(results.length / page);
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 mx-4">
-        {results.map((result, index) => (
-          <motion.div
-            key={result.business_id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-          >
-            <RestaurantCard key={result.business_id} restaurant={result} />
-          </motion.div>
-        ))}
+        {results.map((result, index) => {
+          // Calculate relative index per page so that animation restarts from 0 for new results.
+          const relativeIndex = index - (page - 1) * itemsPerPage;
+          return (
+            <div
+              key={result.business_id}
+              className="animate-fadeInUp opacity-0"
+              style={{ animationDelay: `${relativeIndex * 0.1}s` }}
+            >
+              <RestaurantCard restaurant={result} />
+            </div>
+          );
+        })}
 
         {hasMore && (
           <div ref={loadMoreRef} className="col-span-full self-center h-60 w-60 mx-auto">
