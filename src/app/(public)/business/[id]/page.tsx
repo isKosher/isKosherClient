@@ -1,15 +1,15 @@
 import { Metadata } from "next";
-import { BusinessDetails } from "./business-details";
 import { LatLngExpression } from "leaflet";
 import { BusinessDetailsResponse } from "@/types";
 import { serverApi } from "@/utils/apiClient";
+import BusinessDetails from "./business-details";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = await params;
-  const restaurant = await getRestaurant(id);
+  const business = await getRestaurant(id);
   return {
-    title: `${restaurant.business_name} | isKosher`,
-    description: restaurant.business_details,
+    title: `${business.business_name} | isKosher`,
+    description: business.business_details,
   };
 }
 
@@ -25,16 +25,16 @@ export async function getRestaurant(id: string): Promise<BusinessDetailsResponse
 
 export default async function RestaurantPage({ params }: { params: { id: string } }) {
   const { id } = await params;
-  let restaurant;
+  let business: BusinessDetailsResponse;
   let coordinates: LatLngExpression;
 
   try {
-    restaurant = await getRestaurant(id);
-    coordinates = { lat: restaurant.location.latitude, lng: restaurant.location.longitude };
+    business = await getRestaurant(id);
+    coordinates = { lat: business.location.latitude, lng: business.location.longitude };
   } catch (error) {
     console.error("Error fetching data:", error);
     return <div>Error</div>;
   }
 
-  return <BusinessDetails restaurant={restaurant} coordinates={coordinates} />;
+  return <BusinessDetails business={business} coordinates={coordinates} />;
 }

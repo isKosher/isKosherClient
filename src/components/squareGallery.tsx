@@ -5,11 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-
-interface GalleryImage {
-  src: string;
-  alt: string;
-}
+import { GalleryImage } from "@/types";
 
 interface SquareGalleryProps {
   images: GalleryImage[];
@@ -49,12 +45,7 @@ export default function SquareGallery({ images }: SquareGalleryProps) {
                   )}
                   onClick={() => setCurrentIndex(index)}
                 >
-                  <Image
-                    src={image.src || "/placeholder.svg"}
-                    alt={image.alt}
-                    layout="fill"
-                    objectFit="cover"
-                  />
+                  <Image src={image.src || "/placeholder.svg"} alt={image.alt} layout="fill" objectFit="cover" />
                 </button>
               ))}
             </div>
