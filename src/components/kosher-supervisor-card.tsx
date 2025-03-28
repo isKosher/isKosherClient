@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Phone, ChevronLeft, ChevronRight, Award } from "lucide-react";
+import { Phone, ChevronLeft, ChevronRight, Award, Mail } from "lucide-react";
 import { KosherSupervisor } from "@/types";
+import { AVATAR_SUPERVISOR_URL } from "@/lib/constants";
 
 type KosherSupervisorsCardProps = {
   supervisors: KosherSupervisor[];
@@ -50,10 +51,7 @@ const KosherSupervisorsCard: React.FC<KosherSupervisorsCardProps> = ({ superviso
 
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 bg-blue-100 text-[#1A365D]">
-            <AvatarImage
-              src="https://lh3.googleusercontent.com/d/1mBGdKNPdaelz6mgm6SBFUXzefP16mrWn=w1000"
-              alt={"supervisor"}
-            />
+            <AvatarImage src={AVATAR_SUPERVISOR_URL} alt={"supervisor"} />
             <AvatarFallback>{currentSuper.name?.charAt(0) || <Award />}</AvatarFallback>
           </Avatar>
           <div className="flex-grow">
@@ -65,9 +63,15 @@ const KosherSupervisorsCard: React.FC<KosherSupervisorsCardProps> = ({ superviso
               variant="ghost"
               size="icon"
               className="text-[#1A365D]"
-              onClick={() => window.open(`tel:${currentSuper.contact_info}`, "_self")}
+              onClick={() => {
+                if (currentSuper.contact_info.includes("@")) {
+                  window.open(`mailto:${currentSuper.contact_info}`, "_self");
+                } else {
+                  window.open(`tel:${currentSuper.contact_info}`, "_self");
+                }
+              }}
             >
-              <Phone size={18} />
+              {currentSuper.contact_info.includes("@") ? <Mail size={18} /> : <Phone size={18} />}
             </Button>
           )}
         </div>

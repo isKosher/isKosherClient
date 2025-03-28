@@ -46,8 +46,7 @@ const KosherCertificatesCard: React.FC<KosherCertificatesCardProps> = ({ certifi
       <div className="p-6 space-y-4">
         {/* Certificate Section */}
         <div className="pt-3">
-          <h4 className="text-sm font-semibold text-gray-500 mb-2">תעודת כשרות</h4>
-
+          <h4 className="text-sm font-semibold text-gray-500 mb-2">כשרויות</h4>
           <div className="flex justify-start gap-2 my-1">
             {kosher_types.map((type, idx) => (
               <div
@@ -69,6 +68,7 @@ const KosherCertificatesCard: React.FC<KosherCertificatesCardProps> = ({ certifi
             ))}
           </div>
           <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-gray-500 mb-2">תעודת כשרות</h4>
             {certificates.length > 1 && (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={handlePrevCertificate}>
