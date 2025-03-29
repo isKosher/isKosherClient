@@ -3,7 +3,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import { AspectRatio } from "./ui/aspect-ratio";
-
+//TODO: refactor using in new details
 export default function Map(props: any) {
   const { position, zoom } = props;
 

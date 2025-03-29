@@ -10,14 +10,7 @@ interface StepIndicatorProps {
   wasAttempted: boolean;
 }
 
-export function StepIndicator({
-  currentStep,
-  stepIndex,
-  title,
-  isValid,
-  isActive,
-  wasAttempted,
-}: StepIndicatorProps) {
+export function StepIndicator({ currentStep, stepIndex, title, isValid, isActive, wasAttempted }: StepIndicatorProps) {
   return (
     <div className="flex flex-col items-center">
       <div
@@ -33,10 +26,8 @@ export function StepIndicator({
       >
         {isValid ? <Check className="h-4 w-4" /> : <span>{stepIndex + 1}</span>}
       </div>
-      <span className="mt-2 text-sm hidden md:block">{title}</span>
-      {!isValid && isActive && wasAttempted && (
-        <AlertCircle className="h-4 w-4 text-red-500 mt-1" />
-      )}
+      <span className="mt-2 text-sm hidden sm:block">{title}</span>
+      {!isValid && isActive && wasAttempted && <AlertCircle className="h-4 w-4 text-red-500 mt-1" />}
     </div>
   );
 }

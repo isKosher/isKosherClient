@@ -7,8 +7,8 @@ import { KosherBusinessFormWrapper } from "./kosher-business-form-wrapper";
 
 export default function CreateBusinessPage() {
   return (
-    <div className="h-screen flex justify-center items-center">
-      <div className="container mx-auto p-4 " dir="rtl">
+    <div className="h-screen flex justify-center">
+      <div className="container mx-auto p-4 mt-16 " dir="rtl">
         <Suspense
           fallback={
             <div className="flex items-center justify-center min-h-[400px]">

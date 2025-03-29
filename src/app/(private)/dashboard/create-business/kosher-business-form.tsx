@@ -33,11 +33,10 @@ const stepValidationFields = {
     "supervisor.name",
     "supervisor.contact_info",
     "supervisor.authority",
-    //TODO: Add link for kosher_certificate
-    //"kosher_certificate.certificate",
+    "kosher_certificate.certificate",
     "kosher_certificate.expiration_date",
   ],
-  4: [], // Summary step doesn't need validation
+  4: [],
 };
 
 const defaultValues: FormData = {
