@@ -14,12 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SquareGallery from "@/components/squareGallery";
 import KosherSupervisorsCard from "@/components/kosher-supervisor-card";
 import KosherCertificatesCard from "@/components/kosher-certifcate-card";
+import NearbyBusinesses from "@/components/get-nearby-businesses";
 
 type BusinessDetailsProps = {
   business: BusinessDetailsResponse;
   coordinates: LatLngExpression;
 };
-const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business: business, coordinates }) => {
+const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates }) => {
   const Map = useMemo(
     () =>
       dynamic(() => import("@/components/map"), {
@@ -224,27 +225,12 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business: business, c
               {/* Recommendations Section */}
               <div className="bg-white rounded-2xl shadow-md p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#1A365D]">מסעדות כשרות נוספות באזור</h3>
+                  <h3 className="text-xl font-bold text-[#1A365D]">מסעדות נוספות באזור</h3>
                   <Button variant="ghost" className="text-[#1A365D] gap-1">
                     הצג הכל <ChevronLeft size={16} />
                   </Button>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* TODO: Call func that get 5 business neardly */}
-                  {[1, 2].map((_, idx) => (
-                    <motion.div
-                      key={idx}
-                      whileHover={{ y: -5 }}
-                      className="bg-blue-50 rounded-xl p-4 flex items-center gap-4 transition-all cursor-pointer"
-                    >
-                      <div>
-                        <h4 className="font-medium text-[#1A365D]">מסעדה כשרה {idx + 1}</h4>
-                        <p className="text-sm text-gray-600">500 מ׳ ממיקומך</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                <NearbyBusinesses coordinates={coordinates} />
               </div>
             </motion.div>
           </div>
