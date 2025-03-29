@@ -28,8 +28,9 @@ export default function SquareGallery({ images }: SquareGalleryProps) {
               <Image
                 src={images[currentIndex].src || "/placeholder.svg"}
                 alt={images[currentIndex].alt}
-                layout="fill"
-                objectFit="cover"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                style={{ objectFit: "cover" }}
                 className="rounded-t-lg"
               />
             </div>
@@ -45,7 +46,13 @@ export default function SquareGallery({ images }: SquareGalleryProps) {
                   )}
                   onClick={() => setCurrentIndex(index)}
                 >
-                  <Image src={image.src || "/placeholder.svg"} alt={image.alt} layout="fill" objectFit="cover" />
+                  <Image
+                    src={image.src || "/placeholder.svg"}
+                    alt={image.alt}
+                    fill
+                    sizes="100px"
+                    style={{ objectFit: "cover" }}
+                  />
                 </button>
               ))}
             </div>
