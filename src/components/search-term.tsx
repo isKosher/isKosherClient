@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, SearchIcon, XCircle } from "lucide-react";
 import type { BusinessSearchResult } from "@/types";
-import { getSearchTrem } from "@/app/actions/getRestaurantAction";
+import { getSearchTerm } from "@/app/actions/getRestaurantAction";
 import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,7 +57,7 @@ export default function SearchComponent() {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const data = await getSearchTrem(searchTerm);
+        const data = await getSearchTerm(searchTerm);
 
         const sortedResults = data
           .filter((business: BusinessSearchResult) => business.match_score != null && !isNaN(business.match_score))

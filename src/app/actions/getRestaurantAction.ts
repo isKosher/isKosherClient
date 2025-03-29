@@ -1,9 +1,18 @@
 "use server";
 
-import { BusinessSearchResult, BusinessPreview, PageResponse } from "@/types";
+import { BusinessSearchResult, BusinessPreview, PageResponse, BusinessDetailsResponse } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 
 const DEFAULT_SIZE: number = 12;
+export async function getRestaurant(id: string): Promise<BusinessDetailsResponse> {
+  const res = await serverApi.get<BusinessDetailsResponse>(`/discover/${id}/details`);
+
+  if (!res.data) {
+    throw new Error("Failed to fetch restaurant");
+  }
+
+  return res.data;
+}
 
 //TODO: Add useing in cache for the data
 export async function getRestaurantsAction(page: Number = 1): Promise<BusinessPreview[]> {
@@ -22,7 +31,7 @@ export async function getRestaurantsAction(page: Number = 1): Promise<BusinessPr
   }
 }
 
-export async function getSearchTrem(text: string): Promise<BusinessSearchResult[]> {
+export async function getSearchTerm(text: string): Promise<BusinessSearchResult[]> {
   try {
     const response = await serverApi.get<BusinessSearchResult[]>(`discover/search?query=${text}`);
     return response.data;
@@ -55,11 +64,12 @@ export async function getNearbyBusinesses(
   lat: number,
   lon: number,
   radius: number,
-  page: number = 1
+  page: number = 1,
+  size: number = DEFAULT_SIZE
 ): Promise<PageResponse<BusinessPreview>> {
   try {
     const response = await serverApi.get<PageResponse<BusinessPreview>>(
-      `/discover/nearby?lat=${lat}&lon=${lon}&radius=${radius}&page=${page}&size=${DEFAULT_SIZE}`
+      `/discover/nearby?lat=${lat}&lon=${lon}&radius=${radius}&page=${page}&size=${size}`
     );
     return response.data;
   } catch (error) {
