@@ -5,11 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-
-interface GalleryImage {
-  src: string;
-  alt: string;
-}
+import { GalleryImage } from "@/types";
 
 interface SquareGalleryProps {
   images: GalleryImage[];
@@ -32,8 +28,9 @@ export default function SquareGallery({ images }: SquareGalleryProps) {
               <Image
                 src={images[currentIndex].src || "/placeholder.svg"}
                 alt={images[currentIndex].alt}
-                layout="fill"
-                objectFit="cover"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                style={{ objectFit: "cover" }}
                 className="rounded-t-lg"
               />
             </div>
@@ -52,8 +49,9 @@ export default function SquareGallery({ images }: SquareGalleryProps) {
                   <Image
                     src={image.src || "/placeholder.svg"}
                     alt={image.alt}
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    sizes="100px"
+                    style={{ objectFit: "cover" }}
                   />
                 </button>
               ))}

@@ -9,7 +9,7 @@ export default function Map(props: any) {
 
   return (
     <AspectRatio ratio={1}>
-      <MapContainer center={position} zoom={props.zoom} style={{ height: "100%", width: "100%" }}>
+      <MapContainer center={position} zoom={zoom} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

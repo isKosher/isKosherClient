@@ -146,3 +146,8 @@ export interface GovmapResult {
   Y: number;
   ObjectID: string;
 }
+
+export interface GalleryImage {
+  src: string;
+  alt: string;
+}
