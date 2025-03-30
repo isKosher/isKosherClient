@@ -18,6 +18,7 @@ export default function DashboardClient() {
       try {
         setIsLoading(true);
         const businesses = await getMyBusinessAction();
+        console.log("getMyBusinessAction", businesses);
         setUserBusinesses(businesses);
         setError(null);
       } catch (err) {

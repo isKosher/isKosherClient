@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { fetchLookupDataAction } from "@/services/lookup-service";
-import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/getRestaurantAction";
+import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/businessesAction";
 import type { BusinessPreview, Coordinates } from "@/types";
 import type { Option } from "@/lib/schemaCreateBusiness";
 import SearchComponent from "./search-term";

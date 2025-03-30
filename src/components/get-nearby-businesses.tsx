@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getNearbyBusinesses } from "@/app/actions/getRestaurantAction";
+import { getNearbyBusinesses } from "@/app/actions/businessesAction";
 import { LatLngExpression } from "leaflet";
 import { BusinessPreview } from "@/types";
 
@@ -42,7 +42,6 @@ const NearbyBusinesses: React.FC<NearbyBusinessesProps> = ({ coordinates }) => {
           SIZE_NEARBY_BUSINESS
         );
 
-        console.log("getNearbyBusinesses");
         setBusinesses(response.content.slice(1));
       } catch (error) {
         console.error("Error fetching nearby businesses:", error);

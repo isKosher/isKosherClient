@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { LatLngExpression } from "leaflet";
 import { BusinessDetailsResponse } from "@/types";
 import BusinessDetails from "./business-details";
-import { getRestaurant } from "@/app/actions/getRestaurantAction";
+import { getRestaurant } from "@/app/actions/businessesAction";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = await params;
