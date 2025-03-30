@@ -21,6 +21,23 @@ export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<
   instance.interceptors.response.use(
     (response) => response,
     (error) => {
+      if (
+        error.code === "ECONNABORTED" ||
+        error.message.includes("Network Error") ||
+        error.message.includes("ENOTFOUND")
+      ) {
+        console.error("נתקלנו בשגיאת תקשורת:", {
+          errorType: "שגיאת חיבור לשרת",
+          details: error.message,
+        });
+
+        // Create a custom network error
+        return Promise.reject({
+          isNetworkError: true,
+          message: "אין חיבור לאינטרנט או שהשרת אינו זמין כרגע",
+          originalError: error,
+        });
+      }
       console.error(`API Error: ${error.message}`, {
         url: error.config?.url,
         status: error.response?.status,

@@ -15,12 +15,14 @@ import SquareGallery from "@/components/squareGallery";
 import KosherSupervisorsCard from "@/components/kosher-supervisor-card";
 import KosherCertificatesCard from "@/components/kosher-certifcate-card";
 import NearbyBusinesses from "@/components/get-nearby-businesses";
+import { useRouter } from "next/navigation";
 
 type BusinessDetailsProps = {
   business: BusinessDetailsResponse;
   coordinates: LatLngExpression;
 };
 const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates }) => {
+  const router = useRouter();
   const Map = useMemo(
     () =>
       dynamic(() => import("@/components/map"), {
@@ -54,7 +56,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
     window.open(url, "_blank");
   };
 
-  const openNavigation = (app: "waze" | "google") => {
+  const openNavigation = (app: "waze" | "google" | "location") => {
     // Get coordinates
     const lat = Array.isArray(coordinates) ? coordinates[0] : coordinates.lat;
     const lng = Array.isArray(coordinates) ? coordinates[1] : coordinates.lng;
@@ -62,8 +64,10 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
     let url = "";
     if (app === "waze") {
       url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-    } else {
+    } else if (app === "google") {
       url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    } else {
+      router.push(`/?tab=location&lat=${lat}&lng=${lng}&radius=10`);
     }
 
     window.open(url, "_blank");
@@ -226,7 +230,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
               <div className="bg-white rounded-2xl shadow-md p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-[#1A365D]">מסעדות נוספות באזור</h3>
-                  <Button variant="ghost" className="text-[#1A365D] gap-1">
+                  <Button onClick={() => openNavigation("location")} variant="ghost" className="text-[#1A365D] gap-1">
                     הצג הכל <ChevronLeft size={16} />
                   </Button>
                 </div>
