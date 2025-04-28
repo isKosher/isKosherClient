@@ -12,6 +12,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   useEffect(() => {
+    //TODO: Check if user is logged in and set user state accordingly or delete user from local storage
     const storedUser = localStorage.getItem("user_data");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
