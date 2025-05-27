@@ -1,18 +1,15 @@
 "use client";
-
 import type React from "react";
-import { useState, useRef } from "react";
-import type { BusinessPreview, UserOwnedBusinessResponse } from "@/types";
-import { Plus, Trash2, Upload } from "lucide-react";
-
+import { useState } from "react";
+import type { UserOwnedBusinessResponse } from "@/types";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-// Import the API service
-import { updateBusinessPhotos, uploadFile } from "@/app/actions/dashboardAction";
+import { FileUploader } from "@/components/file-uploader";
+import { FileUploaderType, FolderGoogleType, type FileUploadResponse } from "@/types/file-upload";
+import { updateBusinessPhotos } from "@/app/actions/dashboardAction";
 
 type PhotosFormProps = {
   business: UserOwnedBusinessResponse;
@@ -32,15 +29,31 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
     url: "",
     photo_info: "",
   });
-
-  // Add loading and error states
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadedInfo, setUploadedInfo] = useState<FileUploadResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRemovePhoto = (id: string) => {
     setPhotos(photos.filter((photo) => photo.id !== id));
+  };
+
+  const handlePhotoFileChange = (file: File | null, uploadResponse?: FileUploadResponse) => {
+    setPhotoFile(file);
+
+    if (uploadResponse) {
+      setUploadedInfo(uploadResponse);
+      setNewPhoto({
+        ...newPhoto,
+        url: uploadResponse.web_view_link,
+      });
+    } else if (file === null) {
+      setUploadedInfo(null);
+      setNewPhoto({
+        ...newPhoto,
+        url: "",
+      });
+    }
   };
 
   const handleAddPhoto = () => {
@@ -48,34 +61,9 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
       const id = crypto.randomUUID();
       setPhotos([...photos, { ...newPhoto, id }]);
       setNewPhoto({ url: "", photo_info: "" });
+      setPhotoFile(null);
+      setUploadedInfo(null);
       setIsAdding(false);
-    }
-  };
-
-  // Add file upload handler
-  const handleFileUpload = async () => {
-    if (!fileInputRef.current?.files?.length) return;
-
-    try {
-      setIsUploading(true);
-      const file = fileInputRef.current.files[0];
-
-      const response = await uploadFile(file, "photo");
-
-      if (response.error) {
-        throw new Error(response.message);
-      }
-
-      // Update the new photo with the URL from the response
-      setNewPhoto({
-        ...newPhoto,
-        url: response.url,
-      });
-    } catch (err) {
-      console.error("Failed to upload photo:", err);
-      setError(err instanceof Error ? err.message : "שגיאה בהעלאת התמונה");
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -86,7 +74,6 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
       setIsLoading(true);
       setError(null);
 
-      // Update photos
       const response = await updateBusinessPhotos({
         businessId: business.business_id,
         photos: photos.map((photo) => ({
@@ -100,7 +87,6 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
         throw new Error(response.message);
       }
 
-      // Close the dialog on success with a message
       onClose(true, "התמונות עודכנו בהצלחה");
     } catch (err) {
       console.error("Failed to update photos:", err);
@@ -116,59 +102,32 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
         <div className="flex justify-between items-center mb-4">
           <Label className="text-[#1A365D] text-lg">תמונות העסק</Label>
           {!isAdding && (
-            <>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/jpeg,image/png,image/gif"
-                onChange={handleFileUpload}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-[#1A365D] border-sky-200"
-                onClick={() => setIsAdding(true)}
-              >
-                <Plus className="h-4 w-4 ml-1" /> הוסף תמונה
-              </Button>
-            </>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-[#1A365D] border-sky-200"
+              onClick={() => setIsAdding(true)}
+            >
+              <Plus className="h-4 w-4 ml-1" /> הוסף תמונה
+            </Button>
           )}
         </div>
 
         {isAdding && (
           <Card className="border-sky-200 mb-4">
             <CardContent className="p-4 space-y-3">
-              <div>
-                <Label className="text-[#1A365D]">קישור לתמונה</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    placeholder="הזן קישור לתמונה"
-                    className="border-sky-200 focus:border-sky-500"
-                    value={newPhoto.url}
-                    onChange={(e) => setNewPhoto({ ...newPhoto, url: e.target.value })}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="text-[#1A365D] border-sky-200"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A365D] border-t-transparent mr-1"></div>
-                        מעלה...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-1" /> העלה
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              <FileUploader
+                label="תמונת עסק"
+                value={photoFile}
+                onChange={handlePhotoFileChange}
+                uploaderType={FileUploaderType.IMAGE}
+                folderType={FolderGoogleType.BUSINESS_PHOTOS}
+                maxSizeMB={5}
+                direction="rtl"
+                uploadedInfo={uploadedInfo}
+              />
+
               <div>
                 <Label className="text-[#1A365D]">תיאור התמונה</Label>
                 <Textarea
@@ -183,12 +142,23 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setPhotoFile(null);
+                    setUploadedInfo(null);
+                    setNewPhoto({ url: "", photo_info: "" });
+                  }}
                   className="border-gray-300"
                 >
                   ביטול
                 </Button>
-                <Button type="button" size="sm" className="bg-[#1A365D] hover:bg-[#2D4A6D]" onClick={handleAddPhoto}>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-[#1A365D] hover:bg-[#2D4A6D]"
+                  onClick={handleAddPhoto}
+                  disabled={!newPhoto.url}
+                >
                   הוסף
                 </Button>
               </div>

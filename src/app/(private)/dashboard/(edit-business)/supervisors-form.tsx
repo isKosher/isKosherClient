@@ -1,23 +1,19 @@
 "use client";
-
 import type React from "react";
 import { useState } from "react";
-import type { BusinessPreview, UserOwnedBusinessResponse } from "@/types";
+import type { UserOwnedBusinessResponse } from "@/types";
 import { Plus, Trash2 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-// Import the API service
-import { updateBusinessSupervisors } from "@/app/actions/dashboardAction";
+import { updateBusinessSupervisor } from "@/app/actions/dashboardAction";
 
 type SupervisorsFormProps = {
   business: UserOwnedBusinessResponse;
   onClose: (refreshData?: boolean, message?: string) => void;
 };
-
+//TODO: use type from types.ts
 type Supervisor = {
   id: string;
   name: string;
@@ -33,8 +29,6 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
     contact_info: "",
   });
   const [isAdding, setIsAdding] = useState(false);
-
-  // Add loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,8 +52,7 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
       setIsLoading(true);
       setError(null);
 
-      // Update supervisors
-      const response = await updateBusinessSupervisors({
+      const response = await updateBusinessSupervisor({
         businessId: business.business_id,
         supervisors: supervisors.map((supervisor) => ({
           id: supervisor.id,
@@ -73,7 +66,6 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
         throw new Error(response.message);
       }
 
-      // Close the dialog on success with a message
       onClose(true, "פרטי המשגיחים עודכנו בהצלחה");
     } catch (err) {
       console.error("Failed to update supervisors:", err);

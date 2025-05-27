@@ -1,18 +1,14 @@
 "use client";
-
 import type React from "react";
 import { useState } from "react";
 import type { UserOwnedBusinessResponse } from "@/types";
 import { X, Plus } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-// Import the API service
 import { updateBusinessKosherTypes } from "@/app/actions/dashboardAction";
 
 type KosherTypesFormProps = {
@@ -26,8 +22,6 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
   const [foodItemTypes, setFoodItemTypes] = useState([...business.food_item_types]);
   const [newFoodType, setNewFoodType] = useState("");
   const [newFoodItemType, setNewFoodItemType] = useState("");
-
-  // Add loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +58,6 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
       setIsLoading(true);
       setError(null);
 
-      // Update kosher types
       const response = await updateBusinessKosherTypes({
         businessId: business.business_id,
         kosherTypes: kosherTypes.map((type) => type.id),
@@ -76,7 +69,6 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
         throw new Error(response.message);
       }
 
-      // Close the dialog on success with a message
       onClose(true, "פרטי הכשרות עודכנו בהצלחה");
     } catch (err) {
       console.error("Failed to update kosher types:", err);

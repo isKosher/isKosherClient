@@ -1,17 +1,15 @@
 "use client";
-
 import type React from "react";
-import { useState, useRef } from "react";
-import type { BusinessPreview, UserOwnedBusinessResponse } from "@/types";
-import { Plus, Trash2, Upload } from "lucide-react";
-
+import { useState } from "react";
+import type { UserOwnedBusinessResponse } from "@/types";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-// Import the API service
-import { updateBusinessCertificates, uploadFile } from "@/app/actions/dashboardAction";
+import { FileUploader } from "@/components/file-uploader";
+import { FileUploaderType, FolderGoogleType, type FileUploadResponse } from "@/types/file-upload";
+import { updateBusinessCertificates } from "@/app/actions/dashboardAction";
 
 type CertificatesFormProps = {
   business: UserOwnedBusinessResponse;
@@ -31,15 +29,31 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
     certificate: "",
     expiration_date: "",
   });
-
-  // Add loading and error states
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [uploadedInfo, setUploadedInfo] = useState<FileUploadResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRemoveCertificate = (id: string) => {
     setCertificates(certificates.filter((cert) => cert.id !== id));
+  };
+
+  const handleCertificateFileChange = (file: File | null, uploadResponse?: FileUploadResponse) => {
+    setCertificateFile(file);
+
+    if (uploadResponse) {
+      setUploadedInfo(uploadResponse);
+      setNewCertificate({
+        ...newCertificate,
+        certificate: uploadResponse.web_view_link,
+      });
+    } else if (file === null) {
+      setUploadedInfo(null);
+      setNewCertificate({
+        ...newCertificate,
+        certificate: "",
+      });
+    }
   };
 
   const handleAddCertificate = () => {
@@ -47,34 +61,9 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
       const id = crypto.randomUUID();
       setCertificates([...certificates, { ...newCertificate, id }]);
       setNewCertificate({ certificate: "", expiration_date: "" });
+      setCertificateFile(null);
+      setUploadedInfo(null);
       setIsAdding(false);
-    }
-  };
-
-  // Add file upload handler
-  const handleFileUpload = async () => {
-    if (!fileInputRef.current?.files?.length) return;
-
-    try {
-      setIsUploading(true);
-      const file = fileInputRef.current.files[0];
-
-      const response = await uploadFile(file, "certificate");
-
-      if (response.error) {
-        throw new Error(response.message);
-      }
-
-      // Update the new certificate with the URL from the response
-      setNewCertificate({
-        ...newCertificate,
-        certificate: response.url,
-      });
-    } catch (err) {
-      console.error("Failed to upload certificate:", err);
-      setError(err instanceof Error ? err.message : "שגיאה בהעלאת התעודה");
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -85,7 +74,6 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
       setIsLoading(true);
       setError(null);
 
-      // Update certificates
       const response = await updateBusinessCertificates({
         businessId: business.business_id,
         certificates: certificates.map((cert) => ({
@@ -99,7 +87,6 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
         throw new Error(response.message);
       }
 
-      // Close the dialog on success with a message
       onClose(true, "התעודות עודכנו בהצלחה");
     } catch (err) {
       console.error("Failed to update certificates:", err);
@@ -130,44 +117,17 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
         {isAdding && (
           <Card className="border-sky-200 mb-4">
             <CardContent className="p-4 space-y-3">
-              <div>
-                <Label className="text-[#1A365D]">קישור לתעודה</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    placeholder="הזן קישור לתעודה"
-                    className="border-sky-200 focus:border-sky-500"
-                    value={newCertificate.certificate}
-                    onChange={(e) => setNewCertificate({ ...newCertificate, certificate: e.target.value })}
-                  />
-                  {/* Update the upload button to trigger file input */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="text-[#1A365D] border-sky-200"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A365D] border-t-transparent mr-1"></div>
-                        מעלה...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-1" /> העלה
-                      </>
-                    )}
-                  </Button>
-                  {/* Add hidden file input */}
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/jpeg,image/png,application/pdf"
-                    onChange={handleFileUpload}
-                  />
-                </div>
-              </div>
+              <FileUploader
+                label="תעודת כשרות"
+                value={certificateFile}
+                onChange={handleCertificateFileChange}
+                uploaderType={FileUploaderType.DOCUMENT}
+                folderType={FolderGoogleType.CERTIFICATES}
+                maxSizeMB={10}
+                direction="rtl"
+                uploadedInfo={uploadedInfo}
+              />
+
               <div>
                 <Label className="text-[#1A365D]">תאריך תפוגה</Label>
                 <Input
@@ -182,7 +142,12 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setCertificateFile(null);
+                    setUploadedInfo(null);
+                    setNewCertificate({ certificate: "", expiration_date: "" });
+                  }}
                   className="border-gray-300"
                 >
                   ביטול
@@ -192,6 +157,7 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                   size="sm"
                   className="bg-[#1A365D] hover:bg-[#2D4A6D]"
                   onClick={handleAddCertificate}
+                  disabled={!newCertificate.certificate || !newCertificate.expiration_date}
                 >
                   הוסף
                 </Button>
@@ -235,7 +201,6 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
         </div>
       </div>
 
-      {/* Update the form buttons to show loading state and error */}
       <div className="flex flex-col space-y-2">
         {error && <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">{error}</div>}
         <div className="flex justify-start gap-2 pt-4">

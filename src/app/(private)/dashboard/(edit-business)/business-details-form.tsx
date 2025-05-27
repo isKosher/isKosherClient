@@ -2,16 +2,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import type { BusinessPreview, UserOwnedBusinessResponse } from "@/types";
-
+import type { UserOwnedBusinessResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-// Import the API service
-import { updateBusinessDetails, updateBusinessLocation } from "@/app/actions/dashboardAction";
 import { useState } from "react";
+import { getCoordinates } from "@/services/govmap-service";
+import { updateBusinessDetails, updateBusinessLocation } from "@/app/actions/dashboardAction";
 
 const formSchema = z.object({
   business_name: z.string().min(2, { message: "שם העסק חייב להכיל לפחות 2 תווים" }),
@@ -21,6 +19,7 @@ const formSchema = z.object({
   address: z.string().min(2, { message: "כתובת חייבת להכיל לפחות 2 תווים" }),
   street_number: z.number().min(1, { message: "מספר רחוב חייב להיות לפחות 1" }),
   city: z.string().min(2, { message: "עיר חייבת להכיל לפחות 2 תווים" }),
+  location_details: z.string().min(2, { message: "פרטי מיקום חייבים להכיל לפחות 2 תווים" }),
 });
 
 type BusinessDetailsFormProps = {
@@ -39,10 +38,10 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
       address: business.location.address,
       street_number: business.location.street_number,
       city: business.location.city,
+      location_details: business.location.location_details || "",
     },
   });
 
-  // Add loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +50,29 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
       setIsLoading(true);
       setError(null);
 
-      // First update business details
+      // Check if address changed to get new coordinates
+      const addressChanged =
+        values.address !== business.location.address ||
+        values.street_number !== business.location.street_number ||
+        values.city !== business.location.city;
+
+      let coordinates = {
+        latitude: business.location.latitude,
+        longitude: business.location.longitude,
+      };
+
+      if (addressChanged) {
+        // Get new coordinates if address changed
+        const newCoordinates = await getCoordinates(values.address, values.city, values.street_number);
+        if (newCoordinates?.longitude && newCoordinates?.latitude) {
+          coordinates = {
+            latitude: newCoordinates.latitude || business.location.latitude,
+            longitude: newCoordinates.longitude || business.location.longitude,
+          };
+        }
+      }
+
+      // Update business details
       const detailsResponse = await updateBusinessDetails({
         businessId: business.business_id,
         businessName: values.business_name,
@@ -61,22 +82,27 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
       });
 
       if (detailsResponse.error) {
-        throw new Error(detailsResponse.message);
+        // throw new Error(detailsResponse.message);
       }
 
-      // Then update location
+      // Update location
       const locationResponse = await updateBusinessLocation({
         businessId: business.business_id,
-        address: values.address,
-        street_number: values.street_number,
-        city: values.city,
+        location: {
+          streetNumber: values.street_number,
+          address: values.address,
+          city: values.city,
+          region: business.location.region,
+          longitude: coordinates.longitude,
+          latitude: coordinates.latitude,
+          locationDetails: values.location_details,
+        },
       });
 
       if (locationResponse.error) {
         throw new Error(locationResponse.message);
       }
 
-      // Close the dialog on success with a message
       onClose(true, "פרטי העסק עודכנו בהצלחה");
     } catch (err) {
       console.error("Failed to update business details:", err);
@@ -112,7 +138,7 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
               <FormControl>
                 <Textarea
                   placeholder="הזן תיאור של העסק"
-                  className="border-sky-200 focus:border-sky-500 min-h-[100px]"
+                  className="border-sky-200 focus:border-sky-500 min-h-[80px]"
                   {...field}
                 />
               </FormControl>
@@ -121,33 +147,35 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="business_number"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[#1A365D]">מספר טלפון</FormLabel>
-              <FormControl>
-                <Input placeholder="הזן מספר טלפון" className="border-sky-200 focus:border-sky-500" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="business_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1A365D]">מספר טלפון</FormLabel>
+                <FormControl>
+                  <Input placeholder="הזן מספר טלפון" className="border-sky-200 focus:border-sky-500" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="business_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[#1A365D]">סוג העסק</FormLabel>
-              <FormControl>
-                <Input placeholder="הזן את סוג העסק" className="border-sky-200 focus:border-sky-500" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="business_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1A365D]">סוג העסק</FormLabel>
+                <FormControl>
+                  <Input placeholder="הזן את סוג העסק" className="border-sky-200 focus:border-sky-500" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
@@ -199,7 +227,24 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
           )}
         />
 
-        {/* Update the form buttons to show loading state and error */}
+        <FormField
+          control={form.control}
+          name="location_details"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[#1A365D]">פרטי מיקום</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="הזן פרטי מיקום נוספים"
+                  className="border-sky-200 focus:border-sky-500 min-h-[60px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="flex flex-col space-y-2">
           {error && <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">{error}</div>}
           <div className="flex justify-start gap-2 pt-4">
