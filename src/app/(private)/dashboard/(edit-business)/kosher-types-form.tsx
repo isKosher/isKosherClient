@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { updateBusinessKosherTypes } from "@/app/actions/dashboardAction";
+import { updateBusinessDetails } from "@/app/actions/dashboardAction";
 
 type KosherTypesFormProps = {
   business: UserOwnedBusinessResponse;
@@ -58,16 +58,12 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
       setIsLoading(true);
       setError(null);
 
-      const response = await updateBusinessKosherTypes({
-        businessId: business.business_id,
-        kosherTypes: kosherTypes.map((type) => type.id),
-        foodTypes,
-        foodItemTypes,
+      await updateBusinessDetails({
+        business_id: business.business_id,
+        kosher_types: kosherTypes.map((type) => type.name),
+        food_types: foodTypes,
+        food_item_types: foodItemTypes,
       });
-
-      if (response.error) {
-        throw new Error(response.message);
-      }
 
       onClose(true, "פרטי הכשרות עודכנו בהצלחה");
     } catch (err) {
