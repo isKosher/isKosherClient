@@ -18,6 +18,7 @@ export const DOCUMENT_TYPES = [
 export enum FolderGoogleType {
   CERTIFICATES = "CERTIFICATES",
   SUPERVISORS = "SUPERVISORS",
+  BUSINESS_PHOTOS = "BUSINESS_PHOTOS",
 }
 
 export interface FileUploadResponse {

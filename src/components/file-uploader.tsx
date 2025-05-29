@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import type React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Upload, X, FileIcon, ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/app/actions/uploadsAction";
@@ -239,109 +238,110 @@ export function FileUploader({
   const isBusy = isUploading || isDeleting;
 
   return (
-    <FormItem className={className} dir={direction}>
-      <FormLabel>{label}</FormLabel>
-      <FormControl>
-        <div className="space-y-2">
-          {/* Upload area */}
-          {!preview && (
-            <div
-              className={cn(
-                "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
-                dragActive ? "border-sky-500 bg-sky-50" : "border-sky-200 hover:border-sky-300 hover:bg-sky-50/50",
-                isBusy ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+    <div className={className} dir={direction}>
+      {/* Label */}
+      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#1A365D]">
+        {label}
+      </label>
+
+      <div className="space-y-2 mt-2">
+        {/* Upload area */}
+        {!preview && (
+          <div
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+              dragActive ? "border-sky-500 bg-sky-50" : "border-sky-200 hover:border-sky-300 hover:bg-sky-50/50",
+              isBusy ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            )}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => {
+              if (!isBusy) {
+                inputRef.current?.click();
+              }
+            }}
+          >
+            <div className="flex flex-col items-center justify-center gap-2">
+              <Upload className="h-10 w-10 text-sky-500" />
+              <div className="text-sm text-gray-600">
+                <span className="font-medium text-sky-600">{messages.clickToUpload}</span> {messages.dragHere}
+              </div>
+              <p className="text-xs text-gray-500">{messages.fileTypes}</p>
+            </div>
+            <input
+              ref={inputRef}
+              type="file"
+              accept={getAcceptValue(uploaderType, accept)}
+              onChange={handleInputChange}
+              className="hidden"
+              disabled={isBusy}
+            />
+          </div>
+        )}
+
+        {/* File preview */}
+        {preview && (
+          <div className="relative border rounded-lg overflow-hidden">
+            <div className="aspect-video relative">
+              {preview === "document-preview" ? (
+                <div className="flex items-center justify-center h-full bg-gray-100">
+                  <div className="text-center">
+                    <div className="flex justify-center">{getFileIcon()}</div>
+                    <p className="mt-2 text-sm text-gray-600">{value?.name || "מסמך"}</p>
+                  </div>
+                </div>
+              ) : (
+                <Image src={preview} alt="Preview" fill className="object-contain" />
               )}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => {
-                if (!isBusy) {
-                  inputRef.current?.click();
-                }
-              }}
+            </div>
+
+            {/* Remove button */}
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 h-8 w-8 rounded-full"
+              onClick={handleRemove}
+              disabled={isBusy}
             >
-              <div className="flex flex-col items-center justify-center gap-2">
-                <Upload className="h-10 w-10 text-sky-500" />
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium text-sky-600">{messages.clickToUpload}</span> {messages.dragHere}
+              <X className="h-4 w-4" />
+            </Button>
+
+            {/* Status indicators */}
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className="bg-white p-3 rounded-md flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-sky-500" />
+                  <span className="text-sm font-medium">{messages.uploading}</span>
                 </div>
-                <p className="text-xs text-gray-500">{messages.fileTypes}</p>
               </div>
-              <input
-                ref={inputRef}
-                type="file"
-                accept={getAcceptValue(uploaderType, accept)}
-                onChange={handleInputChange}
-                className="hidden"
-                disabled={isBusy}
-              />
-            </div>
-          )}
+            )}
 
-          {/* File preview */}
-          {preview && (
-            <div className="relative border rounded-lg overflow-hidden">
-              <div className="aspect-video relative">
-                {preview === "document-preview" ? (
-                  <div className="flex items-center justify-center h-full bg-gray-100">
-                    <div className="text-center">
-                      <div className="flex justify-center">{getFileIcon()}</div>
-                      <p className="mt-2 text-sm text-gray-600">{value?.name || "מסמך"}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <Image src={preview} alt="Preview" fill className="object-contain" />
-                )}
+            {isDeleting && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className="bg-white p-3 rounded-md flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-red-500" />
+                  <span className="text-sm font-medium">{messages.deleting}</span>
+                </div>
               </div>
+            )}
 
-              {/* Remove button */}
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                onClick={handleRemove}
-                disabled={isBusy}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            {fileInfo && !isBusy && (
+              <div className="absolute bottom-2 left-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md">
+                {messages.uploadSuccess}
+              </div>
+            )}
+          </div>
+        )}
 
-              {/* Status indicators */}
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="bg-white p-3 rounded-md flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin text-sky-500" />
-                    <span className="text-sm font-medium">{messages.uploading}</span>
-                  </div>
-                </div>
-              )}
+        {/* Error message */}
+        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
-              {isDeleting && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="bg-white p-3 rounded-md flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin text-red-500" />
-                    <span className="text-sm font-medium">{messages.deleting}</span>
-                  </div>
-                </div>
-              )}
-
-              {fileInfo && !isBusy && (
-                <div className="absolute bottom-2 left-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md">
-                  {messages.uploadSuccess}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Error message */}
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-
-          {/* Hidden field for form submission */}
-          {fileInfo && <input type="hidden" name="uploadedFileId" value={fileInfo.id} />}
-        </div>
-      </FormControl>
-      <FormMessage />
-    </FormItem>
+        {/* Hidden field for form submission */}
+        {fileInfo && <input type="hidden" name="uploadedFileId" value={fileInfo.id} />}
+      </div>
+    </div>
   );
 }
