@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import { KosherCertificate, KosherType } from "@/types";
+import KosherCertificateViewer from "./Kosher-certificate-viewer";
 
 type KosherCertificatesCardProps = {
   certificates: KosherCertificate[];
@@ -108,30 +109,7 @@ const KosherCertificatesCard: React.FC<KosherCertificatesCardProps> = ({ certifi
         </div>
 
         {/* Certificate Viewer */}
-        {currentCert.certificate && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="w-full bg-[#1A365D] hover:bg-[#0F2542] flex items-center justify-center gap-2">
-                  <span>צפה בתעודת הכשרות</span>
-                  <ChevronLeft size={16} />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogTitle className="text-center">תעודת כשרות</DialogTitle>
-                <div className="relative w-full h-auto overflow-hidden rounded-lg">
-                  <Image
-                    src={currentCert.certificate}
-                    alt="תעודת כשרות"
-                    width={400}
-                    height={600}
-                    className="object-contain w-full"
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+        {currentCert.certificate && <KosherCertificateViewer certificateUrl={currentCert.certificate} />}
       </div>
     </motion.div>
   );
