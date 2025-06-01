@@ -50,6 +50,23 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
       setIsLoading(true);
       setError(null);
 
+      const businessDetailsChanged =
+        values.business_name !== business.business_name ||
+        values.business_details !== business.business_details ||
+        values.business_number !== business.business_number ||
+        values.business_type !== business.business_type;
+
+      const locationChanged =
+        values.address !== business.location.address ||
+        values.street_number !== business.location.street_number ||
+        values.city !== business.location.city ||
+        values.location_details !== (business.location.location_details || "");
+
+      if (!businessDetailsChanged && !locationChanged) {
+        onClose(false, "לא נמצאו שינויים לעדכון");
+        return;
+      }
+
       // Check if address changed to get new coordinates
       const addressChanged =
         values.address !== business.location.address ||
@@ -64,6 +81,7 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
       if (addressChanged) {
         // Get new coordinates if address changed
         const newCoordinates = await getCoordinates(values.address, values.city, values.street_number);
+
         if (newCoordinates?.longitude && newCoordinates?.latitude) {
           coordinates = {
             latitude: newCoordinates.latitude || business.location.latitude,
@@ -72,38 +90,51 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
         }
       }
 
-      // Update business details
-      const detailsResponse = await updateBusinessDetails({
-        businessId: business.business_id,
-        businessName: values.business_name,
-        businessDetails: values.business_details,
-        businessPhone: values.business_number,
-        businessType: values.business_type,
-      });
+      const updatePromises = [];
 
-      if (detailsResponse.error) {
-        // throw new Error(detailsResponse.message);
+      if (businessDetailsChanged) {
+        updatePromises.push(
+          updateBusinessDetails({
+            business_id: business.business_id,
+            business_name: values.business_name,
+            business_details: values.business_details,
+            business_phone: values.business_number,
+            business_type: values.business_type,
+          })
+        );
       }
 
-      // Update location
-      const locationResponse = await updateBusinessLocation({
-        businessId: business.business_id,
-        location: {
-          streetNumber: values.street_number,
-          address: values.address,
-          city: values.city,
-          region: business.location.region,
-          longitude: coordinates.longitude,
-          latitude: coordinates.latitude,
-          locationDetails: values.location_details,
-        },
-      });
+      updatePromises.push(
+        updateBusinessLocation({
+          business_id: business.business_id,
+          location: {
+            street_number: values.street_number,
+            address: values.address,
+            city: values.city,
+            region: business.location.region,
+            longitude: coordinates.longitude,
+            latitude: coordinates.latitude,
+            location_details: values.location_details,
+          },
+        })
+      );
+      console.log(`Running ${updatePromises.length} update operations...`);
+      const results = await Promise.all(updatePromises);
 
-      if (locationResponse.error) {
-        throw new Error(locationResponse.message);
+      const failedUpdates = results.filter((result) => !result);
+      if (failedUpdates.length > 0) {
+        throw new Error("חלק מהעדכונים נכשלו");
       }
 
-      onClose(true, "פרטי העסק עודכנו בהצלחה");
+      let successMessage = "עודכן בהצלחה: ";
+      const updatedItems = [];
+
+      if (businessDetailsChanged) updatedItems.push("פרטי העסק");
+      if (locationChanged) updatedItems.push("מיקום העסק");
+
+      successMessage += updatedItems.join(" ו");
+
+      onClose(true, successMessage);
     } catch (err) {
       console.error("Failed to update business details:", err);
       setError(err instanceof Error ? err.message : "שגיאה בעדכון פרטי העסק");

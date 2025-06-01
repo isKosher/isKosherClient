@@ -22,6 +22,8 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
   const [foodItemTypes, setFoodItemTypes] = useState([...business.food_item_types]);
   const [newFoodType, setNewFoodType] = useState("");
   const [newFoodItemType, setNewFoodItemType] = useState("");
+  const [newKosherType, setNewKosherType] = useState("");
+  const [showAddKosher, setShowAddKosher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +51,24 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
       setFoodItemTypes([...foodItemTypes, newFoodItemType.trim()]);
       setNewFoodItemType("");
     }
+  };
+
+  const handleAddKosherType = () => {
+    if (newKosherType.trim()) {
+      const newKosher = {
+        id: `temp-${Date.now()}`,
+        name: newKosherType.trim(),
+        kosher_icon_url: null,
+      };
+      setKosherTypes([...kosherTypes, newKosher]);
+      setNewKosherType("");
+      setShowAddKosher(false);
+    }
+  };
+
+  const handleCancelAddKosher = () => {
+    setNewKosherType("");
+    setShowAddKosher(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,9 +125,58 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
             </Card>
           ))}
         </div>
-        <Button type="button" variant="outline" size="sm" className="mt-3 text-[#1A365D] border-sky-200">
-          <Plus className="h-4 w-4 ml-1" /> הוסף סוג כשרות
-        </Button>
+
+        {/* אזור הוספת כשרות חדשה */}
+        {showAddKosher ? (
+          <Card className="mt-3 border-sky-200 border-dashed">
+            <CardContent className="p-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="שם סוג כשרות"
+                  className="border-sky-200 focus:border-sky-500"
+                  value={newKosherType}
+                  onChange={(e) => setNewKosherType(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddKosherType();
+                    }
+                  }}
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-[#1A365D] border-sky-200"
+                  onClick={handleAddKosherType}
+                  disabled={!newKosherType.trim()}
+                >
+                  <Plus className="h-4 w-4 ml-1" /> הוסף
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500"
+                  onClick={handleCancelAddKosher}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3 text-[#1A365D] border-sky-200"
+            onClick={() => setShowAddKosher(true)}
+          >
+            <Plus className="h-4 w-4 ml-1" /> הוסף סוג כשרות
+          </Button>
+        )}
       </div>
 
       <Separator />

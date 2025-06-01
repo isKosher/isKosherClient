@@ -154,7 +154,6 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
           )}
         </div>
 
-        {/* טופס הוספת משגיח חדש */}
         {isAdding && (
           <Card className="border-sky-200 mb-4">
             <CardContent className="p-4 space-y-3">
@@ -217,13 +216,11 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
           </Card>
         )}
 
-        {/* רשימת המשגיחים */}
         <div className="space-y-3">
           {supervisors.map((supervisor) => (
             <Card key={supervisor.id} className="border-sky-200">
               <CardContent className="p-4">
                 {editingSupervisor?.id === supervisor.id ? (
-                  // מצב עריכה
                   <div className="space-y-3">
                     <div>
                       <Label className="text-[#1A365D]">שם המשגיח</Label>
@@ -294,7 +291,6 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
                     </div>
                   </div>
                 ) : (
-                  // מצב תצוגה
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-medium text-[#1A365D]">{supervisor.name}</h4>
@@ -337,10 +333,8 @@ export default function SupervisorsForm({ business, onClose }: SupervisorsFormPr
         </div>
       </div>
 
-      {/* הודעת שגיאה */}
       {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
 
-      {/* כפתור סגירה */}
       <div className="flex justify-start pt-4">
         <Button
           type="button"

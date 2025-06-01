@@ -8,8 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileUploader } from "@/components/file-uploader";
-import { FileUploaderType, FolderGoogleType, type FileUploadResponse } from "@/types/file-upload";
-import { updateBusinessCertificates } from "@/app/actions/dashboardAction";
+import { FileUploaderType, FolderType, type FileUploadResponse } from "@/types/file-upload";
+import { addBusinessCertificate, deleteBusinessCertificate } from "@/app/actions/dashboardAction";
+import KosherCertificateViewer from "@/components/Kosher-certificate-viewer";
 
 type CertificatesFormProps = {
   business: UserOwnedBusinessResponse;
@@ -31,11 +32,32 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
   });
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [uploadedInfo, setUploadedInfo] = useState<FileUploadResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState<{
+    adding: boolean;
+    deleting: string | null;
+  }>({
+    adding: false,
+    deleting: null,
+  });
   const [error, setError] = useState<string | null>(null);
 
-  const handleRemoveCertificate = (id: string) => {
-    setCertificates(certificates.filter((cert) => cert.id !== id));
+  const handleRemoveCertificate = async (id: string) => {
+    try {
+      setLoadingStates((prev) => ({ ...prev, deleting: id }));
+      setError(null);
+
+      await deleteBusinessCertificate({
+        business_id: business.business_id,
+        certificate_id: id,
+      });
+
+      setCertificates(certificates.filter((cert) => cert.id !== id));
+    } catch (err) {
+      console.error("Failed to delete certificate:", err);
+      setError(err instanceof Error ? err.message : "שגיאה במחיקת תעודה");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, deleting: null }));
+    }
   };
 
   const handleCertificateFileChange = (file: File | null, uploadResponse?: FileUploadResponse) => {
@@ -43,61 +65,62 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
 
     if (uploadResponse) {
       setUploadedInfo(uploadResponse);
-      setNewCertificate({
-        ...newCertificate,
+      setNewCertificate((prev) => ({
+        ...prev,
         certificate: uploadResponse.web_view_link,
-      });
+      }));
     } else if (file === null) {
       setUploadedInfo(null);
-      setNewCertificate({
-        ...newCertificate,
+      setNewCertificate((prev) => ({
+        ...prev,
         certificate: "",
-      });
+      }));
     }
   };
 
-  const handleAddCertificate = () => {
-    if (newCertificate.certificate && newCertificate.expiration_date) {
-      const id = crypto.randomUUID();
-      setCertificates([...certificates, { ...newCertificate, id }]);
+  const handleAddCertificate = async () => {
+    if (!newCertificate.certificate || !newCertificate.expiration_date) {
+      setError("יש למלא את כל השדות");
+      return;
+    }
+
+    try {
+      setLoadingStates((prev) => ({ ...prev, adding: true }));
+      setError(null);
+
+      const response = await addBusinessCertificate({
+        business_id: business.business_id,
+        certificate: newCertificate,
+      });
+
+      if (!response.id) {
+        throw new Error("Failed to get certificate ID from response");
+      }
+
+      const addedCertificate = { ...newCertificate, id: response.id };
+      setCertificates([...certificates, addedCertificate]);
       setNewCertificate({ certificate: "", expiration_date: "" });
       setCertificateFile(null);
       setUploadedInfo(null);
       setIsAdding(false);
+    } catch (err) {
+      console.error("Failed to add certificate:", err);
+      setError(err instanceof Error ? err.message : "שגיאה בהוספת תעודה");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, adding: false }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await updateBusinessCertificates({
-        businessId: business.business_id,
-        certificates: certificates.map((cert) => ({
-          id: cert.id,
-          certificate: cert.certificate,
-          expiration_date: cert.expiration_date,
-        })),
-      });
-
-      if (response.error) {
-        throw new Error(response.message);
-      }
-
-      onClose(true, "התעודות עודכנו בהצלחה");
-    } catch (err) {
-      console.error("Failed to update certificates:", err);
-      setError(err instanceof Error ? err.message : "שגיאה בעדכון התעודות");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleCancelAdd = () => {
+    setIsAdding(false);
+    setCertificateFile(null);
+    setUploadedInfo(null);
+    setNewCertificate({ certificate: "", expiration_date: "" });
+    setError(null);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir="rtl">
       <div>
         <div className="flex justify-between items-center mb-4">
           <Label className="text-[#1A365D] text-lg">תעודות כשרות</Label>
@@ -121,8 +144,8 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                 label="תעודת כשרות"
                 value={certificateFile}
                 onChange={handleCertificateFileChange}
-                uploaderType={FileUploaderType.DOCUMENT}
-                folderType={FolderGoogleType.CERTIFICATES}
+                uploaderType={FileUploaderType.ANY}
+                folderType={FolderType.CERTIFICATES}
                 maxSizeMB={10}
                 direction="rtl"
                 uploadedInfo={uploadedInfo}
@@ -142,13 +165,9 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setIsAdding(false);
-                    setCertificateFile(null);
-                    setUploadedInfo(null);
-                    setNewCertificate({ certificate: "", expiration_date: "" });
-                  }}
+                  onClick={handleCancelAdd}
                   className="border-gray-300"
+                  disabled={loadingStates.adding}
                 >
                   ביטול
                 </Button>
@@ -157,9 +176,16 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                   size="sm"
                   className="bg-[#1A365D] hover:bg-[#2D4A6D]"
                   onClick={handleAddCertificate}
-                  disabled={!newCertificate.certificate || !newCertificate.expiration_date}
+                  disabled={loadingStates.adding}
                 >
-                  הוסף
+                  {loadingStates.adding ? (
+                    <>
+                      <span className="ml-2">מוסיף...</span>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    </>
+                  ) : (
+                    "הוסף"
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -176,14 +202,7 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                     <p className="text-[#2D4A6D] text-sm">
                       בתוקף עד: {new Date(certificate.expiration_date).toLocaleDateString("he-IL")}
                     </p>
-                    <a
-                      href={certificate.certificate}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#1A365D] hover:text-sky-700 underline text-sm mt-1 inline-block"
-                    >
-                      צפה בתעודה
-                    </a>
+                    <KosherCertificateViewer certificateUrl={certificate.certificate} variant="link" />
                   </div>
                   <Button
                     type="button"
@@ -191,8 +210,13 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                     size="sm"
                     className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                     onClick={() => handleRemoveCertificate(certificate.id)}
+                    disabled={loadingStates.deleting === certificate.id || isAdding}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {loadingStates.deleting === certificate.id ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -201,30 +225,19 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
         </div>
       </div>
 
-      <div className="flex flex-col space-y-2">
-        {error && <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">{error}</div>}
-        <div className="flex justify-start gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onClose()}
-            className="border-gray-300"
-            disabled={isLoading}
-          >
-            ביטול
-          </Button>
-          <Button type="submit" className="bg-[#1A365D] hover:bg-[#2D4A6D]" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <span className="ml-2">שומר שינויים...</span>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              </>
-            ) : (
-              "שמור שינויים"
-            )}
-          </Button>
-        </div>
+      {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
+
+      <div className="flex justify-start pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onClose(true)}
+          className="border-gray-300"
+          disabled={Object.values(loadingStates).some(Boolean) || isAdding}
+        >
+          סגור
+        </Button>
       </div>
-    </form>
+    </div>
   );
 }
