@@ -9,8 +9,23 @@ declare global {
 }
 
 let isInitialized = false;
+
+function createHiddenMapElement(): void {
+  if (document.getElementById("hidden-map")) return;
+
+  const hiddenMapDiv = document.createElement("div");
+  hiddenMapDiv.id = "hidden-map";
+  hiddenMapDiv.style.display = "none";
+  hiddenMapDiv.style.width = "1px";
+  hiddenMapDiv.style.height = "1px";
+  hiddenMapDiv.style.position = "absolute";
+  hiddenMapDiv.style.left = "-9999px";
+  document.body.appendChild(hiddenMapDiv);
+}
+
 export async function initGovmap(): Promise<boolean> {
   if (isInitialized) return true;
+
   try {
     await new Promise<void>((resolve, reject) => {
       const jqueryScript = document.createElement("script");
@@ -19,6 +34,8 @@ export async function initGovmap(): Promise<boolean> {
         const govmapScript = document.createElement("script");
         govmapScript.src = "https://www.govmap.gov.il/govmap/api/govmap.api.js";
         govmapScript.onload = () => {
+          createHiddenMapElement();
+
           window.govmap.createMap("hidden-map", {
             token: process.env.NEXT_PUBLIC_GOVMAP_API_TOKEN_KEY,
             layers: [],
@@ -44,6 +61,7 @@ export async function initGovmap(): Promise<boolean> {
     return false;
   }
 }
+
 export async function searchCities(keyword: string): Promise<string[]> {
   if (!isInitialized) {
     await initGovmap();
@@ -55,7 +73,7 @@ export async function searchCities(keyword: string): Promise<string[]> {
     });
     if (!response?.data) {
       return [];
-    } // Extract unique city names
+    }
     const cities = new Set<string>();
     response.data.forEach((result: GovmapResult) => {
       const parts = result.ResultLable.split(",");

@@ -53,6 +53,79 @@ export interface BusinessDetailsResponse {
   kosher_certificates: KosherCertificate[];
 }
 
+export type UserOwnedBusinessResponse = {
+  business_id: string;
+  business_name: string;
+  business_details: string;
+  business_rating: number | null;
+  business_number: string;
+  kosher_types: {
+    id: string;
+    name: string;
+    kosher_icon_url: string | null;
+  }[];
+  business_type: string;
+  location: LocationDto;
+  supervisors: KosherSupervisor[];
+  certificates: {
+    id: string;
+    certificate: string;
+    expiration_date: string;
+  }[];
+  food_types: string[];
+  food_item_types: string[];
+  business_photos: {
+    id: string;
+    url: string;
+    photo_info: string | null;
+  }[];
+};
+
+// Server request types
+export type LocationDto = {
+  street_number: number;
+  address: string;
+  city: string;
+  region?: string;
+  longitude?: number;
+  latitude?: number;
+  location_details: string;
+};
+
+export type KosherCertificateDto = {
+  id?: string;
+  certificate: string;
+  expiration_date: string;
+};
+
+export type KosherSupervisorDto = {
+  id?: string;
+  name: string;
+  contact_info: string;
+  authority: string;
+};
+
+export type BusinessPhotoDto = {
+  id?: string;
+  url: string;
+  photo_info?: string;
+};
+
+export type BusinessCreateRequest = {
+  businessName: string;
+  businessPhone: string;
+  businessDetails: string;
+  businessRating?: number;
+  location: LocationDto;
+  kosherTypes: string[];
+  businessTypeName: string;
+  foodTypes: string[];
+  foodItemTypes: string[];
+  businessPhotos?: BusinessPhotoDto[];
+  supervisor: KosherSupervisorDto;
+  kosherCertificate: KosherCertificateDto;
+};
+
 export type BusinessSearchResult = {
   business_id: string;
   business_name: string;

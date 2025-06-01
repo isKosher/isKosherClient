@@ -6,10 +6,16 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Upload, X, FileIcon, ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadImage, deleteImage } from "@/app/actions/uploadsAction";
+import { uploadFile, deleteFile } from "@/app/actions/uploadsAction";
 import { UPLOAD_COOLDOWN, UPLOAD_DELAY } from "@/lib/constants";
-import { FileUploaderProps, FileUploaderType } from "@/types/file-upload";
-import { generateFileMessages, getAcceptValue, isValidFileType } from "@/data/file-uploader-data";
+import {
+  FileUploaderProps,
+  FileUploaderType,
+  getAcceptValue,
+  isValidFileType,
+  StorageProvider,
+} from "@/types/file-upload";
+import { generateFileMessages } from "@/data/file-uploader-data";
 
 export function FileUploader({
   label,
@@ -23,6 +29,7 @@ export function FileUploader({
   uploaderType = FileUploaderType.ANY,
   direction = "rtl",
   uploadedInfo = null,
+  provider = StorageProvider.GOOGLE_DRIVE,
 }: FileUploaderProps) {
   // State variables
   const [dragActive, setDragActive] = useState(false);
@@ -42,10 +49,8 @@ export function FileUploader({
   useEffect(() => {
     if (uploadedInfo && uploadedInfo.web_view_link && !preview) {
       if (uploaderType === FileUploaderType.IMAGE) {
-        // For images, set the web view link as the preview
         setPreview(uploadedInfo.web_view_link);
       } else {
-        // For non-images, use document-preview
         setPreview("document-preview");
       }
       setFileInfo(uploadedInfo);
@@ -58,92 +63,73 @@ export function FileUploader({
       if (uploadTimeout) {
         clearTimeout(uploadTimeout);
       }
-      // Only revoke URLs that we created with createObjectURL (not the web_view_link URLs)
       if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
         URL.revokeObjectURL(preview);
       }
     };
   }, [uploadTimeout, preview]);
 
-  // Helper function to get file icon
   const getFileIcon = () => {
-    if (value?.type.startsWith("image/")) {
+    if (value?.type?.startsWith("image/")) {
       return <ImageIcon className="h-12 w-12 text-sky-500" />;
     }
     return <FileIcon className="h-12 w-12 text-sky-500" />;
   };
 
-  // Handle file selection
   const handleFileChange = (file: File | null) => {
-    // Clear any existing timeout
     if (uploadTimeout) {
       clearTimeout(uploadTimeout);
       setUploadTimeout(null);
     }
-
     setError(null);
 
     if (!file) {
       setPreview(null);
       return;
     }
-
-    // Validate file type
     if (!isValidFileType(file, uploaderType)) {
       setError(messages.invalidFileType);
       return;
     }
-
-    // Validate file size
     if (file.size > maxSizeMB * 1024 * 1024) {
       setError(messages.fileTooLarge);
       return;
     }
-
-    // Check upload cooldown
     const now = Date.now();
     if (now - lastUploadTime < UPLOAD_COOLDOWN) {
       setError(messages.waitBeforeNextUpload(Math.ceil((UPLOAD_COOLDOWN - (now - lastUploadTime)) / 1000)));
       return;
     }
-
-    // Set preview based on file type
     if (file.type.startsWith("image/")) {
       const fileUrl = URL.createObjectURL(file);
       setPreview(fileUrl);
     } else {
-      setPreview("document-preview"); // Special value for non-image files
+      setPreview("document-preview");
     }
-
-    // Check if we need to delete existing file first
     if (fileInfo && !isDeleting) {
       setError(messages.deleteExistingFirst);
-      // Only revoke URLs that we created with createObjectURL
       if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
         URL.revokeObjectURL(preview);
       }
       setPreview(null);
       return;
     }
-
-    // Handle upload (auto or manual)
     if (autoUpload) {
       const timeout = setTimeout(() => {
         setLastUploadTime(Date.now());
         handleUpload(file);
       }, UPLOAD_DELAY);
-
       setUploadTimeout(timeout);
     } else {
       onChange(file);
     }
   };
 
-  // Upload file to server
+  // Upload file to server, now with provider
   const handleUpload = async (file: File) => {
     try {
       setIsUploading(true);
-      const uploadResult = await uploadImage(file, folderType);
+      const uploadResult = await uploadFile(file, folderType, provider);
       setFileInfo(uploadResult);
       onChange(file, uploadResult);
     } catch (error) {
@@ -155,13 +141,12 @@ export function FileUploader({
     }
   };
 
-  // Delete file from server
+  // Delete file from server, now with provider
   const deleteFileFromServer = async (fileId: string) => {
     if (!fileId) return false;
-
     try {
       setIsDeleting(true);
-      await deleteImage(fileId);
+      await deleteFile(fileId, folderType, provider);
       return true;
     } catch (error) {
       console.error("Delete error:", error);
@@ -177,75 +162,59 @@ export function FileUploader({
     const file = e.target.files?.[0] || null;
     handleFileChange(file);
   };
-
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
     } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   };
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
     if (isUploading || isDeleting) {
       return;
     }
-
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileChange(e.dataTransfer.files[0]);
     }
   };
-
   const handleRemove = async () => {
     if (isDeleting || isUploading) {
       return;
     }
-
     if (uploadTimeout) {
       clearTimeout(uploadTimeout);
       setUploadTimeout(null);
     }
-
     if (fileInfo?.id) {
       const success = await deleteFileFromServer(fileInfo.id);
       if (!success) {
         return;
       }
     }
-
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-
-    // Only revoke URLs that we created with createObjectURL
     if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
       URL.revokeObjectURL(preview);
     }
-
     setPreview(null);
     setFileInfo(null);
     onChange(null);
   };
 
-  // Determine if component is in a busy state
   const isBusy = isUploading || isDeleting;
 
   return (
     <div className={className} dir={direction}>
-      {/* Label */}
       <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#1A365D]">
         {label}
       </label>
-
       <div className="space-y-2 mt-2">
-        {/* Upload area */}
         {!preview && (
           <div
             className={cn(
@@ -280,8 +249,6 @@ export function FileUploader({
             />
           </div>
         )}
-
-        {/* File preview */}
         {preview && (
           <div className="relative border rounded-lg overflow-hidden">
             <div className="aspect-video relative">
@@ -296,8 +263,6 @@ export function FileUploader({
                 <Image src={preview} alt="Preview" fill className="object-contain" />
               )}
             </div>
-
-            {/* Remove button */}
             <Button
               type="button"
               variant="destructive"
@@ -308,8 +273,6 @@ export function FileUploader({
             >
               <X className="h-4 w-4" />
             </Button>
-
-            {/* Status indicators */}
             {isUploading && (
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 <div className="bg-white p-3 rounded-md flex items-center gap-2">
@@ -318,7 +281,6 @@ export function FileUploader({
                 </div>
               </div>
             )}
-
             {isDeleting && (
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 <div className="bg-white p-3 rounded-md flex items-center gap-2">
@@ -327,7 +289,6 @@ export function FileUploader({
                 </div>
               </div>
             )}
-
             {fileInfo && !isBusy && (
               <div className="absolute bottom-2 left-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md">
                 {messages.uploadSuccess}
@@ -335,11 +296,7 @@ export function FileUploader({
             )}
           </div>
         )}
-
-        {/* Error message */}
         {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-
-        {/* Hidden field for form submission */}
         {fileInfo && <input type="hidden" name="uploadedFileId" value={fileInfo.id} />}
       </div>
     </div>

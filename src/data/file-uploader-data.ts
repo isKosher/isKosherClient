@@ -1,4 +1,4 @@
-import { DOCUMENT_TYPES, FileUploaderType, FileUploadMessages } from "@/types/file-upload";
+import { FileUploaderType, FileUploadMessages } from "@/types/file-upload";
 
 export function generateFileMessages(
   uploaderType: FileUploaderType,
@@ -48,32 +48,4 @@ export function getInvalidFileTypeMessage(uploaderType: FileUploaderType, isRTL:
     default:
       return isRTL ? "סוג קובץ לא תקין" : "Invalid file type";
   }
-}
-
-export function getAcceptValue(uploaderType: FileUploaderType, accept?: string): string {
-  if (accept) return accept;
-
-  switch (uploaderType) {
-    case FileUploaderType.IMAGE:
-      return "image/*";
-    case FileUploaderType.DOCUMENT:
-      return ".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx";
-    case FileUploaderType.ANY:
-    default:
-      return "*/*";
-  }
-}
-
-export function isValidFileType(file: File, uploaderType: FileUploaderType): boolean {
-  if (uploaderType === FileUploaderType.ANY) return true;
-
-  if (uploaderType === FileUploaderType.IMAGE) {
-    return file.type.startsWith("image/");
-  }
-
-  if (uploaderType === FileUploaderType.DOCUMENT) {
-    return DOCUMENT_TYPES.includes(file.type);
-  }
-
-  return false;
 }

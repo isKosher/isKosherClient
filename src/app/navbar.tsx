@@ -90,14 +90,6 @@ export default function Navbar() {
               </div>
 
               <SheetClose asChild>
-                <Link href="/dashboard/create-business">
-                  <Button className="w-full mt-4" variant="outline">
-                    הוסף עסק כשר
-                  </Button>
-                </Link>
-              </SheetClose>
-
-              <SheetClose asChild>
                 <Button className="w-full mt-4" variant="outline" onClick={() => logout()}>
                   להתנתק
                 </Button>

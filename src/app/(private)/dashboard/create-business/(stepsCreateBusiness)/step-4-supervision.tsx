@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { FormData, isDateValid } from "@/lib/schemaCreateBusiness";
 import { useState, useEffect } from "react";
 import { FileUploader } from "@/components/file-uploader";
-import { FileUploaderType, FileUploadResponse, FolderGoogleType } from "@/types/file-upload";
+import { FileUploaderType, FileUploadResponse, FolderType } from "@/types/file-upload";
 //TODO: preview image after back step (change url of google drive...)
 export function Step4Supervision() {
   const { control, watch, setValue } = useFormContext<FormData>();
@@ -31,6 +31,9 @@ export function Step4Supervision() {
         setUploadedInfo({
           id: certificateMetadata,
           web_view_link: certificateUrl,
+          fileName: "",
+          fileType: "",
+          fileSize: 0,
         });
       } catch (error) {
         console.error("Failed to parse certificate file ID:", error);
@@ -123,7 +126,7 @@ export function Step4Supervision() {
             value={certificateFile}
             uploaderType={FileUploaderType.IMAGE}
             onChange={handleCertificateChange}
-            folderType={FolderGoogleType.CERTIFICATES}
+            folderType={FolderType.CERTIFICATES}
             className="w-full"
             // Pass the uploadedInfo to the FileUploader so it can show the preview
             // and properly handle deletion of existing file
