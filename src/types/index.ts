@@ -179,6 +179,12 @@ export interface LoginResponse {
   error?: string;
 }
 
+export interface Option {
+  id: string;
+  name: string;
+  isCustom?: boolean;
+}
+
 export interface ServerPayload {
   business_name: string;
   business_phone: string;
