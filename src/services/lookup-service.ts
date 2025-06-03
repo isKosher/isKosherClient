@@ -8,14 +8,14 @@ interface LookupData {
   kosher_types: Array<{ id: string; name: string; kosher_icon_url: string }>;
   food_item_types: Array<{ id: string; name: string }>;
 }
-//TODO: call four times why?
+
 export async function fetchLookupDataAction(): Promise<LookupData> {
   try {
     const response = await serverApi.get<LookupData>("lookup");
+    console.log("Lookup data fetched successfully");
     return response.data;
   } catch (error) {
     console.error("Error fetching lookup data:", error);
-    // Return empty arrays as fallback
     return {
       food_types: [],
       business_types: [],

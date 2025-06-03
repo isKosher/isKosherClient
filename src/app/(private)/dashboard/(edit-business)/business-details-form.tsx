@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { getCoordinates } from "@/services/govmap-service";
 import { updateBusinessDetails, updateBusinessLocation } from "@/app/actions/dashboardAction";
+import { useLookupData } from "@/contexts/lookup-context";
+import SelectWithAdd from "@/components/select-with-add";
 
 const formSchema = z.object({
   business_name: z.string().min(2, { message: "שם העסק חייב להכיל לפחות 2 תווים" }),
@@ -28,6 +30,8 @@ type BusinessDetailsFormProps = {
 };
 
 export default function BusinessDetailsForm({ business, onClose }: BusinessDetailsFormProps) {
+  const { businessTypes, addCustomBusinessType, isLoading: lookupLoading } = useLookupData();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,6 +48,11 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleAddCustomBusinessType = (name: string) => {
+    addCustomBusinessType(name);
+    form.setValue("business_type", name);
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -200,7 +209,18 @@ export default function BusinessDetailsForm({ business, onClose }: BusinessDetai
               <FormItem>
                 <FormLabel className="text-[#1A365D]">סוג העסק</FormLabel>
                 <FormControl>
-                  <Input placeholder="הזן את סוג העסק" className="border-sky-200 focus:border-sky-500" {...field} />
+                  {lookupLoading ? (
+                    <div className="p-2 text-center text-gray-500">טוען סוגי עסקים...</div>
+                  ) : (
+                    <SelectWithAdd
+                      options={businessTypes}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onAddCustom={handleAddCustomBusinessType}
+                      placeholder="בחר או הוסף סוג עסק"
+                      allowCustom={true}
+                    />
+                  )}
                 </FormControl>
                 <FormMessage />
               </FormItem>

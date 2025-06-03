@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { fetchLookupDataAction } from "@/services/lookup-service";
 import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/businessesAction";
 import type { BusinessPreview, Coordinates } from "@/types";
-import type { Option } from "@/lib/schemaCreateBusiness";
 import SearchComponent from "./search-term";
 import CityFilter from "@/app/cityFilter";
 import FilterDropdown from "@/app/filterDropdown";
 import LoadingPage from "@/app/loading";
 import ResultsList from "./results-list";
 import TabButton from "./tab-button";
+import { useLookupData } from "@/contexts/lookup-context";
 
 // TODO: Remove foodTypes from here
 const foodTypes = ["בשרי", "חלבי", "פרווה"];
@@ -24,15 +24,23 @@ const foodTypes = ["בשרי", "חלבי", "פרווה"];
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  //TODO: replace to enum
+
+  // Use the lookup context
+  const {
+    businessTypes,
+    kosherTypes,
+    foodItems,
+    isLoading: contextLoading,
+    isInitialized: dataInitialized,
+    error: contextError,
+  } = useLookupData();
+
+  // Component state
   const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">("text");
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<BusinessPreview[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedFoodType, setSelectedFoodType] = useState<string[]>([]);
-  const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
-  const [kosherTypes, setKosherTypes] = useState<Option[]>([]);
-  const [foodItems, setFoodItems] = useState<Option[]>([]);
   const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
   const [selectedKosherTypes, setSelectedKosherTypes] = useState<string[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<string[]>([]);
@@ -45,10 +53,18 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const { ref, inView } = useInView();
-  const [dataInitialized, setDataInitialized] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [searchRadius, setSearchRadius] = useState(15);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+
+  // Handle context errors
+  useEffect(() => {
+    if (contextError) {
+      toast.error("שגיאה בטעינת הנתונים", {
+        description: contextError,
+      });
+    }
+  }, [contextError]);
 
   // Check if any filters are applied
   const hasActiveFilters = useCallback(() => {
@@ -60,48 +76,6 @@ export default function HomePage() {
       selectedFoodItems.length > 0
     );
   }, [selectedCity, selectedFoodType, selectedBusinessTypes, selectedKosherTypes, selectedFoodItems]);
-
-  // Load lookup data on component mount
-  // TODO: replace to context
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchLookupDataAction();
-
-        setBusinessTypes(
-          data.business_types.map((item) => ({
-            id: item.id,
-            name: item.name,
-          }))
-        );
-
-        setKosherTypes(
-          data.kosher_types.map((item) => ({
-            id: item.id,
-            name: item.name,
-          }))
-        );
-
-        setFoodItems(
-          data.food_item_types.map((item) => ({
-            id: item.id,
-            name: item.name,
-          }))
-        );
-
-        setDataInitialized(true);
-      } catch (error) {
-        toast.error("שגיאה בטעינת הנתונים", {
-          description: "לא ניתן לטעון את רשימת האפשרויות. אנא נסה שוב מאוחר יותר.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
 
   // Initialize filters from URL and load appropriate data - only runs once
   useEffect(() => {
@@ -570,6 +544,14 @@ export default function HomePage() {
             <h2 className="text-5xl is-kosher-font text-[#1A365D] font-bold mb-2">isKosher</h2>
             <p className="text-[#2D4A6D] text-md lg:text-lg">מצא מסעדות כשרות בסביבתך</p>
           </header>
+          {contextLoading && activeTab === "filter" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center">
+              <div className="flex items-center justify-center space-x-2 space-x-reverse">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-blue-700">טוען נתוני סינון...</span>
+              </div>
+            </div>
+          )}
           <div className="bg-white bg-opacity-70 backdrop-filter backdrop-blur-lg rounded-xl shadow-lg p-6 mb-8">
             <div className="flex justify-center mb-6 space-x-2 space-x-reverse">
               <TabButton
