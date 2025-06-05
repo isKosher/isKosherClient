@@ -34,6 +34,11 @@ const NearbyBusinesses: React.FC<NearbyBusinessesProps> = ({ coordinates }) => {
         setIsLoading(true);
         const lat = Array.isArray(coordinates) ? coordinates[0] : coordinates.lat;
         const lng = Array.isArray(coordinates) ? coordinates[1] : coordinates.lng;
+        if (!lat || !lng || lat === 0 || lng === 0) {
+          setBusinesses([]);
+          setIsLoading(false);
+          return;
+        }
         const response = await getNearbyBusinesses(
           lat,
           lng,

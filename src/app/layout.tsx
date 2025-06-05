@@ -5,6 +5,7 @@ import Navbar from "./navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Yatra_One } from "next/font/google";
 import { Toaster } from "sonner";
+import { LookupProvider } from "@/contexts/lookup-context";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -37,9 +38,11 @@ export default function RootLayout({
     <AuthProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} ${yatraOne.variable}  antialiased`}>
-          <Navbar />
-          {children}
-          <Toaster position="top-left" dir="rtl" />
+          <LookupProvider>
+            <Navbar />
+            {children}
+            <Toaster position="top-left" dir="rtl" />
+          </LookupProvider>
         </body>
       </html>
     </AuthProvider>

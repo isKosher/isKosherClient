@@ -1,75 +1,32 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { useEffect, useState } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DynamicCombobox } from "@/components/dynamic-combobox";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import type { FormData, Option } from "@/lib/schemaCreateBusiness";
-import { fetchLookupDataAction } from "@/services/lookup-service";
+import type { FormData } from "@/lib/schemaCreateBusiness";
+import { useLookupData } from "@/contexts/lookup-context";
 import { foodTypes } from "@/data/staticData";
 
 export function Step3FoodAndKosher() {
   const form = useFormContext<FormData>();
-  const [isLoading, setIsLoading] = useState(true);
-  const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
-  const [kosherTypes, setKosherTypes] = useState<Option[]>([]);
-  const [foodItems, setFoodItems] = useState<Option[]>([]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchLookupDataAction();
-
-        // Transform and merge API data with existing options
-        setBusinessTypes(
-          data.business_types.map((item) => ({
-            id: item.id,
-            name: item.name,
-            isCustom: false,
-          }))
-        );
-
-        setKosherTypes(
-          data.kosher_types.map((item) => ({
-            id: item.id,
-            name: item.name,
-            isCustom: false,
-          }))
-        );
-
-        setFoodItems(
-          data.food_item_types.map((item) => ({
-            id: item.id,
-            name: item.name,
-            isCustom: false,
-          }))
-        );
-      } catch (error) {
-        toast.error("שגיאה בטעינת הנתונים", {
-          description: "לא ניתן לטעון את רשימת האפשרויות. אנא נסה שוב מאוחר יותר.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  const {
+    businessTypes,
+    kosherTypes,
+    foodItems,
+    isLoading,
+    addCustomBusinessType,
+    addCustomKosherType,
+    addCustomFoodItem,
+  } = useLookupData();
 
   if (!form) {
     return null;
   }
 
   const handleAddBusinessType = (name: string) => {
-    const newType: Option = {
-      id: `custom-${Date.now()}`,
-      name,
-      isCustom: true,
-    };
-    setBusinessTypes([...businessTypes, newType]);
+    const newType = addCustomBusinessType(name);
     form.setValue("business_type", {
       ...newType,
       isCustom: newType.isCustom ?? false,
@@ -77,23 +34,13 @@ export function Step3FoodAndKosher() {
   };
 
   const handleAddKosherType = (name: string) => {
-    const newType: Option = {
-      id: `custom-${Date.now()}`,
-      name,
-      isCustom: true,
-    };
-    setKosherTypes([...kosherTypes, newType]);
+    const newType = addCustomKosherType(name);
     const currentTypes = form.getValues("kosher_types") || [];
     form.setValue("kosher_types", [...currentTypes, { ...newType, isCustom: newType.isCustom ?? false }]);
   };
 
   const handleAddFoodItem = (name: string) => {
-    const newItem: Option = {
-      id: `custom-${Date.now()}`,
-      name,
-      isCustom: true,
-    };
-    setFoodItems([...foodItems, newItem]);
+    const newItem = addCustomFoodItem(name);
     const currentItems = form.getValues("food_items") || [];
     form.setValue("food_items", [...currentItems, { ...newItem, isCustom: newItem.isCustom ?? false }]);
   };
@@ -122,7 +69,6 @@ export function Step3FoodAndKosher() {
                 options={businessTypes}
                 selected={field.value ? [{ ...field.value, id: field.value.id || "" }] : []}
                 onSelect={(option) => {
-                  // Clear previous selection and set new one
                   form.setValue("business_type", {
                     ...option,
                     isCustom: option.isCustom ?? false,
@@ -139,7 +85,7 @@ export function Step3FoodAndKosher() {
                 placeholder="בחר סוג עסק"
                 emptyText="לא נמצאו תוצאות"
                 addNewText="הוסף סוג עסק חדש"
-                multiple={false} // Ensure single selection
+                multiple={false}
               />
             </FormControl>
             <FormMessage />

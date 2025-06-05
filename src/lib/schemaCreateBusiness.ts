@@ -72,12 +72,6 @@ export const formSchema = z.object({
 
 export type FormData = z.infer<typeof formSchema>;
 
-export interface Option {
-  id: string;
-  name: string;
-  isCustom?: boolean;
-}
-
 export const isDateValid = (date: Date): boolean => {
   const today = new Date();
   const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());

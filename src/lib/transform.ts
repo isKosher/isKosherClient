@@ -8,7 +8,7 @@ export async function transformFormDataToServerPayload(formData: FormData): Prom
     business_name: formData.business_name,
     business_phone: formData.business_phone,
     business_details: formData.business_details,
-    business_rating: 4,
+    business_rating: 0,
     location: {
       street_number: formData.location.street_number,
       address: formData.location.address,
@@ -28,7 +28,7 @@ export async function transformFormDataToServerPayload(formData: FormData): Prom
       authority: formData.supervisor.authority,
     },
     kosher_certificate: {
-      certificate: Math.round(Math.random() * 1000000).toString(),
+      certificate: formData.kosher_certificate.certificate,
       expiration_date: formData.kosher_certificate.expiration_date.toISOString().split("T")[0],
     },
   };

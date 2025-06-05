@@ -96,6 +96,7 @@ export function KosherBusinessForm() {
         setCurrentStep(0);
         setStepValidity({});
         setAttemptedSteps({});
+        window.location.href = "/dashboard";
       } else {
         throw new Error(result.error);
       }
