@@ -1,10 +1,10 @@
 name: Secret Scanning
 
 on:
-  pull_request:
+  push:
     branches:
       - master
-  push:
+  pull_request:
     branches:
       - master
 
@@ -16,8 +16,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install GitLeaks CLI
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -o gitleaks
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+
       - name: Run GitLeaks Secret Scan
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          config-path: .github/gitleaks.toml
-          fail-on-detection: true
+        run: |
+          gitleaks detect \
+            --source . \
+            --config .github/gitleaks.toml \
+            --no-git \
+            --verbose
