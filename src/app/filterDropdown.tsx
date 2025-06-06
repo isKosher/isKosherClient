@@ -6,9 +6,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Option } from "@/types";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { Option } from "@/lib/schemaCreateBusiness";
 
 interface FilterProps {
   filterOptions: Option[];

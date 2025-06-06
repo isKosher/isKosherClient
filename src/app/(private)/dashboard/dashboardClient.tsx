@@ -292,7 +292,7 @@ export default function DashboardClient() {
                                   <dt className="text-[#2D4A6D] font-medium">טלפון:</dt>
                                   <dd className="text-[#2D4A6D]">{selectedBusiness.business_number}</dd>
                                 </div>
-                                {selectedBusiness.business_rating && (
+                                {selectedBusiness.business_rating !== 0 && (
                                   <div className="flex items-center gap-1">
                                     <dt className="text-[#2D4A6D] font-medium">דירוג:</dt>
                                     <dd className="text-[#2D4A6D] flex items-center">

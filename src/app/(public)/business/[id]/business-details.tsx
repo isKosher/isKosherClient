@@ -16,6 +16,7 @@ import KosherSupervisorsCard from "@/components/kosher-supervisor-card";
 import KosherCertificatesCard from "@/components/kosher-certifcate-card";
 import NearbyBusinesses from "@/components/get-nearby-businesses";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type BusinessDetailsProps = {
   business: BusinessDetailsResponse;
@@ -60,7 +61,10 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
     // Get coordinates
     const lat = Array.isArray(coordinates) ? coordinates[0] : coordinates.lat;
     const lng = Array.isArray(coordinates) ? coordinates[1] : coordinates.lng;
-
+    if (!lat || !lng || lat === 0 || lng === 0) {
+      toast.error("לא ניתן לפתוח ניווט, מיקום לא זמין", { style: { color: "red" } });
+      return;
+    }
     let url = "";
     if (app === "waze") {
       url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;

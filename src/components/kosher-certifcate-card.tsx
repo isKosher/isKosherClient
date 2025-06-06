@@ -63,7 +63,9 @@ const KosherCertificatesCard: React.FC<KosherCertificatesCardProps> = ({ certifi
                     className="object-contain h-full w-full"
                   />
                 ) : (
-                  <span className="text-sm text-gray-700 font-medium">{type.name}</span>
+                  <span className="text-sm text-gray-700 font-medium w-16 flex items-center justify-center">
+                    {type.name}
+                  </span>
                 )}
               </div>
             ))}

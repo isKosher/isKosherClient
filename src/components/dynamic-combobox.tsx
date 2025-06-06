@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Option } from "@/lib/schemaCreateBusiness";
+import { Option } from "@/types";
 
 interface DynamicComboboxProps {
   options: Option[];
@@ -73,8 +73,9 @@ export function DynamicCombobox({
   };
 
   const handleAddNew = () => {
-    if (newItemName.trim() && onAdd) {
-      onAdd(newItemName.trim());
+    const valueToAdd = newItemName.trim() || search.trim();
+    if (valueToAdd && onAdd) {
+      onAdd(valueToAdd);
       setNewItemName("");
       setDialogOpen(false);
       setSearch("");
@@ -105,8 +106,9 @@ export function DynamicCombobox({
                       variant="ghost"
                       className="w-full justify-start text-right"
                       onClick={() => setDialogOpen(true)}
+                      dir="rtl"
                     >
-                      <Plus className="ml-2 h-4 w-4" />
+                      <Plus className="h-4 w-4" />
                       הוסף "{search}"
                     </Button>
                     <DialogContent>
@@ -127,7 +129,7 @@ export function DynamicCombobox({
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button onClick={handleAddNew} disabled={!newItemName && !search}>
+                        <Button onClick={handleAddNew} disabled={!newItemName.trim() && !search.trim()}>
                           הוסף
                         </Button>
                       </DialogFooter>
@@ -187,7 +189,7 @@ export function DynamicCombobox({
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button onClick={handleAddNew} disabled={!newItemName.trim()}>
+                          <Button onClick={handleAddNew} disabled={!newItemName.trim() && !search.trim()}>
                             הוסף
                           </Button>
                         </DialogFooter>

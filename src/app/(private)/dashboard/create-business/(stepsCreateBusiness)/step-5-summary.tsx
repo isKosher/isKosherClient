@@ -142,7 +142,11 @@ export function Step5Summary() {
               </div>
               <div className="flex items-center space-x-4 space-x-reverse">
                 <Calendar className="h-4 w-4 text-sky-500" />
-                <span>תוקף תעודה: {format(new Date(formData.kosher_certificate.expiration_date), "dd/MM/yyyy")}</span>
+                {formData.kosher_certificate.expiration_date ? (
+                  <span>תוקף תעודה: {format(new Date(formData.kosher_certificate.expiration_date), "dd/MM/yyyy")}</span>
+                ) : (
+                  <span className="text-gray-500">תוקף תעודה לא צוין</span>
+                )}
               </div>
             </CardContent>
           </Card>
