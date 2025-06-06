@@ -2,14 +2,14 @@
 import type React from "react";
 import { useState } from "react";
 import type { UserOwnedBusinessResponse } from "@/types";
-import { X, Plus } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { updateBusinessDetails } from "@/app/actions/dashboardAction";
+import { useLookupData } from "@/contexts/lookup-context";
+import SelectWithAdd from "@/components/select-with-add";
 
 type KosherTypesFormProps = {
   business: UserOwnedBusinessResponse;
@@ -17,58 +17,88 @@ type KosherTypesFormProps = {
 };
 
 export default function KosherTypesForm({ business, onClose }: KosherTypesFormProps) {
-  const [kosherTypes, setKosherTypes] = useState([...business.kosher_types]);
-  const [foodTypes, setFoodTypes] = useState([...business.food_types]);
-  const [foodItemTypes, setFoodItemTypes] = useState([...business.food_item_types]);
-  const [newFoodType, setNewFoodType] = useState("");
-  const [newFoodItemType, setNewFoodItemType] = useState("");
-  const [newKosherType, setNewKosherType] = useState("");
-  const [showAddKosher, setShowAddKosher] = useState(false);
+  const { lookupData, kosherTypes, addCustomKosherType, foodItems, addCustomFoodItem } = useLookupData();
+
+  const [selectedKosherTypes, setSelectedKosherTypes] = useState([...business.kosher_types]);
+  const [selectedFoodTypes, setSelectedFoodTypes] = useState([...business.food_types]);
+  const [selectedFoodItemTypes, setSelectedFoodItemTypes] = useState([...business.food_item_types]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleRemoveKosherType = (id: string) => {
-    setKosherTypes(kosherTypes.filter((type) => type.id !== id));
+  // Helper function to get kosher type details with icon
+  const getKosherTypeDetails = (typeName: string) => {
+    return lookupData.kosher_types.find((kt) => kt.name === typeName);
   };
 
-  const handleRemoveFoodType = (index: number) => {
-    setFoodTypes(foodTypes.filter((_, i) => i !== index));
+  // Helper function to get food type options
+  const getFoodTypeOptions = () => {
+    return lookupData.food_types.map((ft) => ({
+      id: ft.id,
+      name: ft.name,
+      isCustom: false,
+    }));
   };
 
-  const handleRemoveFoodItemType = (index: number) => {
-    setFoodItemTypes(foodItemTypes.filter((_, i) => i !== index));
+  const handleRemoveKosherType = (typeName: string) => {
+    setSelectedKosherTypes(selectedKosherTypes.filter((type) => type.name !== typeName));
   };
 
-  const handleAddFoodType = () => {
-    if (newFoodType.trim()) {
-      setFoodTypes([...foodTypes, newFoodType.trim()]);
-      setNewFoodType("");
+  const handleRemoveFoodType = (typeName: string) => {
+    setSelectedFoodTypes(selectedFoodTypes.filter((type) => type !== typeName));
+  };
+
+  const handleRemoveFoodItemType = (typeName: string) => {
+    setSelectedFoodItemTypes(selectedFoodItemTypes.filter((type) => type !== typeName));
+  };
+
+  const handleAddKosherType = (typeName: string) => {
+    // Check if already selected
+    if (selectedKosherTypes.some((kt) => kt.name === typeName)) {
+      return;
+    }
+
+    // Check if it's from lookup data or custom
+    const existingType = lookupData.kosher_types.find((kt) => kt.name === typeName);
+
+    if (existingType) {
+      // Add existing type
+      setSelectedKosherTypes([
+        ...selectedKosherTypes,
+        {
+          id: existingType.id,
+          name: existingType.name,
+          kosher_icon_url: existingType.kosher_icon_url,
+        },
+      ]);
+    } else {
+      // Add as custom type
+      const customType = addCustomKosherType(typeName);
+      setSelectedKosherTypes([
+        ...selectedKosherTypes,
+        {
+          id: customType.id,
+          name: customType.name,
+          kosher_icon_url: null,
+        },
+      ]);
     }
   };
 
-  const handleAddFoodItemType = () => {
-    if (newFoodItemType.trim()) {
-      setFoodItemTypes([...foodItemTypes, newFoodItemType.trim()]);
-      setNewFoodItemType("");
+  const handleAddFoodType = (typeName: string) => {
+    if (!selectedFoodTypes.includes(typeName)) {
+      setSelectedFoodTypes([...selectedFoodTypes, typeName]);
     }
   };
 
-  const handleAddKosherType = () => {
-    if (newKosherType.trim()) {
-      const newKosher = {
-        id: `temp-${Date.now()}`,
-        name: newKosherType.trim(),
-        kosher_icon_url: null,
-      };
-      setKosherTypes([...kosherTypes, newKosher]);
-      setNewKosherType("");
-      setShowAddKosher(false);
-    }
-  };
+  const handleAddFoodItemType = (typeName: string) => {
+    if (!selectedFoodItemTypes.includes(typeName)) {
+      setSelectedFoodItemTypes([...selectedFoodItemTypes, typeName]);
 
-  const handleCancelAddKosher = () => {
-    setNewKosherType("");
-    setShowAddKosher(false);
+      // Add to context if it's custom
+      if (!lookupData.food_item_types.some((fit) => fit.name === typeName)) {
+        addCustomFoodItem(typeName);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,9 +110,9 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
 
       await updateBusinessDetails({
         business_id: business.business_id,
-        kosher_types: kosherTypes.map((type) => type.name),
-        food_types: foodTypes,
-        food_item_types: foodItemTypes,
+        kosher_types: selectedKosherTypes.map((type) => type.name),
+        food_types: selectedFoodTypes,
+        food_item_types: selectedFoodItemTypes,
       });
 
       onClose(true, "פרטי הכשרות עודכנו בהצלחה");
@@ -96,184 +126,209 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
-      <div>
-        <Label className="text-[#1A365D] text-lg mb-2 block">סוגי כשרות</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {kosherTypes.map((type) => (
-            <Card key={type.id} className="border-sky-200">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex items-center">
-                  {type.kosher_icon_url && (
-                    <img
-                      src={type.kosher_icon_url || "/placeholder.svg"}
-                      alt={type.name}
-                      className="w-8 h-8 object-contain mr-2"
-                    />
-                  )}
-                  <span className="text-[#1A365D]">{type.name}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-[#1A365D]"
-                  onClick={() => handleRemoveKosherType(type.id)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {/* Kosher Types Section */}
+      <Card className="border-sky-100 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-[#1A365D] text-lg flex items-center gap-2">
+            סוגי כשרות
+            <Badge variant="secondary" className="bg-sky-50 text-sky-700">
+              {selectedKosherTypes.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Selected Kosher Types */}
+          {selectedKosherTypes.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {selectedKosherTypes.map((type, index) => {
+                const details = getKosherTypeDetails(type.name);
+                return (
+                  <Card key={`${type.name}-${index}`} className="border-sky-200 bg-sky-50/30">
+                    <CardContent className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {details?.kosher_icon_url ? (
+                          <img
+                            src={details.kosher_icon_url}
+                            alt={type.name}
+                            className="w-8 h-8 object-contain rounded"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-sky-100 rounded flex items-center justify-center text-sky-600 text-xs font-medium">
+                            {type.name.charAt(0)}
+                          </div>
+                        )}
+                        <span className="text-[#1A365D] font-medium">{type.name}</span>
+                        {!details && (
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                            חדש
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleRemoveKosherType(type.name)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
 
-        {/* אזור הוספת כשרות חדשה */}
-        {showAddKosher ? (
-          <Card className="mt-3 border-sky-200 border-dashed">
-            <CardContent className="p-3">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="שם סוג כשרות"
-                  className="border-sky-200 focus:border-sky-500"
-                  value={newKosherType}
-                  onChange={(e) => setNewKosherType(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddKosherType();
-                    }
-                  }}
-                  autoFocus
-                />
-                <Button
-                  type="button"
+          {/* Add Kosher Type */}
+          <SelectWithAdd
+            options={kosherTypes}
+            value=""
+            onChange={(value) => handleAddKosherType(value)}
+            onAddCustom={(name) => handleAddKosherType(name)}
+            placeholder="בחר או הוסף סוג כשרות"
+            className="max-w-md"
+            allowCustom={true}
+            selectedItems={selectedKosherTypes.map((kt) => kt.name)}
+          />
+        </CardContent>
+      </Card>
+
+      <Separator className="bg-sky-100" />
+
+      {/* Food Types Section */}
+      <Card className="border-sky-100 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-[#1A365D] text-lg flex items-center gap-2">
+            סוגי מזון
+            <Badge variant="secondary" className="bg-sky-50 text-sky-700">
+              {selectedFoodTypes.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Selected Food Types */}
+          {selectedFoodTypes.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedFoodTypes.map((type, index) => (
+                <Badge
+                  key={`${type}-${index}`}
                   variant="outline"
-                  size="sm"
-                  className="text-[#1A365D] border-sky-200"
-                  onClick={handleAddKosherType}
-                  disabled={!newKosherType.trim()}
+                  className="bg-sky-50 text-[#1A365D] border-sky-200 px-3 py-2 text-sm"
                 >
-                  <Plus className="h-4 w-4 ml-1" /> הוסף
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-500"
-                  onClick={handleCancelAddKosher}
+                  {type}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 ml-2 text-red-500 hover:text-red-700"
+                    onClick={() => handleRemoveFoodType(type)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Add Food Type */}
+          <SelectWithAdd
+            options={getFoodTypeOptions()}
+            value=""
+            onChange={(value) => handleAddFoodType(value)}
+            onAddCustom={(name) => handleAddFoodType(name)}
+            placeholder="בחר או הוסף סוג מזון"
+            className="max-w-md"
+            allowCustom={false}
+            selectedItems={selectedFoodTypes}
+          />
+        </CardContent>
+      </Card>
+
+      <Separator className="bg-sky-100" />
+
+      {/* Food Item Types Section */}
+      <Card className="border-sky-100 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-[#1A365D] text-lg flex items-center gap-2">
+            פריטי מזון
+            <Badge variant="secondary" className="bg-sky-50 text-sky-700">
+              {selectedFoodItemTypes.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Selected Food Item Types */}
+          {selectedFoodItemTypes.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedFoodItemTypes.map((item, index) => (
+                <Badge
+                  key={`${item}-${index}`}
+                  variant="outline"
+                  className="bg-sky-50 text-[#1A365D] border-sky-200 px-3 py-2 text-sm"
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-3 text-[#1A365D] border-sky-200"
-            onClick={() => setShowAddKosher(true)}
-          >
-            <Plus className="h-4 w-4 ml-1" /> הוסף סוג כשרות
-          </Button>
-        )}
-      </div>
+                  {item}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 ml-2 text-red-500 hover:text-red-700"
+                    onClick={() => handleRemoveFoodItemType(item)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          )}
 
-      <Separator />
-
-      <div>
-        <Label className="text-[#1A365D] text-lg mb-2 block">סוגי מזון</Label>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {foodTypes.map((type, index) => (
-            <Badge key={index} variant="outline" className="bg-sky-50 text-[#1A365D] border-sky-200 px-3 py-1.5">
-              {type}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-5 w-5 p-0 ml-1 text-[#1A365D]"
-                onClick={() => handleRemoveFoodType(index)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="הוסף סוג מזון"
-            className="border-sky-200 focus:border-sky-500"
-            value={newFoodType}
-            onChange={(e) => setNewFoodType(e.target.value)}
+          {/* Add Food Item Type */}
+          <SelectWithAdd
+            options={foodItems}
+            value=""
+            onChange={(value) => handleAddFoodItemType(value)}
+            onAddCustom={(name) => handleAddFoodItemType(name)}
+            placeholder="בחר או הוסף פריט מזון"
+            className="max-w-md"
+            allowCustom={true}
+            selectedItems={selectedFoodItemTypes}
           />
-          <Button type="button" variant="outline" className="text-[#1A365D] border-sky-200" onClick={handleAddFoodType}>
-            <Plus className="h-4 w-4 ml-1" /> הוסף
-          </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <Separator />
+      {/* Form Actions */}
+      <Card className="border-sky-100 shadow-sm">
+        <CardContent className="pt-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm mb-4 flex items-center gap-2">
+              <X className="h-4 w-4 text-red-500" />
+              {error}
+            </div>
+          )}
 
-      <div>
-        <Label className="text-[#1A365D] text-lg mb-2 block">פריטי מזון</Label>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {foodItemTypes.map((item, index) => (
-            <Badge key={index} variant="outline" className="bg-sky-50 text-[#1A365D] border-sky-200 px-3 py-1.5">
-              {item}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-5 w-5 p-0 ml-1 text-[#1A365D]"
-                onClick={() => handleRemoveFoodItemType(index)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="הוסף פריט מזון"
-            className="border-sky-200 focus:border-sky-500"
-            value={newFoodItemType}
-            onChange={(e) => setNewFoodItemType(e.target.value)}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="text-[#1A365D] border-sky-200"
-            onClick={handleAddFoodItemType}
-          >
-            <Plus className="h-4 w-4 ml-1" /> הוסף
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col space-y-2">
-        {error && <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">{error}</div>}
-        <div className="flex justify-start gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onClose()}
-            className="border-gray-300"
-            disabled={isLoading}
-          >
-            ביטול
-          </Button>
-          <Button type="submit" className="bg-[#1A365D] hover:bg-[#2D4A6D]" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <span className="ml-2">שומר שינויים...</span>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              </>
-            ) : (
-              "שמור שינויים"
-            )}
-          </Button>
-        </div>
-      </div>
+          <div className="flex justify-start gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onClose()}
+              className="border-gray-300 hover:bg-gray-50"
+              disabled={isLoading}
+            >
+              ביטול
+            </Button>
+            <Button type="submit" className="bg-[#1A365D] hover:bg-[#2D4A6D] text-white px-6" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  <span>שומר שינויים...</span>
+                </div>
+              ) : (
+                "שמור שינויים"
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </form>
   );
 }
