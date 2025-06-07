@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Loader2 } from "lucide-react";
-import { searchCities, searchStreets, getCoordinates } from "@/services/govmap-service";
+import { searchCities, searchStreets, getCoordinates } from "@/services/geoapify-service";
 import { getRegions } from "@/services/lookup-service";
 import { toast } from "sonner";
 import type { FormData } from "@/lib/schemaCreateBusiness";
@@ -89,7 +89,7 @@ export function Step2Location() {
   }, []);
 
   const updateCoordinates = useCallback(async () => {
-    if (!city || !street || !streetNumber) {
+    if (!city || !street) {
       return;
     }
 
@@ -99,10 +99,17 @@ export function Step2Location() {
       if (coordinates?.longitude && coordinates?.latitude) {
         form.setValue("location.latitude", coordinates.latitude);
         form.setValue("location.longitude", coordinates.longitude);
+      } else {
+        // Clear coordinates if not found
+        form.setValue("location.latitude", undefined);
+        form.setValue("location.longitude", undefined);
       }
     } catch (error) {
       console.error("Error updating coordinates:", error);
       toast.error("שגיאה בקבלת קואורדינטות למיקום");
+      // Clear coordinates on error
+      form.setValue("location.latitude", undefined);
+      form.setValue("location.longitude", undefined);
     }
   }, [city, street, streetNumber, form]);
 
@@ -144,9 +151,14 @@ export function Step2Location() {
     }
   }, [regionInput, allRegions, isRegionSelected]);
 
-  // Search cities
+  // Search cities with debouncing
   useEffect(() => {
     if (cityInput === "" && !isCitySelected) {
+      setCitySuggestions([]);
+      return;
+    }
+
+    if (cityInput.length < 2) {
       setCitySuggestions([]);
       return;
     }
@@ -157,24 +169,30 @@ export function Step2Location() {
         const cities = await searchCities(cityInput);
         setCitySuggestions(cities);
 
-        // Show suggestions when typing
+        // Show suggestions when typing and input is focused
         if (document.activeElement === cityInputRef.current && cities.length > 0) {
           setShowCitySuggestions(true);
         }
       } catch (error) {
         console.error("Error searching cities:", error);
         toast.error("שגיאה בחיפוש ערים");
+        setCitySuggestions([]);
       } finally {
         setIsLoadingCity(false);
       }
-    }, 300);
+    }, 500); // Increased debounce time for better performance
 
     return () => clearTimeout(timer);
   }, [cityInput, isCitySelected]);
 
-  // Search streets
+  // Search streets with debouncing
   useEffect(() => {
     if ((streetInput === "" && !isStreetSelected) || !city) {
+      setStreetSuggestions([]);
+      return;
+    }
+
+    if (streetInput.length < 2) {
       setStreetSuggestions([]);
       return;
     }
@@ -185,26 +203,28 @@ export function Step2Location() {
         const streets = await searchStreets(streetInput, city);
         setStreetSuggestions(streets);
 
-        // Show suggestions when typing
+        // Show suggestions when typing and input is focused
         if (document.activeElement === streetInputRef.current && streets.length > 0) {
           setShowStreetSuggestions(true);
         }
       } catch (error) {
         console.error("Error searching streets:", error);
         toast.error("שגיאה בחיפוש רחובות");
+        setStreetSuggestions([]);
       } finally {
         setIsLoadingStreet(false);
       }
-    }, 300);
+    }, 500); // Increased debounce time for better performance
 
     return () => clearTimeout(timer);
   }, [streetInput, city, isStreetSelected]);
 
+  // Update coordinates when address details change
   useEffect(() => {
-    if (city && street && streetNumber) {
+    if (city && street) {
       const timer = setTimeout(() => {
         updateCoordinates();
-      }, 500);
+      }, 800); // Slightly longer delay for coordinates
 
       return () => clearTimeout(timer);
     }
@@ -233,10 +253,16 @@ export function Step2Location() {
 
     if (value === "") {
       form.setValue("location.city", "");
+      // Clear dependent fields
+      form.setValue("location.address", "");
+      setStreetInput("");
+      setIsStreetSelected(false);
+      form.setValue("location.latitude", undefined);
+      form.setValue("location.longitude", undefined);
     }
 
     // Open suggestions dropdown when typing
-    if (value !== "") {
+    if (value !== "" && value.length >= 2) {
       setShowCitySuggestions(true);
     }
   };
@@ -250,11 +276,12 @@ export function Step2Location() {
       form.setValue("location.address", "");
     }
 
+    // Clear coordinates when street changes
     form.setValue("location.latitude", undefined);
     form.setValue("location.longitude", undefined);
 
     // Open suggestions dropdown when typing
-    if (value !== "" && city) {
+    if (value !== "" && city && value.length >= 2) {
       setShowStreetSuggestions(true);
     }
   };
@@ -263,8 +290,6 @@ export function Step2Location() {
 
   return (
     <div className="space-y-6">
-      <div id="hidden-map" style={{ display: "none", height: "1px", width: "1px" }} />
-
       <h2 className="text-2xl font-semibold text-sky-800">מיקום העסק</h2>
 
       <div className="relative" ref={regionDropdownRef}>
@@ -298,7 +323,7 @@ export function Step2Location() {
                 </div>
               </FormControl>
               {showRegionSuggestions && regionSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1 max-h-60 overflow-auto">
                   <Command>
                     <CommandList>
                       <CommandGroup>
@@ -338,12 +363,12 @@ export function Step2Location() {
                 <div className="relative">
                   <Input
                     ref={cityInputRef}
-                    placeholder="הקלד שם עיר..."
+                    placeholder="הקלד שם עיר (לפחות 2 תווים)..."
                     value={cityInput}
                     onChange={handleCityInputChange}
                     onFocus={() => {
                       // Show suggestions on focus if there's input
-                      if (cityInput !== "" && !isCitySelected) {
+                      if (cityInput !== "" && cityInput.length >= 2 && !isCitySelected) {
                         setShowCitySuggestions(true);
                       }
                       // Close the other dropdowns
@@ -358,7 +383,7 @@ export function Step2Location() {
                 </div>
               </FormControl>
               {showCitySuggestions && citySuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1 max-h-60 overflow-auto">
                   <Command>
                     <CommandList>
                       <CommandGroup>
@@ -404,12 +429,12 @@ export function Step2Location() {
                 <div className="relative">
                   <Input
                     ref={streetInputRef}
-                    placeholder="הקלד שם רחוב..."
+                    placeholder="הקלד שם רחוב (לפחות 2 תווים)..."
                     value={streetInput}
                     onChange={handleStreetInputChange}
                     onFocus={() => {
                       // Show suggestions on focus if there's input, city selected, and results
-                      if (streetInput !== "" && city && !isStreetSelected) {
+                      if (streetInput !== "" && streetInput.length >= 2 && city && !isStreetSelected) {
                         setShowStreetSuggestions(true);
                       }
                       // Close the other dropdowns
@@ -425,18 +450,19 @@ export function Step2Location() {
                 </div>
               </FormControl>
               {showStreetSuggestions && streetSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1 max-h-60 overflow-auto">
                   <Command>
                     <CommandList>
                       <CommandGroup>
-                        {streetSuggestions.map((streetOption) => (
+                        {streetSuggestions.map((streetOption, index) => (
                           <CommandItem
-                            key={streetOption}
+                            key={`${streetOption}-${index}`}
                             onSelect={() => {
                               field.onChange(streetOption);
                               setStreetInput(streetOption);
                               setIsStreetSelected(true);
                               setShowStreetSuggestions(false);
+                              // Clear coordinates to trigger new fetch
                               form.setValue("location.latitude", undefined);
                               form.setValue("location.longitude", undefined);
                             }}
@@ -469,6 +495,7 @@ export function Step2Location() {
                 value={field.value || ""}
                 onChange={(e) => {
                   field.onChange(Number(e.target.value));
+                  // Clear coordinates to trigger new fetch with house number
                   form.setValue("location.latitude", undefined);
                   form.setValue("location.longitude", undefined);
                 }}

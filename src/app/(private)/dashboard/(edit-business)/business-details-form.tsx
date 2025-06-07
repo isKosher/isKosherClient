@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { getCoordinates } from "@/services/govmap-service";
+import { getCoordinates } from "@/services/geoapify-service";
 import { updateBusinessDetails, updateBusinessLocation } from "@/app/actions/dashboardAction";
 import { useLookupData } from "@/contexts/lookup-context";
 import SelectWithAdd from "@/components/select-with-add";
