@@ -323,7 +323,7 @@ export function Step2Location() {
                 </div>
               </FormControl>
               {showRegionSuggestions && regionSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1 max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
                   <Command>
                     <CommandList>
                       <CommandGroup>
@@ -383,7 +383,7 @@ export function Step2Location() {
                 </div>
               </FormControl>
               {showCitySuggestions && citySuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1 max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
                   <Command>
                     <CommandList>
                       <CommandGroup>
@@ -450,7 +450,7 @@ export function Step2Location() {
                 </div>
               </FormControl>
               {showStreetSuggestions && streetSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1 max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
                   <Command>
                     <CommandList>
                       <CommandGroup>
