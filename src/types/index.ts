@@ -219,13 +219,6 @@ export type Coordinates = {
   longitude: number;
 };
 
-export interface GovmapResult {
-  ResultLable: string;
-  X: number;
-  Y: number;
-  ObjectID: string;
-}
-
 export interface GalleryImage {
   src: string;
   alt: string;

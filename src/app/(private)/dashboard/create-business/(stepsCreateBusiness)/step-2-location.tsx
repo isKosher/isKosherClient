@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Loader2 } from "lucide-react";
-import { searchCities, searchStreets, getCoordinates } from "@/services/geoapify-service";
-import { getRegions } from "@/services/lookup-service";
+import { searchCities, searchStreets, getCoordinates, getCityRegion } from "@/services/geoapify-service";
 import { toast } from "sonner";
 import type { FormData } from "@/lib/schemaCreateBusiness";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
@@ -17,37 +16,32 @@ export function Step2Location() {
 
   const city = form.watch("location.city");
   const street = form.watch("location.address");
-  const region = form.watch("location.region");
   const streetNumber = form.watch("location.street_number");
 
   const [cityInput, setCityInput] = useState(city || "");
   const [streetInput, setStreetInput] = useState(street || "");
-  const [regionInput, setRegionInput] = useState(region || "");
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
-  const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
-  const [allRegions, setAllRegions] = useState<string[]>([]);
   const [isLoadingCity, setIsLoadingCity] = useState(false);
   const [isLoadingStreet, setIsLoadingStreet] = useState(false);
-  const [isLoadingRegions, setIsLoadingRegions] = useState(false);
+  const [isLoadingRegion, setIsLoadingRegion] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [showStreetSuggestions, setShowStreetSuggestions] = useState(false);
-  const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
   const [isCitySelected, setIsCitySelected] = useState(!!city);
   const [isStreetSelected, setIsStreetSelected] = useState(!!street);
-  const [isRegionSelected, setIsRegionSelected] = useState(!!region);
+
+  // Track the last processed city to prevent duplicate API calls
+  const lastProcessedCityRef = useRef<string>("");
 
   // Create refs for the dropdown containers
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const streetDropdownRef = useRef<HTMLDivElement>(null);
-  const regionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Create refs for input elements
   const cityInputRef = useRef<HTMLInputElement>(null);
   const streetInputRef = useRef<HTMLInputElement>(null);
-  const regionInputRef = useRef<HTMLInputElement>(null);
 
-  // Create handlers for outside clicks
+  // Stable handlers for outside clicks
   const handleCityOutsideClick = useCallback(() => {
     setShowCitySuggestions(false);
   }, []);
@@ -56,38 +50,72 @@ export function Step2Location() {
     setShowStreetSuggestions(false);
   }, []);
 
-  const handleRegionOutsideClick = useCallback(() => {
-    setShowRegionSuggestions(false);
-  }, []);
-
-  // Use your custom hook for all dropdowns
+  // Use your custom hook for dropdowns
   useOnClickOutside(cityDropdownRef, handleCityOutsideClick);
   useOnClickOutside(streetDropdownRef, handleStreetOutsideClick);
-  useOnClickOutside(regionDropdownRef, handleRegionOutsideClick);
 
-  // Sync input states with form values when they change externally
+  // Sync input states with form values when they change externally (only once)
   useEffect(() => {
-    setCityInput(city || "");
-    setIsCitySelected(!!city);
-  }, [city]);
-
-  useEffect(() => {
-    setStreetInput(street || "");
-    setIsStreetSelected(!!street);
-  }, [street]);
+    if (city !== cityInput) {
+      setCityInput(city || "");
+      setIsCitySelected(!!city);
+    }
+  }, [city]); // Remove cityInput from dependencies to prevent loops
 
   useEffect(() => {
-    setRegionInput(region || "");
-    setIsRegionSelected(!!region);
-  }, [region]);
+    if (street !== streetInput) {
+      setStreetInput(street || "");
+      setIsStreetSelected(!!street);
+    }
+  }, [street]); // Remove streetInput from dependencies to prevent loops
 
-  // Close all dropdowns when component mounts or remounts
+  // Close all dropdowns when component mounts (only once)
   useEffect(() => {
     setShowCitySuggestions(false);
     setShowStreetSuggestions(false);
-    setShowRegionSuggestions(false);
-  }, []);
+  }, []); // Empty dependency array
 
+  // Update region when city changes - prevent duplicate calls
+  useEffect(() => {
+    const updateRegionForCity = async (selectedCity: string) => {
+      // Prevent duplicate API calls
+      if (lastProcessedCityRef.current === selectedCity) {
+        return;
+      }
+
+      lastProcessedCityRef.current = selectedCity;
+
+      if (!selectedCity) {
+        form.setValue("location.region", "");
+        return;
+      }
+
+      setIsLoadingRegion(true);
+      try {
+        const region = await getCityRegion(selectedCity);
+        if (region) {
+          form.setValue("location.region", region);
+        } else {
+          form.setValue("location.region", "");
+          console.warn(`No region found for city: ${selectedCity}`);
+        }
+      } catch (error) {
+        console.error("Error getting region for city:", error);
+        toast.error("שגיאה בקבלת האזור לעיר");
+        form.setValue("location.region", "");
+      } finally {
+        setIsLoadingRegion(false);
+      }
+    };
+
+    if (city && isCitySelected) {
+      updateRegionForCity(city);
+    } else if (!city) {
+      lastProcessedCityRef.current = "";
+    }
+  }, [city, isCitySelected]); // Minimal dependencies
+
+  // Stable updateCoordinates function
   const updateCoordinates = useCallback(async () => {
     if (!city || !street) {
       return;
@@ -100,58 +128,18 @@ export function Step2Location() {
         form.setValue("location.latitude", coordinates.latitude);
         form.setValue("location.longitude", coordinates.longitude);
       } else {
-        // Clear coordinates if not found
         form.setValue("location.latitude", undefined);
         form.setValue("location.longitude", undefined);
       }
     } catch (error) {
       console.error("Error updating coordinates:", error);
       toast.error("שגיאה בקבלת קואורדינטות למיקום");
-      // Clear coordinates on error
       form.setValue("location.latitude", undefined);
       form.setValue("location.longitude", undefined);
     }
-  }, [city, street, streetNumber, form]);
+  }, [city, street, streetNumber]); // Remove form from dependencies
 
-  // Fetch all regions once when component mounts
-  useEffect(() => {
-    const fetchRegions = async () => {
-      setIsLoadingRegions(true);
-      try {
-        const regions = await getRegions();
-        setAllRegions(regions);
-        setRegionSuggestions(regions);
-      } catch (error) {
-        console.error("Error fetching regions:", error);
-        toast.error("שגיאה בטעינת רשימת האזורים");
-      } finally {
-        setIsLoadingRegions(false);
-      }
-    };
-
-    fetchRegions();
-  }, []);
-
-  // Filter regions based on input
-  useEffect(() => {
-    if (regionInput === "" && !isRegionSelected) {
-      setRegionSuggestions(allRegions);
-      return;
-    }
-
-    const filteredRegions = allRegions.filter((region) => region.toLowerCase().includes(regionInput.toLowerCase()));
-
-    setRegionSuggestions(filteredRegions);
-
-    // Show suggestions when typing
-    if (document.activeElement === regionInputRef.current && filteredRegions.length > 0) {
-      setShowRegionSuggestions(true);
-    } else if (filteredRegions.length === 0) {
-      setShowRegionSuggestions(false);
-    }
-  }, [regionInput, allRegions, isRegionSelected]);
-
-  // Search cities with debouncing
+  // Search cities with debouncing - prevent duplicate searches
   useEffect(() => {
     if (cityInput === "" && !isCitySelected) {
       setCitySuggestions([]);
@@ -160,6 +148,11 @@ export function Step2Location() {
 
     if (cityInput.length < 2) {
       setCitySuggestions([]);
+      return;
+    }
+
+    // Don't search if city is already selected and input matches
+    if (isCitySelected && cityInput === city) {
       return;
     }
 
@@ -180,12 +173,12 @@ export function Step2Location() {
       } finally {
         setIsLoadingCity(false);
       }
-    }, 500); // Increased debounce time for better performance
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [cityInput, isCitySelected]);
+  }, [cityInput, isCitySelected, city]); // Add city to prevent unnecessary searches
 
-  // Search streets with debouncing
+  // Search streets with debouncing - prevent duplicate searches
   useEffect(() => {
     if ((streetInput === "" && !isStreetSelected) || !city) {
       setStreetSuggestions([]);
@@ -194,6 +187,11 @@ export function Step2Location() {
 
     if (streetInput.length < 2) {
       setStreetSuggestions([]);
+      return;
+    }
+
+    // Don't search if street is already selected and input matches
+    if (isStreetSelected && streetInput === street) {
       return;
     }
 
@@ -214,143 +212,69 @@ export function Step2Location() {
       } finally {
         setIsLoadingStreet(false);
       }
-    }, 500); // Increased debounce time for better performance
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [streetInput, city, isStreetSelected]);
+  }, [streetInput, city, isStreetSelected, street]); // Add street to prevent unnecessary searches
 
-  // Update coordinates when address details change
+  // Update coordinates when address details change - with better debouncing
   useEffect(() => {
     if (city && street) {
       const timer = setTimeout(() => {
         updateCoordinates();
-      }, 800); // Slightly longer delay for coordinates
+      }, 800);
 
       return () => clearTimeout(timer);
     }
-  }, [streetNumber, city, street, updateCoordinates]);
+  }, [updateCoordinates]); // Use the stable function reference
 
-  // Handlers for input changes
-  const handleRegionInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setRegionInput(value);
-    setIsRegionSelected(false);
-
-    if (value === "") {
-      form.setValue("location.region", "");
-    }
-
-    // Open suggestions dropdown when typing
-    if (value !== "" && allRegions.length > 0) {
-      setShowRegionSuggestions(true);
-    }
-  };
-
-  const handleCityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Stable handlers for input changes
+  const handleCityInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCityInput(value);
     setIsCitySelected(false);
 
     if (value === "") {
       form.setValue("location.city", "");
-      // Clear dependent fields
+      form.setValue("location.region", "");
       form.setValue("location.address", "");
       setStreetInput("");
       setIsStreetSelected(false);
       form.setValue("location.latitude", undefined);
       form.setValue("location.longitude", undefined);
+      lastProcessedCityRef.current = "";
     }
 
-    // Open suggestions dropdown when typing
     if (value !== "" && value.length >= 2) {
       setShowCitySuggestions(true);
     }
-  };
+  }, []); // No dependencies needed
 
-  const handleStreetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setStreetInput(value);
-    setIsStreetSelected(false);
+  const handleStreetInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setStreetInput(value);
+      setIsStreetSelected(false);
 
-    if (value === "") {
-      form.setValue("location.address", "");
-    }
+      if (value === "") {
+        form.setValue("location.address", "");
+      }
 
-    // Clear coordinates when street changes
-    form.setValue("location.latitude", undefined);
-    form.setValue("location.longitude", undefined);
+      form.setValue("location.latitude", undefined);
+      form.setValue("location.longitude", undefined);
 
-    // Open suggestions dropdown when typing
-    if (value !== "" && city && value.length >= 2) {
-      setShowStreetSuggestions(true);
-    }
-  };
+      if (value !== "" && city && value.length >= 2) {
+        setShowStreetSuggestions(true);
+      }
+    },
+    [city]
+  ); // Only city as dependency
 
   if (!form) return null;
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-sky-800">מיקום העסק</h2>
-
-      <div className="relative" ref={regionDropdownRef}>
-        <FormField
-          control={form.control}
-          name="location.region"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>אזור</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    ref={regionInputRef}
-                    placeholder="בחר אזור..."
-                    value={regionInput}
-                    onChange={handleRegionInputChange}
-                    onFocus={() => {
-                      // Show suggestions on focus if there's input or we have regions to show
-                      if (regionInput !== "" || (allRegions.length > 0 && !isRegionSelected)) {
-                        setShowRegionSuggestions(true);
-                      }
-                      // Close the other dropdowns
-                      setShowCitySuggestions(false);
-                      setShowStreetSuggestions(false);
-                    }}
-                    className="text-right"
-                  />
-                  {isLoadingRegions && (
-                    <Loader2 className="absolute left-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
-                  )}
-                </div>
-              </FormControl>
-              {showRegionSuggestions && regionSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-white rounded-md border shadow-lg mt-1">
-                  <Command>
-                    <CommandList>
-                      <CommandGroup>
-                        {regionSuggestions.map((regionOption) => (
-                          <CommandItem
-                            key={regionOption}
-                            onSelect={() => {
-                              field.onChange(regionOption);
-                              setRegionInput(regionOption);
-                              setIsRegionSelected(true);
-                              setShowRegionSuggestions(false);
-                            }}
-                            className="text-right"
-                          >
-                            {regionOption}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </div>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
 
       <div className="relative" ref={cityDropdownRef}>
         <FormField
@@ -367,17 +291,14 @@ export function Step2Location() {
                     value={cityInput}
                     onChange={handleCityInputChange}
                     onFocus={() => {
-                      // Show suggestions on focus if there's input
                       if (cityInput !== "" && cityInput.length >= 2 && !isCitySelected) {
                         setShowCitySuggestions(true);
                       }
-                      // Close the other dropdowns
                       setShowStreetSuggestions(false);
-                      setShowRegionSuggestions(false);
                     }}
                     className="text-right"
                   />
-                  {isLoadingCity && (
+                  {(isLoadingCity || isLoadingRegion) && (
                     <Loader2 className="absolute left-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
@@ -395,7 +316,7 @@ export function Step2Location() {
                               setCityInput(cityOption);
                               setIsCitySelected(true);
                               setShowCitySuggestions(false);
-                              // Reset street when city changes
+                              // Reset dependent fields
                               form.setValue("location.address", "");
                               setStreetInput("");
                               setIsStreetSelected(false);
@@ -433,16 +354,13 @@ export function Step2Location() {
                     value={streetInput}
                     onChange={handleStreetInputChange}
                     onFocus={() => {
-                      // Show suggestions on focus if there's input, city selected, and results
                       if (streetInput !== "" && streetInput.length >= 2 && city && !isStreetSelected) {
                         setShowStreetSuggestions(true);
                       }
-                      // Close the other dropdowns
                       setShowCitySuggestions(false);
-                      setShowRegionSuggestions(false);
                     }}
                     className="text-right"
-                    disabled={!form.watch("location.city")}
+                    disabled={!city}
                   />
                   {isLoadingStreet && (
                     <Loader2 className="absolute left-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
@@ -462,7 +380,6 @@ export function Step2Location() {
                               setStreetInput(streetOption);
                               setIsStreetSelected(true);
                               setShowStreetSuggestions(false);
-                              // Clear coordinates to trigger new fetch
                               form.setValue("location.latitude", undefined);
                               form.setValue("location.longitude", undefined);
                             }}
@@ -495,12 +412,11 @@ export function Step2Location() {
                 value={field.value || ""}
                 onChange={(e) => {
                   field.onChange(Number(e.target.value));
-                  // Clear coordinates to trigger new fetch with house number
                   form.setValue("location.latitude", undefined);
                   form.setValue("location.longitude", undefined);
                 }}
                 className="text-right"
-                disabled={!form.watch("location.address")}
+                disabled={!street}
               />
             </FormControl>
             <FormMessage />

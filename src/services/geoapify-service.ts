@@ -160,11 +160,17 @@ export const getCityCoordinates = unstable_cache(getCityCoordinatesMemoized, ["c
 });
 
 /**
- * Searches for cities in Israel matching the provided keyword.
- * Filters out duplicates and normalizes city names.
- * @param keyword - User-input search keyword.
- * @returns Array of unique city names.
- * @throws GeoapifyError on API or network errors.
+ * Searches for Israeli cities matching the provided keyword using the Geoapify API.
+ *
+ * - Filters results to cities within Israel (`countrycode:il`).
+ * - Normalizes city names for consistent matching and deduplication.
+ * - Special handling for "Tel Aviv–Yafo": always normalizes to "תל־אביב–יפו" to avoid mismatches.
+ * - Returns a sorted array of unique city names matching the keyword.
+ * - Caches results for a configurable duration.
+ *
+ * @param keyword - The search keyword to match city names against.
+ * @returns A promise that resolves to an array of matching city names.
+ * @throws {GeoapifyError} If the request fails or the API returns an error.
  */
 export const searchCities = unstable_cache(
   async (keyword: string): Promise<string[]> => {
@@ -175,29 +181,38 @@ export const searchCities = unstable_cache(
         text: keyword.trim(),
         filter: "countrycode:il",
         type: "city",
-        limit: "50",
+        limit: "30",
       });
 
-      const data = await makeGeoapifyRequest("search", params);
+      const data = await makeGeoapifyRequest("autocomplete", params);
       if (data.features.length === 0) return [];
+
+      const normalizedKeyword = normalizeCityName(keyword);
       const citiesMap = new Map<string, string>();
 
-      data.features.filter(validateFeatureInIsrael).forEach((feature) => {
+      for (const feature of data.features.filter(validateFeatureInIsrael)) {
         const { properties } = feature;
         const cityName = properties.city || properties.name;
-        if (
-          cityName &&
-          (properties.result_type === "city" ||
-            properties.result_type === "locality" ||
-            properties.result_type === "municipality")
-        ) {
-          const normalizedCity = normalizeCityName(cityName);
-          console.log(normalizedCity);
-          if (!citiesMap.has(normalizedCity) || cityName.length < citiesMap.get(normalizedCity)!.length) {
+        if (!cityName) continue;
+
+        // Special handling for Tel Aviv–Yafo:
+        // Geoapify sometimes returns "תל אביב-יפו" or "תל אביב" (without the dash or with different dash types).
+        // To ensure consistent city name matching (especially for street lookups), always normalize to "תל־אביב–יפו".
+        // This avoids issues where street search fails due to mismatched city names.
+        if (cityName.startsWith("תל")) {
+          citiesMap.set(cityName, "תל־אביב–יפו");
+          break;
+        }
+
+        const normalizedCity = normalizeCityName(cityName);
+        if (normalizedCity.includes(normalizedKeyword)) {
+          const existing = citiesMap.get(normalizedCity);
+          if (!existing || cityName.trim().length < existing.length) {
             citiesMap.set(normalizedCity, cityName.trim());
           }
         }
-      });
+      }
+
       return Array.from(citiesMap.values()).sort();
     } catch (error) {
       console.error(`Failed to search cities with keyword "${keyword}":`, error);
@@ -242,7 +257,6 @@ export const searchStreets = unstable_cache(
         type: "street",
         limit: "50",
       });
-
       const data = await makeGeoapifyRequest("search", params);
 
       if (data.features.length === 0) return [];
@@ -253,9 +267,7 @@ export const searchStreets = unstable_cache(
         const { properties } = feature;
 
         if (!properties.city || !areCitiesEqual(properties.city, city)) return;
-
         let streetName = properties.street || properties.name || properties.address_line1;
-
         if (
           streetName &&
           (properties.result_type === "street" ||
@@ -375,6 +387,51 @@ export const getCoordinates = unstable_cache(
   {
     revalidate: GEOAPIFY_CONFIG.CACHE_DURATION,
     tags: ["geoapify", "coordinates"],
+  }
+);
+
+export const getCityRegion = unstable_cache(
+  async (city: string): Promise<string | null> => {
+    validateSearchInput(city, "city");
+
+    try {
+      const params = new URLSearchParams({
+        text: city.trim(),
+        filter: "countrycode:il",
+        type: "city",
+        limit: "10",
+      });
+
+      const data = await makeGeoapifyRequest("search", params);
+
+      if (data.features.length === 0) return null;
+
+      const feature =
+        data.features
+          .filter(validateFeatureInIsrael)
+          .find((f) => f.properties.city && areCitiesEqual(f.properties.city, city)) ||
+        data.features.find(validateFeatureInIsrael);
+
+      if (!feature) return null;
+
+      const { state, county, suburb } = feature.properties;
+
+      return state || county || suburb || null;
+    } catch (error) {
+      console.error(`Failed to get region for city "${city}":`, error);
+      throw error instanceof GeoapifyError
+        ? error
+        : new GeoapifyError(
+            `Failed to get city region: ${error instanceof Error ? error.message : "Unknown error"}`,
+            undefined,
+            error instanceof Error ? error : undefined
+          );
+    }
+  },
+  ["city-region"],
+  {
+    revalidate: GEOAPIFY_CONFIG.CACHE_DURATION,
+    tags: ["geoapify", "cities", "regions"],
   }
 );
 
