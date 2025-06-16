@@ -3,7 +3,7 @@ import { Car, Footprints, MapPin } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { foodTypes } from "@/data/staticData";
+import { foodTypes } from "@/data/static-data";
 import { BusinessPreview } from "@/types";
 
 interface RestaurantCardProps {

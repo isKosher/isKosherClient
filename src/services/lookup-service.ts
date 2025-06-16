@@ -1,5 +1,4 @@
 "use server";
-import { regions } from "@/data/staticData";
 import { serverApi } from "@/utils/apiClient";
 
 interface LookupData {
@@ -23,15 +22,4 @@ export async function fetchLookupDataAction(): Promise<LookupData> {
       food_item_types: [],
     };
   }
-}
-
-export async function getRegions(): Promise<string[]> {
-  //TODO: Add a function that fetches the regions from the server
-  // const response = await fetch('/api/regions');
-  // return response.json();
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(regions);
-    }, 300);
-  });
 }

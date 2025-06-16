@@ -7,19 +7,15 @@ import { useInView } from "react-intersection-observer";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { fetchLookupDataAction } from "@/services/lookup-service";
 import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/businessesAction";
 import type { BusinessPreview, Coordinates } from "@/types";
 import SearchComponent from "./search-term";
 import CityFilter from "@/app/cityFilter";
 import FilterDropdown from "@/app/filterDropdown";
-import LoadingPage from "@/app/loading";
 import ResultsList from "./results-list";
 import TabButton from "./tab-button";
 import { useLookupData } from "@/contexts/lookup-context";
-
-// TODO: Remove foodTypes from here
-const foodTypes = ["בשרי", "חלבי", "פרווה"];
+import { foodTypeNames } from "@/data/static-data";
 
 export default function HomePage() {
   const router = useRouter();
@@ -100,7 +96,7 @@ export default function HomePage() {
 
       // Set the filter values from URL
       setSelectedCity(city);
-      setSelectedFoodType(foodTypeParams.filter((type) => foodTypes.includes(type)));
+      setSelectedFoodType(foodTypeParams.filter((type) => foodTypeNames.includes(type)));
       setSelectedBusinessTypes(businessTypeParams);
       setSelectedKosherTypes(kosherTypeParams);
       setSelectedFoodItems(foodItemParams);
@@ -483,10 +479,10 @@ export default function HomePage() {
   };
 
   const handleCheckAll = () => {
-    if (selectedFoodType.length === foodTypes.length) {
+    if (selectedFoodType.length === foodTypeNames.length) {
       setSelectedFoodType([]); // Uncheck all if all are already selected
     } else {
-      setSelectedFoodType([...foodTypes]); // Check all
+      setSelectedFoodType([...foodTypeNames]); // Check all
     }
   };
 
@@ -648,7 +644,7 @@ export default function HomePage() {
                         >
                           בחר הכל
                         </Button>
-                        {foodTypes.map((type) => (
+                        {foodTypeNames.map((type) => (
                           <Button
                             key={type}
                             variant="outline"

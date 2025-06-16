@@ -22,7 +22,6 @@ import KosherTypesForm from "./(edit-business)/kosher-types-form";
 import SupervisorsForm from "./(edit-business)/supervisors-form";
 import CertificatesForm from "./(edit-business)/certificates-form";
 import PhotosForm from "./(edit-business)/photos-form";
-import ErrorPage from "@/components/ErrorPage";
 import Link from "next/link";
 import BusinessesAdminListSkeleton from "@/components/businesses-admin-list-skeleton";
 import BusinessesAdminSearch from "@/components/businesses-admin-search";

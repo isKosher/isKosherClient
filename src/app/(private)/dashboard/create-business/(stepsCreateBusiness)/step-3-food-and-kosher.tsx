@@ -6,7 +6,7 @@ import { DynamicCombobox } from "@/components/dynamic-combobox";
 import { Loader2 } from "lucide-react";
 import type { FormData } from "@/lib/schemaCreateBusiness";
 import { useLookupData } from "@/contexts/lookup-context";
-import { foodTypes } from "@/data/staticData";
+import { foodTypes } from "@/data/static-data";
 
 export function Step3FoodAndKosher() {
   const form = useFormContext<FormData>();
