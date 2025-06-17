@@ -10,9 +10,12 @@ interface LookupData {
 
 export async function fetchLookupDataAction(): Promise<LookupData> {
   try {
-    const response = await serverApi.get<LookupData>("lookup");
-    console.log("Lookup data fetched successfully");
-    return response.data;
+    const response = await serverApi.get<LookupData>("/lookup", {
+      cache: "force-cache",
+      tags: ["lookup"],
+    });
+
+    return response.json();
   } catch (error) {
     console.error("Error fetching lookup data:", error);
     return {

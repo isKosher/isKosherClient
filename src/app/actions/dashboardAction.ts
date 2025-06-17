@@ -16,7 +16,7 @@ export async function getMyBusinessAction(): Promise<UserOwnedBusinessResponse[]
   const response = await serverApi.get<UserOwnedBusinessResponse[]>("/admin/businesses/my-businesses", {
     includeCookies: true,
   });
-  return response.data;
+  return response.json();
 }
 
 export async function createBusiness(data: z.infer<typeof formSchema>) {
@@ -27,9 +27,9 @@ export async function createBusiness(data: z.infer<typeof formSchema>) {
     const response = await serverApi.post<any>("/admin/businesses/create-business", serverPayload, {
       includeCookies: true,
     });
-    console.log("Response Backnd: ", response.data);
+    console.log("Response Backnd: ", (await response.json()).data);
 
-    console.log("Creating business: ", serverPayload);
+    console.log("Creating business: ", (await response.json()).data);
     return { success: true };
   } catch (error) {
     console.error("Error creating business:", error);
@@ -99,7 +99,7 @@ export const updateBusinessDetails = async (data: BusinessUpdateRequest) => {
       includeCookies: true,
     });
 
-    return response.data;
+    return (await response.json()).data;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to update business details");
@@ -117,7 +117,7 @@ export async function addBusinessSupervisor(data: SupervisorUpdateRequest) {
       includeCookies: true,
     }
   );
-  return response.data;
+  return (await response.json()).data;
 }
 
 export async function updateBusinessSupervisor(data: SupervisorUpdateRequest) {
@@ -129,7 +129,7 @@ export async function updateBusinessSupervisor(data: SupervisorUpdateRequest) {
       includeCookies: true,
     }
   );
-  return response.data;
+  return (await response.json()).data;
 }
 
 export async function deleteBusinessSupervisor(data: { business_id: string; supervisor_id: string }) {
@@ -148,7 +148,7 @@ export const updateBusinessPhotos = async (data: PhotoUpdateRequest) => {
     const response = await serverApi.post<BusinessPhotoDto>(`/admin/photos/business/${data.business_id}`, data.photo, {
       includeCookies: true,
     });
-    return response.data;
+    return (await response.json()).data;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to add business photos");
@@ -160,9 +160,10 @@ export async function createBusinessPhoto(data: PhotoUpdateRequest) {
     const response = await serverApi.post<BusinessPhotoDto>(`/admin/photos/business/${data.business_id}`, data.photo, {
       includeCookies: true,
     });
-    if (!response.data) throw new Error("Error creating business photo");
-    console.log("Created business photo:", response.data);
-    return response.data;
+    const parsedResponse = await response.json();
+    if (!parsedResponse.data) throw new Error("Error creating business photo");
+    console.log("Created business photo:", parsedResponse.data);
+    return parsedResponse.data;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to create business photo");
@@ -182,7 +183,7 @@ export const updateBusinessLocation = async (data: LocationUpdateRequest) => {
       includeCookies: true,
     });
 
-    return response.data;
+    return (await response.json()).data;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to update business location");
@@ -198,7 +199,7 @@ export async function addBusinessCertificate(data: CertificateUpdateRequest) {
         includeCookies: true,
       }
     );
-    return response.data;
+    return (await response.json()).data;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to add business certificate");

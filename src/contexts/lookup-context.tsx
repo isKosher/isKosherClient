@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchLookupDataAction } from "@/services/lookup-service";
+import { fetchLookupDataAction } from "@/app/actions/lookupAction";
 import { Option } from "@/types";
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
