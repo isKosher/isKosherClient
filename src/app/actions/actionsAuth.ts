@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 
 export async function handleLoginAction(idToken: string): Promise<LoginResponse> {
   try {
-    const response = await serverApi.post(
+    const response = await serverApi.post<any>(
       `/auth/login`,
       {},
       {
@@ -17,7 +17,7 @@ export async function handleLoginAction(idToken: string): Promise<LoginResponse>
         withCredentials: true,
       }
     );
-    const { accessToken, refreshToken } = extractTokens(response.headers["set-cookie"]);
+    const { accessToken, refreshToken } = extractTokens(response.headers.getSetCookie());
     await setTokensAction(accessToken, refreshToken);
 
     return { success: true };
@@ -35,7 +35,7 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
 
-    const response = await serverApi.post(`/auth/refresh-token`, null, {
+    const response = await serverApi.post<any>(`/auth/refresh-token`, null, {
       headers: {
         Cookie: cookieHeader,
         "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
       withCredentials: true,
     });
 
-    const { accessToken, refreshToken } = extractTokens(response.headers["set-cookie"]);
+    const { accessToken, refreshToken } = extractTokens(response.headers.getSetCookie());
     await setTokensAction(accessToken, refreshToken);
 
     console.log("Access token refreshed successfully!");

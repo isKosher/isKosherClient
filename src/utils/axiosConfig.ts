@@ -1,55 +1,40 @@
 "use server";
 
 import { refreshAccessTokenAction } from "@/app/actions/actionsAuth";
-import { AXIOS_DEFAULT_TIMEOUT } from "@/lib/constants";
-import axios, { AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-//process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<AxiosInstance> => {
-  const instance = axios.create({
-    baseURL: process.env.IS_KOSHER_MANAGER_URL,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    withCredentials: true,
-    timeout: AXIOS_DEFAULT_TIMEOUT,
-    ...config,
-  });
 
-  // Add response interceptor for logging and error handling
-  instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (
-        error.code === "ECONNABORTED" ||
-        error.message.includes("Network Error") ||
-        error.message.includes("ENOTFOUND")
-      ) {
-        console.error("נתקלנו בשגיאת תקשורת:", {
-          errorType: "שגיאת חיבור לשרת",
-          details: error.message,
-        });
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-        // Create a custom network error
-        return Promise.reject({
-          isNetworkError: true,
-          message: "אין חיבור לאינטרנט או שהשרת אינו זמין כרגע",
-          originalError: error,
-        });
-      }
-      console.error(`API Error: ${error.message}`, {
-        url: error.config?.url,
-        status: error.response?.status,
-        data: error.response?.data,
+export const createAPIClient = async (
+  config: RequestInit = {}
+): Promise<(input: RequestInfo, init?: RequestInit) => Promise<Response>> => {
+  return async (input: RequestInfo, init: RequestInit = {}) => {
+    const mergedConfig: RequestInit = {
+      ...config,
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...config.headers,
+        ...init.headers,
+      },
+    };
+
+    const response = await fetch(input, mergedConfig);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(`API Error: ${response.statusText}`, {
+        url: input,
+        status: response.status,
+        data: errorData,
       });
-      return Promise.reject(error);
+      throw new Error(response.statusText);
     }
-  );
 
-  return instance;
+    return response;
+  };
 };
-
 export async function apiFetch<T>(
   endpoint: string,
   options: {
@@ -59,10 +44,11 @@ export async function apiFetch<T>(
     includeCookies?: boolean;
     headers?: Record<string, string>;
     timeout?: number;
+    cache?: "force-cache" | "no-cache";
+    tags?: string[];
   } = {}
-): Promise<AxiosResponse<T>> {
-  const { method = "GET", data, params, includeCookies = false, headers = {}, timeout } = options;
-  let isRefreshAttempt = endpoint === "/auth/refresh-token";
+): Promise<Response & { json: () => Promise<T> }> {
+  const { method = "GET", data, params, includeCookies = false, headers = {}, tags, timeout } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
 
@@ -78,27 +64,29 @@ export async function apiFetch<T>(
     }
   }
 
-  const api = await createAPIClient({ timeout });
+  const api = await createAPIClient({
+    headers: requestHeaders,
+    cache: options.cache,
+    next: { tags, revalidate: 3600 },
+  });
+
+  const url = new URL(process.env.IS_KOSHER_MANAGER_URL! + endpoint);
+  if (params) {
+    Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
+  }
 
   try {
-    const response = await api.request({
-      url: endpoint,
+    const response = await api(url.toString(), {
       method,
-      data,
-      params,
+      body: data ? JSON.stringify(data) : undefined,
       headers: requestHeaders,
     });
-
-    return response;
-  } catch (error: any) {
-    // Only attempt refresh if this isn't already a refresh token request
-    if (error.response?.status === 401 && !isRefreshAttempt) {
+    if (response.status === 401) {
       console.warn("Access token expired, trying to refresh...");
       try {
         const refreshed = await refreshAccessTokenAction();
 
         if (refreshed) {
-          // Try the original request again
           return apiFetch(endpoint, { ...options });
         } else {
           console.error("Failed to refresh token");
@@ -109,6 +97,11 @@ export async function apiFetch<T>(
         redirect("/logout");
       }
     }
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return response;
+  } catch (error: any) {
     throw error;
   }
 }

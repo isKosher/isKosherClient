@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Loader2 } from "lucide-react";
-import { searchCities, searchStreets, getCoordinates, getCityRegion } from "@/services/geoapify-service";
 import { toast } from "sonner";
 import type { FormData } from "@/lib/schemaCreateBusiness";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+import { getCityRegion, getCoordinates, searchCities, searchStreets } from "@/services/geoapify-service";
 
 export function Step2Location() {
   const form = useFormContext<FormData>();

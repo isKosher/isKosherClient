@@ -7,17 +7,17 @@ import { useInView } from "react-intersection-observer";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/businessesAction";
 import type { BusinessPreview, Coordinates } from "@/types";
 import SearchComponent from "./search-term";
-import CityFilter from "@/app/cityFilter";
-import FilterDropdown from "@/app/filterDropdown";
 import ResultsList from "./results-list";
 import TabButton from "./tab-button";
 import { useLookupData } from "@/contexts/lookup-context";
 import { foodTypeNames } from "@/data/static-data";
+import { getFilterParams, getNearbyBusinesses, getRestaurantsAction } from "@/app/actions/businessesAction";
+import FilterDropdown from "./filterDropdown";
+import CityFilter from "./cityFilter";
 
-export default function HomePage() {
+export default function HomePage({ tab: initialTab }: { tab: "text" | "location" | "filter" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,8 +32,7 @@ export default function HomePage() {
   } = useLookupData();
 
   // Component state
-  const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">("text");
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">(initialTab);
   const [restaurants, setRestaurants] = useState<BusinessPreview[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedFoodType, setSelectedFoodType] = useState<string[]>([]);
@@ -48,7 +47,6 @@ export default function HomePage() {
   const [filterHasMore, setFilterHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const { ref, inView } = useInView();
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [searchRadius, setSearchRadius] = useState(15);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
 
@@ -481,7 +479,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-cover bg-center text-right" dir="rtl">
       <div className="mx-auto px-4 py-20 bg-pattern text-sm">
         <div className="max-w-3xl mx-auto bg-white/95 rounded-lg shadow-xl p-8 backdrop-blur-sm">
-          <header className="text-center mb-8">
+          <header className="text-center mb-2">
             <h2 className="text-5xl is-kosher-font text-[#1A365D] font-bold mb-2">isKosher</h2>
             <p className="text-[#2D4A6D] text-md lg:text-lg">מצא מסעדות כשרות בסביבתך</p>
           </header>

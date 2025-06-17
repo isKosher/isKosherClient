@@ -21,12 +21,12 @@ export const uploadFile = async (
         },
       }
     );
-
-    if (!response.data) {
+    const formattedResponse = await response.json();
+    if (!formattedResponse.data) {
       throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
 
-    return response.data;
+    return formattedResponse.data;
   } catch (error) {
     console.error("Error uploading file:", error);
     throw error;
