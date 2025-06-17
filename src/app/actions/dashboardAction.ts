@@ -10,6 +10,7 @@ import {
   UserOwnedBusinessResponse,
 } from "@/types";
 import { serverApi } from "@/utils/apiClient";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
 export async function getMyBusinessAction(): Promise<UserOwnedBusinessResponse[]> {
@@ -27,9 +28,8 @@ export async function createBusiness(data: z.infer<typeof formSchema>) {
     const response = await serverApi.post<any>("/admin/businesses/create-business", serverPayload, {
       includeCookies: true,
     });
-    console.log("Response Backnd: ", (await response.json()).data);
-
-    console.log("Creating business: ", (await response.json()).data);
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
     return { success: true };
   } catch (error) {
     console.error("Error creating business:", error);

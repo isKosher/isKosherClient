@@ -87,7 +87,6 @@ export function KosherBusinessForm() {
     try {
       setIsSubmitting(true);
       const result = await createBusiness(data);
-
       if (result.success) {
         toast.success("העסק נוצר בהצלחה!", {
           description: "הפרטים נשמרו במערכת",
@@ -97,8 +96,6 @@ export function KosherBusinessForm() {
         setStepValidity({});
         setAttemptedSteps({});
         window.location.href = "/dashboard";
-        revalidateTag("lookup");
-        revalidateTag("restaurants");
       } else {
         throw new Error(result.error);
       }
