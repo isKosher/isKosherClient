@@ -5,7 +5,7 @@ import { AXIOS_DEFAULT_TIMEOUT } from "@/lib/constants";
 import axios, { AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+//process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 export const createAPIClient = async (config: AxiosRequestConfig = {}): Promise<AxiosInstance> => {
   const instance = axios.create({
     baseURL: process.env.IS_KOSHER_MANAGER_URL,
