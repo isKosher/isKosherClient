@@ -109,7 +109,7 @@ export function DynamicCombobox({
                       dir="rtl"
                     >
                       <Plus className="h-4 w-4" />
-                      הוסף "{search}"
+                      הוסף &quot;{search}&quot;
                     </Button>
                     <DialogContent>
                       <DialogHeader>

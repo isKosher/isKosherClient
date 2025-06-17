@@ -16,17 +16,14 @@ export const uploadFile = async (
       formData,
       {
         includeCookies: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
       }
     );
     const formattedResponse = await response.json();
-    if (!formattedResponse.data) {
+    if (!formattedResponse) {
       throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
 
-    return formattedResponse.data;
+    return formattedResponse;
   } catch (error) {
     console.error("Error uploading file:", error);
     throw error;
