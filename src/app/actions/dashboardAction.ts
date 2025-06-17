@@ -98,8 +98,7 @@ export const updateBusinessDetails = async (data: BusinessUpdateRequest) => {
     const response = await serverApi.put<BusinessResponse>("/admin/businesses/update-business", data, {
       includeCookies: true,
     });
-
-    return (await response.json()).data;
+    return await response.json();
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to update business details");
@@ -117,7 +116,7 @@ export async function addBusinessSupervisor(data: SupervisorUpdateRequest) {
       includeCookies: true,
     }
   );
-  return (await response.json()).data;
+  return await response.json();
 }
 
 export async function updateBusinessSupervisor(data: SupervisorUpdateRequest) {
@@ -129,7 +128,7 @@ export async function updateBusinessSupervisor(data: SupervisorUpdateRequest) {
       includeCookies: true,
     }
   );
-  return (await response.json()).data;
+  return await response.json();
 }
 
 export async function deleteBusinessSupervisor(data: { business_id: string; supervisor_id: string }) {
@@ -148,7 +147,7 @@ export const updateBusinessPhotos = async (data: PhotoUpdateRequest) => {
     const response = await serverApi.post<BusinessPhotoDto>(`/admin/photos/business/${data.business_id}`, data.photo, {
       includeCookies: true,
     });
-    return (await response.json()).data;
+    return await response.json();
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to add business photos");
@@ -161,9 +160,9 @@ export async function createBusinessPhoto(data: PhotoUpdateRequest) {
       includeCookies: true,
     });
     const parsedResponse = await response.json();
-    if (!parsedResponse.data) throw new Error("Error creating business photo");
-    console.log("Created business photo:", parsedResponse.data);
-    return parsedResponse.data;
+    if (!parsedResponse) throw new Error("Error creating business photo");
+    console.log("Created business photo:", parsedResponse);
+    return parsedResponse;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to create business photo");
@@ -183,7 +182,7 @@ export const updateBusinessLocation = async (data: LocationUpdateRequest) => {
       includeCookies: true,
     });
 
-    return (await response.json()).data;
+    return await response.json();
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to update business location");
@@ -199,7 +198,7 @@ export async function addBusinessCertificate(data: CertificateUpdateRequest) {
         includeCookies: true,
       }
     );
-    return (await response.json()).data;
+    return await response.json();
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to add business certificate");

@@ -22,14 +22,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
   const searchParams = useSearchParams();
 
   // Use the lookup context
-  const {
-    businessTypes,
-    kosherTypes,
-    foodItems,
-    isLoading: contextLoading,
-    isInitialized: dataInitialized,
-    error: contextError,
-  } = useLookupData();
+  const { businessTypes, kosherTypes, foodItems, isLoading: contextLoading, error: contextError } = useLookupData();
 
   // Component state
   const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">(initialTab);
@@ -539,7 +532,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
                     </button>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        טווח חיפוש: {searchRadius} ק"מ
+                        טווח חיפוש: {searchRadius} ק&quot;מ
                       </label>
                       <input
                         type="range"

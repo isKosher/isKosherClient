@@ -1,12 +1,9 @@
 "use client";
 import React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar, ChevronLeft } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { KosherCertificate } from "@/types";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
-import Image from "next/image";
 import KosherCertificateViewer from "./Kosher-certificate-viewer";
 
 type KosherCertificatesListProps = {

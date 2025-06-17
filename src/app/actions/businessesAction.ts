@@ -14,7 +14,7 @@ export async function getRestaurant(id: string): Promise<BusinessDetailsResponse
 }
 
 //TODO: Add useing in cache for the data
-export async function getRestaurantsAction(page: Number = 1): Promise<BusinessPreview[]> {
+export async function getRestaurantsAction(page: number = 1): Promise<BusinessPreview[]> {
   try {
     const res = await serverApi.get<{
       content: BusinessPreview[];
