@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
 export const createAPIClient = async (
   config: RequestInit = {}
 ): Promise<(input: RequestInfo, init?: RequestInit) => Promise<Response>> => {
@@ -14,7 +13,6 @@ export const createAPIClient = async (
       ...config,
       ...init,
       headers: {
-        "Content-Type": "application/json",
         ...config.headers,
         ...init.headers,
       },
@@ -23,18 +21,27 @@ export const createAPIClient = async (
     const response = await fetch(input, mergedConfig);
 
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: response.statusText };
+      }
+
       console.error(`API Error: ${response.statusText}`, {
         url: input,
         status: response.status,
         data: errorData,
       });
-      throw new Error(response.statusText);
+
+      const errorMessage = errorData?.message || response.statusText || "Unknown error occurred";
+      throw new Error(errorMessage);
     }
 
     return response;
   };
 };
+
 export async function apiFetch<T>(
   endpoint: string,
   options: {
@@ -51,6 +58,13 @@ export async function apiFetch<T>(
   const { method = "GET", data, params, includeCookies = false, headers = {}, tags, timeout } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
+
+  if (method !== "GET" && data && !requestHeaders["Content-Type"]) {
+    if (data instanceof FormData) {
+    } else {
+      requestHeaders["Content-Type"] = "application/json";
+    }
+  }
 
   if (includeCookies) {
     const cookieStore = await cookies();
@@ -78,9 +92,10 @@ export async function apiFetch<T>(
   try {
     const response = await api(url.toString(), {
       method,
-      body: data ? JSON.stringify(data) : undefined,
+      body: data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
       headers: requestHeaders,
     });
+
     if (response.status === 401) {
       console.warn("Access token expired, trying to refresh...");
       try {
@@ -97,9 +112,11 @@ export async function apiFetch<T>(
         redirect("/logout");
       }
     }
+
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
+
     return response;
   } catch (error: any) {
     throw error;
