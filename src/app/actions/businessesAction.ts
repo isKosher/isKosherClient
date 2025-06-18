@@ -32,7 +32,7 @@ export async function getRestaurantsAction(page: number = 1): Promise<BusinessPr
 
 export async function getSearchTerm(text: string): Promise<BusinessSearchResult[]> {
   try {
-    const response = await serverApi.get<BusinessSearchResult[]>(`discover/search?query=${text}`);
+    const response = await serverApi.get<BusinessSearchResult[]>(`/discover/search?query=${text}`);
     return response;
   } catch (error) {
     console.error("Error fetching restaurant:", error);

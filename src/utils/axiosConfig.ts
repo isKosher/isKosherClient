@@ -1,8 +1,10 @@
 "use server";
 
 import { refreshAccessTokenAction } from "@/app/actions/actionsAuth";
+import { REVALIDATE_TIME } from "@/lib/constants";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { ApiFetchBaseOptions } from "./apiClient";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 export const createAPIClient = async (
@@ -39,20 +41,6 @@ export const createAPIClient = async (
     }
   };
 };
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-
-export interface ApiFetchBaseOptions {
-  method?: HttpMethod;
-  data?: any;
-  params?: Record<string, any>;
-  includeCookies?: boolean;
-  headers?: Record<string, string>;
-  timeout?: number;
-  cache?: "force-cache" | "no-cache";
-  tags?: string[];
-  credentials?: string;
-  raw?: boolean;
-}
 
 export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions = {}): Promise<T> {
   const {
@@ -87,7 +75,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
   const api = await createAPIClient({
     headers: requestHeaders,
     cache,
-    next: { tags, revalidate: 3600 },
+    next: { tags, revalidate: REVALIDATE_TIME },
   });
 
   const url = new URL(`${process.env.IS_KOSHER_MANAGER_URL}${endpoint}`);

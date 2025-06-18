@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { LatLngExpression } from "leaflet";
-import { serverApi } from "@/utils/apiClient";
 import { BusinessDetailsResponse } from "@/types";
 import BusinessDetails from "./business-details";
 import { getRestaurant } from "@/app/actions/businessesAction";
