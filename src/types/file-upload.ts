@@ -106,3 +106,7 @@ export function extractFilename(url: string): string | null {
   const match = url.match(/\/([^\/?#]+)(?:[?#]|$)/);
   return match ? match[1] : null;
 }
+
+export function isUnsplashImageUrl(url: string): boolean {
+  return url.startsWith("https://images.unsplash.com/");
+}

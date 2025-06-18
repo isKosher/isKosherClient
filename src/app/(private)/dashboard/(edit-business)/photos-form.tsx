@@ -12,6 +12,7 @@ import {
   extractFilename,
   FileUploaderType,
   FolderType,
+  isUnsplashImageUrl,
   StorageProvider,
   type FileUploadResponse,
 } from "@/types/file-upload";
@@ -46,7 +47,7 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
       setIsLoading(true);
       setError(null);
       const fileId = extractFilename(photo.url);
-      if (fileId) {
+      if (fileId && !isUnsplashImageUrl(photo.url)) {
         await deleteFile(fileId, FolderType.BUSINESS_PHOTOS, StorageProvider.SUPABASE);
       }
       await deleteBusinessPhoto(photo.id);
