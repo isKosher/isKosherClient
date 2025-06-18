@@ -3,8 +3,9 @@ import { LatLngExpression } from "leaflet";
 import { serverApi } from "@/utils/apiClient";
 import { BusinessDetailsResponse } from "@/types";
 import BusinessDetails from "./business-details";
+import { getRestaurant } from "@/app/actions/businessesAction";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: any): Promise<Metadata> {
   const { id } = await params;
   const business = await getRestaurant(id);
   return {
@@ -13,18 +14,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export async function getRestaurant(id: string): Promise<BusinessDetailsResponse> {
-  const res = await serverApi.get<BusinessDetailsResponse>(`/discover/${id}/details`, {
-    cache: "force-cache",
-  });
-  if (!res) {
-    throw new Error("Failed to fetch restaurant");
-  }
-
-  return res;
-}
-
-export default async function RestaurantPage({ params }: { params: { id: string } }) {
+export default async function RestaurantPage({ params }: any) {
   const { id } = await params;
   let business: BusinessDetailsResponse;
   let coordinates: LatLngExpression;

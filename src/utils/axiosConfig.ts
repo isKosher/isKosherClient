@@ -122,7 +122,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
   }
   if (raw) return response as T;
   try {
-    let formattedResponse = await response.json();
+    const formattedResponse = await response.json();
     return formattedResponse as T;
   } catch {
     return response.text() as T;

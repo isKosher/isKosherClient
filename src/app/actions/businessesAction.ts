@@ -5,8 +5,9 @@ import { serverApi } from "@/utils/apiClient";
 
 const DEFAULT_SIZE: number = 12;
 export async function getRestaurant(id: string): Promise<BusinessDetailsResponse> {
-  const res = await serverApi.get<BusinessDetailsResponse>(`/discover/${id}/details`);
-
+  const res = await serverApi.get<BusinessDetailsResponse>(`/discover/${id}/details`, {
+    cache: "force-cache",
+  });
   if (!res) {
     throw new Error("Failed to fetch restaurant");
   }
