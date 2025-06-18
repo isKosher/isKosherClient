@@ -34,11 +34,12 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
 
-    const response = await serverApi.post<any>(`/auth/refresh-token`, null, {
+    const response = await serverApi.postRaw(`/auth/refresh-token`, null, {
       headers: {
         Cookie: cookieHeader,
         "Content-Type": "application/json",
       },
+      credentials: "include",
     });
 
     const { accessToken, refreshToken } = extractTokens(response.headers.getSetCookie());
