@@ -15,7 +15,7 @@ export async function fetchLookupDataAction(): Promise<LookupData> {
       tags: ["lookup"],
     });
 
-    return response.json();
+    return response;
   } catch (error) {
     console.error("Error fetching lookup data:", error);
     return {

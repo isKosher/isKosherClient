@@ -41,29 +41,37 @@ export const createAPIClient = async (
     return response;
   };
 };
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
-export async function apiFetch<T>(
-  endpoint: string,
-  options: {
-    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-    data?: any;
-    params?: Record<string, any>;
-    includeCookies?: boolean;
-    headers?: Record<string, string>;
-    timeout?: number;
-    cache?: "force-cache" | "no-cache";
-    tags?: string[];
-  } = {}
-): Promise<Response & { json: () => Promise<T> }> {
-  const { method = "GET", data, params, includeCookies = false, headers = {}, tags, timeout } = options;
+export interface ApiFetchBaseOptions {
+  method?: HttpMethod;
+  data?: any;
+  params?: Record<string, any>;
+  includeCookies?: boolean;
+  headers?: Record<string, string>;
+  timeout?: number;
+  cache?: "force-cache" | "no-cache";
+  tags?: string[];
+  raw?: boolean;
+}
 
-  const requestHeaders: Record<string, string> = { ...headers };
+export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions = {}): Promise<T> {
+  const {
+    method = "GET",
+    data,
+    params,
+    includeCookies = false,
+    headers = {},
+    timeout,
+    cache,
+    tags,
+    raw = false,
+  } = options;
 
-  if (method !== "GET" && data && !requestHeaders["Content-Type"]) {
-    if (data instanceof FormData) {
-    } else {
-      requestHeaders["Content-Type"] = "application/json";
-    }
+  const requestHeaders = { ...headers };
+
+  if (method !== "GET" && data && !(data instanceof FormData)) {
+    requestHeaders["Content-Type"] ??= "application/json";
   }
 
   if (includeCookies) {
@@ -72,7 +80,6 @@ export async function apiFetch<T>(
       .getAll()
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
-
     if (cookieHeader) {
       requestHeaders["Cookie"] = cookieHeader;
     }
@@ -80,45 +87,39 @@ export async function apiFetch<T>(
 
   const api = await createAPIClient({
     headers: requestHeaders,
-    cache: options.cache,
+    cache,
     next: { tags, revalidate: 3600 },
   });
 
-  const url = new URL(process.env.IS_KOSHER_MANAGER_URL! + endpoint);
+  const url = new URL(`${process.env.IS_KOSHER_MANAGER_URL}${endpoint}`);
   if (params) {
-    Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
+    for (const key of Object.keys(params)) {
+      url.searchParams.append(key, params[key]);
+    }
   }
 
-  try {
-    const response = await api(url.toString(), {
-      method,
-      body: data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
-      headers: requestHeaders,
-    });
+  const response = await api(url.toString(), {
+    method,
+    body: data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
+    headers: requestHeaders,
+  });
 
-    if (response.status === 401) {
-      console.warn("Access token expired, trying to refresh...");
-      try {
-        const refreshed = await refreshAccessTokenAction();
-
-        if (refreshed) {
-          return apiFetch(endpoint, { ...options });
-        } else {
-          console.error("Failed to refresh token");
-          redirect("/logout");
-        }
-      } catch (refreshError: any) {
-        console.error("Error refreshing token:", refreshError.message);
+  if (response.status === 401) {
+    try {
+      const refreshed = await refreshAccessTokenAction();
+      if (refreshed) {
+        return apiFetch<T>(endpoint, options);
+      } else {
         redirect("/logout");
       }
+    } catch {
+      redirect("/logout");
     }
-
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
-    return response;
-  } catch (error: any) {
-    throw error;
   }
+
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+
+  return raw ? (response as T) : ((await response.json()) as T);
 }

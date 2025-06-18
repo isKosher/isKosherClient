@@ -21,7 +21,7 @@ export async function getRestaurant(id: string): Promise<BusinessDetailsResponse
     throw new Error("Failed to fetch restaurant");
   }
 
-  return res.json();
+  return res;
 }
 
 export default async function RestaurantPage({ params }: { params: { id: string } }) {

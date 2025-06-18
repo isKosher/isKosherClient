@@ -1,29 +1,23 @@
-import { apiFetch } from "./axiosConfig";
+import { apiFetch, ApiFetchBaseOptions } from "./axiosConfig";
 
 export const serverApi = {
-  get: <T>(endpoint: string, options: Omit<Parameters<typeof apiFetch>[1], "method"> = {}) =>
-    apiFetch<T>(endpoint, { ...options, method: "GET" }),
-
-  post: <T>(
-    endpoint: string,
-    data: any,
-    options: Omit<Parameters<typeof apiFetch>[1], "method" | "data"> = {}
-  ) => apiFetch<T>(endpoint, { ...options, method: "POST", data }),
-
-  put: <T>(
-    endpoint: string,
-    data: any,
-    options: Omit<Parameters<typeof apiFetch>[1], "method" | "data"> = {}
-  ) => apiFetch<T>(endpoint, { ...options, method: "PUT", data }),
-
-  patch: <T>(
-    endpoint: string,
-    data: any,
-    options: Omit<Parameters<typeof apiFetch>[1], "method" | "data"> = {}
-  ) => apiFetch<T>(endpoint, { ...options, method: "PATCH", data }),
-
-  delete: <T>(endpoint: string, options: Omit<Parameters<typeof apiFetch>[1], "method"> = {}) =>
-    apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
+  get: <T>(url: string, options?: Omit<ApiFetchBaseOptions, "method" | "raw">) => {
+    return apiFetch<T>(url, { ...options, method: "GET" });
+  },
+  getRaw: (url: string, options?: Omit<ApiFetchBaseOptions, "method" | "raw">) =>
+    apiFetch<Response>(url, { ...options, method: "GET", raw: true }),
+  post: <T>(url: string, data?: any, options?: Omit<ApiFetchBaseOptions, "method" | "raw" | "data">) =>
+    apiFetch<T>(url, { ...options, method: "POST", data }),
+  postRaw: (url: string, data?: any, options?: Omit<ApiFetchBaseOptions, "method" | "raw" | "data">) =>
+    apiFetch<Response>(url, { ...options, method: "POST", data, raw: true }),
+  put: <T>(url: string, data?: any, options?: Omit<ApiFetchBaseOptions, "method" | "raw" | "data">) =>
+    apiFetch<T>(url, { ...options, method: "PUT", data }),
+  putRaw: (url: string, data?: any, options?: Omit<ApiFetchBaseOptions, "method" | "raw" | "data">) =>
+    apiFetch<Response>(url, { ...options, method: "PUT", data, raw: true }),
+  delete: <T>(url: string, options?: Omit<ApiFetchBaseOptions, "method" | "raw">) =>
+    apiFetch<T>(url, { ...options, method: "DELETE" }),
+  deleteRaw: (url: string, options?: Omit<ApiFetchBaseOptions, "method" | "raw">) =>
+    apiFetch<Response>(url, { ...options, method: "DELETE", raw: true }),
 };
 
 /**
