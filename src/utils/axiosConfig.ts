@@ -17,10 +17,10 @@ export const createAPIClient = async (
         ...init.headers,
       },
     };
-
-    const response = await fetch(input, mergedConfig);
-
-    if (!response.ok) {
+    try {
+      const response = await fetch(input, mergedConfig);
+      return response;
+    } catch (response: any) {
       let errorData;
       try {
         errorData = await response.json();
@@ -37,8 +37,6 @@ export const createAPIClient = async (
       const errorMessage = errorData?.message || response.statusText || "Unknown error occurred";
       throw new Error(errorMessage);
     }
-
-    return response;
   };
 };
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -52,6 +50,7 @@ export interface ApiFetchBaseOptions {
   timeout?: number;
   cache?: "force-cache" | "no-cache";
   tags?: string[];
+  credentials?: string;
   raw?: boolean;
 }
 
@@ -106,6 +105,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
 
   if (response.status === 401) {
     try {
+      console.warn("Access token expired, trying to refresh...");
       const refreshed = await refreshAccessTokenAction();
       if (refreshed) {
         return apiFetch<T>(endpoint, options);
@@ -121,5 +121,5 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
     throw new Error("Network response was not ok");
   }
 
-  return raw ? (response as T) : ((await response.json()) as T);
+  return raw ? (response as T) : (response.json() as T);
 }
