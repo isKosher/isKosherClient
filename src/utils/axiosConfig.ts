@@ -120,6 +120,11 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
   if (!response.ok) {
     throw new Error("Network response was not ok");
   }
-
-  return raw ? (response as T) : (response.json() as T);
+  if (raw) return response as T;
+  try {
+    let formattedResponse = await response.json();
+    return formattedResponse as T;
+  } catch {
+    return response.text() as T;
+  }
 }
