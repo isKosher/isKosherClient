@@ -7,10 +7,10 @@ const DEFAULT_SIZE: number = 12;
 export async function getRestaurant(id: string): Promise<BusinessDetailsResponse> {
   const res = await serverApi.get<BusinessDetailsResponse>(`/discover/${id}/details`);
 
-  if (!res.body) {
+  if (!res) {
     throw new Error("Failed to fetch restaurant");
   }
-  return res.json() as Promise<BusinessDetailsResponse>;
+  return res;
 }
 
 //TODO: Add useing in cache for the data
@@ -22,7 +22,7 @@ export async function getRestaurantsAction(page: number = 1): Promise<BusinessPr
       cache: "force-cache",
       tags: ["restaurants"],
     });
-    return (await res.json()).content as Promise<BusinessPreview[]>;
+    return res.content;
   } catch (error) {
     console.error("Error fetching restaurants:", error);
     throw error;
@@ -32,7 +32,7 @@ export async function getRestaurantsAction(page: number = 1): Promise<BusinessPr
 export async function getSearchTerm(text: string): Promise<BusinessSearchResult[]> {
   try {
     const response = await serverApi.get<BusinessSearchResult[]>(`discover/search?query=${text}`);
-    return response.json();
+    return response;
   } catch (error) {
     console.error("Error fetching restaurant:", error);
     throw error;
@@ -49,7 +49,7 @@ export async function getFilterParams(params: string): Promise<BusinessPreview[]
     const response = await serverApi.get<{ content: BusinessPreview[] }>(
       `/discover/filter?size=${DEFAULT_SIZE}&${urlParams.toString()}`
     );
-    return (await response.json()).content as Promise<BusinessPreview[]>;
+    return response.content;
   } catch (error) {
     console.error("Error fetching restaurant:", error);
     throw error;
@@ -71,7 +71,7 @@ export async function getNearbyBusinesses(
         cache: "force-cache",
       }
     );
-    return response.json();
+    return response;
   } catch (error) {
     console.error("Error fetching nearby businesses:", error);
     throw error;
