@@ -55,7 +55,7 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
 
 export async function logoutAction(): Promise<boolean> {
   try {
-    await serverApi.post(`/auth/logout`, null, {});
+    await serverApi.postRaw(`/auth/logout`, null, {});
     await clearTokensAction();
     console.log("Logged out successfully!");
     return true;
