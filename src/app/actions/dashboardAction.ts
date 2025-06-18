@@ -155,7 +155,6 @@ export const updateBusinessPhotos = async (data: PhotoUpdateRequest) => {
     const response = await serverApi.post<BusinessPhotoDto>(`/admin/photos/business/${data.business_id}`, data.photo, {
       includeCookies: true,
     });
-    console.log(response);
     revalidateTag("lookup");
     revalidateTag("restaurants");
     return response;
@@ -171,7 +170,6 @@ export async function createBusinessPhoto(data: PhotoUpdateRequest) {
       includeCookies: true,
     });
     if (!response) throw new Error("Error creating business photo");
-    console.log(response);
     revalidateTag("lookup");
     revalidateTag("restaurants");
     return response;
