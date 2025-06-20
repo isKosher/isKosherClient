@@ -24,7 +24,6 @@ export async function createBusiness(data: z.infer<typeof formSchema>) {
   try {
     const serverPayload = await transformFormDataToServerPayload(data);
     console.log("Date to send backend: ", serverPayload);
-
     const response = await serverApi.post<any>("/admin/businesses/create-business", serverPayload, {
       includeCookies: true,
     });
