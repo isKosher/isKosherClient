@@ -15,7 +15,7 @@ import { Step5Summary } from "./(stepsCreateBusiness)/step-5-summary";
 import { formSchema, type FormData } from "@/lib/schemaCreateBusiness";
 import { StepIndicator } from "@/components/step-indicator";
 import { createBusiness } from "@/app/actions/dashboardAction";
-import { string } from "zod";
+import { revalidateTag } from "next/cache";
 
 const steps = [
   { title: "פרטי העסק", component: Step1BusinessDetails },
@@ -87,7 +87,6 @@ export function KosherBusinessForm() {
     try {
       setIsSubmitting(true);
       const result = await createBusiness(data);
-
       if (result.success) {
         toast.success("העסק נוצר בהצלחה!", {
           description: "הפרטים נשמרו במערכת",

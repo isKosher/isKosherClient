@@ -10,26 +10,25 @@ import {
   UserOwnedBusinessResponse,
 } from "@/types";
 import { serverApi } from "@/utils/apiClient";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
 export async function getMyBusinessAction(): Promise<UserOwnedBusinessResponse[]> {
   const response = await serverApi.get<UserOwnedBusinessResponse[]>("/admin/businesses/my-businesses", {
     includeCookies: true,
   });
-  return response.data;
+  return response;
 }
 
 export async function createBusiness(data: z.infer<typeof formSchema>) {
   try {
     const serverPayload = await transformFormDataToServerPayload(data);
     console.log("Date to send backend: ", serverPayload);
-
     const response = await serverApi.post<any>("/admin/businesses/create-business", serverPayload, {
       includeCookies: true,
     });
-    console.log("Response Backnd: ", response.data);
-
-    console.log("Creating business: ", serverPayload);
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
     return { success: true };
   } catch (error) {
     console.error("Error creating business:", error);
@@ -98,8 +97,9 @@ export const updateBusinessDetails = async (data: BusinessUpdateRequest) => {
     const response = await serverApi.put<BusinessResponse>("/admin/businesses/update-business", data, {
       includeCookies: true,
     });
-
-    return response.data;
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
+    return response;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to update business details");
@@ -117,7 +117,9 @@ export async function addBusinessSupervisor(data: SupervisorUpdateRequest) {
       includeCookies: true,
     }
   );
-  return response.data;
+  revalidateTag("lookup");
+  revalidateTag("restaurants");
+  return response;
 }
 
 export async function updateBusinessSupervisor(data: SupervisorUpdateRequest) {
@@ -129,14 +131,18 @@ export async function updateBusinessSupervisor(data: SupervisorUpdateRequest) {
       includeCookies: true,
     }
   );
-  return response.data;
+  revalidateTag("lookup");
+  revalidateTag("restaurants");
+  return response;
 }
 
 export async function deleteBusinessSupervisor(data: { business_id: string; supervisor_id: string }) {
   try {
-    await serverApi.delete<void>(`/admin/supervisors/${data.business_id}/${data.supervisor_id}`, {
+    await serverApi.deleteRaw(`/admin/supervisors/${data.business_id}/${data.supervisor_id}`, {
       includeCookies: true,
     });
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to delete business supervisor");
@@ -148,7 +154,9 @@ export const updateBusinessPhotos = async (data: PhotoUpdateRequest) => {
     const response = await serverApi.post<BusinessPhotoDto>(`/admin/photos/business/${data.business_id}`, data.photo, {
       includeCookies: true,
     });
-    return response.data;
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
+    return response;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to add business photos");
@@ -160,9 +168,10 @@ export async function createBusinessPhoto(data: PhotoUpdateRequest) {
     const response = await serverApi.post<BusinessPhotoDto>(`/admin/photos/business/${data.business_id}`, data.photo, {
       includeCookies: true,
     });
-    if (!response.data) throw new Error("Error creating business photo");
-    console.log("Created business photo:", response.data);
-    return response.data;
+    if (!response) throw new Error("Error creating business photo");
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
+    return response;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to create business photo");
@@ -170,10 +179,12 @@ export async function createBusinessPhoto(data: PhotoUpdateRequest) {
 }
 
 export async function deleteBusinessPhoto(photoId: string) {
-  const response = await serverApi.delete<void>(`/admin/photos/${photoId}`, {
+  const response = await serverApi.deleteRaw(`/admin/photos/${photoId}`, {
     includeCookies: true,
   });
   if (response.status !== 204) throw new Error("Error deleting business photo");
+  revalidateTag("lookup");
+  revalidateTag("restaurants");
 }
 
 export const updateBusinessLocation = async (data: LocationUpdateRequest) => {
@@ -181,8 +192,9 @@ export const updateBusinessLocation = async (data: LocationUpdateRequest) => {
     const response = await serverApi.put<LocationDto>(`/admin/location/${data.business_id}/location`, data.location, {
       includeCookies: true,
     });
-
-    return response.data;
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
+    return response;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to update business location");
@@ -198,7 +210,9 @@ export async function addBusinessCertificate(data: CertificateUpdateRequest) {
         includeCookies: true,
       }
     );
-    return response.data;
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
+    return response;
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to add business certificate");
@@ -210,6 +224,8 @@ export async function deleteBusinessCertificate(data: { business_id: string; cer
     await serverApi.delete<void>(`/admin/certificates/business/${data.business_id}/${data.certificate_id}`, {
       includeCookies: true,
     });
+    revalidateTag("lookup");
+    revalidateTag("restaurants");
   } catch (error) {
     handleApiError(error);
     throw new Error("Failed to delete business certificate");

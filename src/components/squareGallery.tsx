@@ -19,7 +19,7 @@ export default function SquareGallery({ images }: SquareGalleryProps) {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl">
       <CardContent className="p-0">
         <AspectRatio ratio={1}>
           <div className="relative w-full h-full">

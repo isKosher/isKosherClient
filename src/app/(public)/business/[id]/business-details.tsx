@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { SiGooglemaps, SiWaze, SiWhatsapp } from "react-icons/si";
 import { MapPin, Star, Info, ChevronLeft } from "lucide-react";
-import { BusinessDetailsResponse, GalleryImage } from "@/types";
+import { BusinessDetailsResponse, BusinessPreview, GalleryImage } from "@/types";
 import { LatLngExpression } from "leaflet";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,9 @@ import { toast } from "sonner";
 type BusinessDetailsProps = {
   business: BusinessDetailsResponse;
   coordinates: LatLngExpression;
+  nearbyBusinesses: BusinessPreview[];
 };
-const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates }) => {
+const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates, nearbyBusinesses }) => {
   const router = useRouter();
   const Map = useMemo(
     () =>
@@ -68,13 +69,13 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
     let url = "";
     if (app === "waze") {
       url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+      window.open(url, "_blank");
     } else if (app === "google") {
       url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      window.open(url, "_blank");
     } else {
       router.push(`/?tab=location&lat=${lat}&lng=${lng}&radius=10`);
     }
-
-    window.open(url, "_blank");
   };
 
   return (
@@ -238,7 +239,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
                     הצג הכל <ChevronLeft size={16} />
                   </Button>
                 </div>
-                <NearbyBusinesses coordinates={coordinates} />
+                <NearbyBusinesses businesses={nearbyBusinesses} />
               </div>
             </motion.div>
           </div>

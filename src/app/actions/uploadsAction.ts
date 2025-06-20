@@ -11,22 +11,15 @@ export const uploadFile = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await serverApi.post<FileUploadResponse>(
-      `/admin/files/upload/${provider}/${folderType}`,
-      formData,
-      {
-        includeCookies: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    if (!response.data) {
+    const response = await serverApi.postRaw(`/admin/files/upload/${provider}/${folderType}`, formData, {
+      includeCookies: true,
+    });
+    const formattedResponse: FileUploadResponse = await response.json();
+    if (!formattedResponse) {
       throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
 
-    return response.data;
+    return formattedResponse;
   } catch (error) {
     console.error("Error uploading file:", error);
     throw error;
@@ -42,7 +35,7 @@ export async function deleteFile(
     if (!fileId) {
       throw new Error("No file ID provided");
     }
-    const response = await serverApi.delete<void>(`/admin/files/${provider}/${folderType}?fileId=${fileId}`, {
+    const response = await serverApi.deleteRaw(`/admin/files/${provider}/${folderType}?fileId=${fileId}`, {
       includeCookies: true,
     });
 

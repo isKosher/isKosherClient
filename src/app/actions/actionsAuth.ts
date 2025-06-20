@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 
 export async function handleLoginAction(idToken: string): Promise<LoginResponse> {
   try {
-    const response = await serverApi.post(
+    const response: Response = await serverApi.postRaw(
       `/auth/login`,
       {},
       {
@@ -14,10 +14,9 @@ export async function handleLoginAction(idToken: string): Promise<LoginResponse>
           Authorization: `${idToken}`,
           "Content-Type": "application/json",
         },
-        withCredentials: true,
       }
     );
-    const { accessToken, refreshToken } = extractTokens(response.headers["set-cookie"]);
+    const { accessToken, refreshToken } = extractTokens(response.headers.getSetCookie());
     await setTokensAction(accessToken, refreshToken);
 
     return { success: true };
@@ -35,15 +34,15 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
 
-    const response = await serverApi.post(`/auth/refresh-token`, null, {
+    const response = await serverApi.postRaw(`/auth/refresh-token`, null, {
       headers: {
         Cookie: cookieHeader,
         "Content-Type": "application/json",
       },
-      withCredentials: true,
+      credentials: "include",
     });
 
-    const { accessToken, refreshToken } = extractTokens(response.headers["set-cookie"]);
+    const { accessToken, refreshToken } = extractTokens(response.headers.getSetCookie());
     await setTokensAction(accessToken, refreshToken);
 
     console.log("Access token refreshed successfully!");
@@ -56,7 +55,7 @@ export async function refreshAccessTokenAction(): Promise<boolean> {
 
 export async function logoutAction(): Promise<boolean> {
   try {
-    await serverApi.post(`/auth/logout`, null, {});
+    await serverApi.postRaw(`/auth/logout`, null, {});
     await clearTokensAction();
     console.log("Logged out successfully!");
     return true;
