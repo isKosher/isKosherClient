@@ -8,36 +8,34 @@ import { ApiFetchBaseOptions } from "./apiClient";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 export const createAPIClient = async (
-  config: RequestInit = {}
+  config: RequestInit & { timeout?: number } = {}
 ): Promise<(input: RequestInfo, init?: RequestInit) => Promise<Response>> => {
   return async (input: RequestInfo, init: RequestInit = {}) => {
+    const { timeout = 30000, ...restConfig } = config; // ברירת מחדל: 30 שניות
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
     const mergedConfig: RequestInit = {
-      ...config,
+      ...restConfig,
       ...init,
+      signal: controller.signal,
       headers: {
-        ...config.headers,
+        ...restConfig.headers,
         ...init.headers,
       },
     };
+
     try {
       const response = await fetch(input, mergedConfig);
+      clearTimeout(timeoutId);
       return response;
-    } catch (response: any) {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch {
-        errorData = { message: response.statusText };
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        console.error("Request timed out after", timeout, "ms");
+        throw new Error(`Request timed out after ${timeout} ms`);
       }
-
-      console.error(`API Error: ${response.statusText}`, {
-        url: input,
-        status: response.status,
-        data: errorData,
-      });
-
-      const errorMessage = errorData?.message || response.statusText || "Unknown error occurred";
-      throw new Error(errorMessage);
+      throw error;
     }
   };
 };
@@ -75,6 +73,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
   const api = await createAPIClient({
     headers: requestHeaders,
     cache,
+    timeout: timeout ?? 30000,
     next: { tags, revalidate: REVALIDATE_TIME },
   });
 

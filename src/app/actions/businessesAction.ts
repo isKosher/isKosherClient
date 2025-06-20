@@ -1,5 +1,6 @@
 "use server";
 
+import { TIMEOUT_MS } from "@/lib/constants";
 import { BusinessSearchResult, BusinessPreview, PageResponse, BusinessDetailsResponse } from "@/types";
 import { serverApi } from "@/utils/apiClient";
 
@@ -7,6 +8,7 @@ const DEFAULT_SIZE: number = 12;
 export async function getRestaurant(id: string): Promise<BusinessDetailsResponse> {
   const res = await serverApi.get<BusinessDetailsResponse>(`/discover/${id}/details`, {
     cache: "force-cache",
+    timeout: TIMEOUT_MS,
   });
   if (!res) {
     throw new Error("Failed to fetch restaurant");
@@ -14,14 +16,15 @@ export async function getRestaurant(id: string): Promise<BusinessDetailsResponse
   return res;
 }
 
-//TODO: Add useing in cache for the data
 export async function getRestaurantsAction(page: number = 1): Promise<BusinessPreview[]> {
   try {
+    // Set a timeout of 120 seconds
     const res = await serverApi.get<{
       content: BusinessPreview[];
     }>(`/discover/preview?size=${DEFAULT_SIZE}&page=${page}`, {
       cache: "force-cache",
       tags: ["restaurants"],
+      timeout: TIMEOUT_MS,
     });
     return res.content;
   } catch (error) {
