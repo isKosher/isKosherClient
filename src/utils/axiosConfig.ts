@@ -11,7 +11,7 @@ export const createAPIClient = async (
   config: RequestInit & { timeout?: number } = {}
 ): Promise<(input: RequestInfo, init?: RequestInit) => Promise<Response>> => {
   return async (input: RequestInfo, init: RequestInit = {}) => {
-    const { timeout = 30000, ...restConfig } = config; // ברירת מחדל: 30 שניות
+    const { timeout = 30000, ...restConfig } = config;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -72,7 +72,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchBaseOptions
 
   const api = await createAPIClient({
     headers: requestHeaders,
-    cache,
+    cache: cache ?? "no-cache", // Default to no-cache unless specified
     timeout: timeout ?? 30000,
     next: { tags, revalidate: REVALIDATE_TIME },
   });
