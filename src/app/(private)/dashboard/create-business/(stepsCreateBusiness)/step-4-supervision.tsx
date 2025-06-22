@@ -3,18 +3,12 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { FormData, isDateValid } from "@/lib/schemaCreateBusiness";
+import { type FormData, isDateValid } from "@/lib/schemaCreateBusiness";
 import { useState, useEffect } from "react";
 import { FileUploader } from "@/components/file-uploader";
-import { FileUploaderType, FileUploadResponse, FolderType } from "@/types/file-upload";
-//TODO: preview image after back step (change url of google drive...)
+import { FileUploaderType, type FileUploadResponse, FolderType } from "@/types/file-upload";
+import { DatePicker } from "@/components/date-picker";
+
 export function Step4Supervision() {
   const { control, watch, setValue } = useFormContext<FormData>();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
@@ -41,26 +35,14 @@ export function Step4Supervision() {
     }
   }, [certificateMetadata, certificateUrl, certificateFile]);
 
-  const formatDateInHebrew = (date: Date | null): string => {
-    if (!date) return "";
-    return format(date, "dd/MM/yyyy", { locale: he });
-  };
-
   const handleCertificateChange = (file: File | null, uploadResponse?: FileUploadResponse) => {
-    // Set the file object in the local state
     setCertificateFile(file);
 
     if (uploadResponse) {
-      // Store the upload info for future reference
       setUploadedInfo(uploadResponse);
-
-      // Store the URL in the form field
       setValue("kosher_certificate.certificate", uploadResponse.web_view_link);
-
-      // Store id in a separate field to help reconstruct the state when navigating back
       setValue("kosher_certificate.file_id", uploadResponse.id);
     } else if (file === null) {
-      // Clear all related fields when file is removed
       setValue("kosher_certificate.certificate", "");
       setValue("kosher_certificate.file_id", "");
       setUploadedInfo(null);
@@ -68,17 +50,28 @@ export function Step4Supervision() {
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-[#1A365D]">פיקוח וכשרות</h2>
+    <div className="space-y-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A365D] to-[#2D5A87] bg-clip-text text-transparent mb-2">
+          פיקוח וכשרות
+        </h2>
+        <div className="w-24 h-1 bg-gradient-to-r from-sky-400 to-sky-600 mx-auto rounded-full"></div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           control={control}
           name="supervisor.name"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>שם המשגיח</FormLabel>
+            <FormItem className="group">
+              <FormLabel className="text-[#1A365D] font-semibold transition-colors group-focus-within:text-sky-600">
+                שם המשגיח
+              </FormLabel>
               <FormControl>
-                <Input {...field} className="border-sky-200 focus:border-sky-500 transition-all duration-300" />
+                <Input
+                  {...field}
+                  className="border-2 border-sky-100 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 transition-all duration-300 hover:border-sky-200 bg-gradient-to-r from-white to-sky-50/30"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,13 +81,15 @@ export function Step4Supervision() {
           control={control}
           name="supervisor.contact_info"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>פרטי התקשרות</FormLabel>
+            <FormItem className="group">
+              <FormLabel className="text-[#1A365D] font-semibold transition-colors group-focus-within:text-sky-600">
+                פרטי התקשרות
+              </FormLabel>
               <FormControl>
                 <Input
                   type="text"
                   {...field}
-                  className="border-sky-200 focus:border-sky-500 transition-all duration-300"
+                  className="border-2 border-sky-100 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 transition-all duration-300 hover:border-sky-200 bg-gradient-to-r from-white to-sky-50/30"
                 />
               </FormControl>
               <FormMessage />
@@ -102,87 +97,67 @@ export function Step4Supervision() {
           )}
         />
       </div>
+
       <FormField
         control={control}
         name="supervisor.authority"
         render={({ field }) => (
-          <FormItem>
-            <FormLabel>רשות הפיקוח</FormLabel>
+          <FormItem className="group">
+            <FormLabel className="text-[#1A365D] font-semibold transition-colors group-focus-within:text-sky-600">
+              רשות הפיקוח
+            </FormLabel>
             <FormControl>
-              <Input {...field} className="border-sky-200 focus:border-sky-500 transition-all duration-300" />
+              <Input
+                {...field}
+                className="border-2 border-sky-100 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 transition-all duration-300 hover:border-sky-200 bg-gradient-to-r from-white to-sky-50/30"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      {/* Certificate upload with FileUploader */}
-      <FormField
-        control={control}
-        name="kosher_certificate.certificate"
-        render={({ field }) => (
-          <FileUploader
-            label="אישור כשרות"
-            value={certificateFile}
-            uploaderType={FileUploaderType.IMAGE}
-            onChange={handleCertificateChange}
-            folderType={FolderType.CERTIFICATES}
-            className="w-full"
-            // Pass the uploadedInfo to the FileUploader so it can show the preview
-            // and properly handle deletion of existing file
-            uploadedInfo={uploadedInfo}
-          />
-        )}
-      />
+      {/* Enhanced Certificate upload */}
+      <div className="bg-gradient-to-br from-sky-50/50 to-blue-50/30 p-6 rounded-xl border border-sky-100">
+        <FormField
+          control={control}
+          name="kosher_certificate.certificate"
+          render={({ field }) => (
+            <FileUploader
+              label="אישור כשרות"
+              value={certificateFile}
+              uploaderType={FileUploaderType.IMAGE}
+              onChange={handleCertificateChange}
+              folderType={FolderType.CERTIFICATES}
+              className="w-full"
+              // Pass the uploadedInfo to the FileUploader so it can show the preview
+              // and properly handle deletion of existing file
+              uploadedInfo={uploadedInfo}
+            />
+          )}
+        />
+      </div>
 
+      {/* Enhanced Date Picker using the new component */}
       <FormField
         control={control}
         name="kosher_certificate.expiration_date"
         render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <FormLabel>תאריך תפוגת תעודה</FormLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full md:w-[240px] pr-3 text-right font-normal border-sky-200 focus:border-sky-500",
-                      !field.value && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                    {field.value ? formatDateInHebrew(field.value) : <span>בחר תאריך</span>}
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="single"
-                  selected={field.value}
-                  onSelect={field.onChange}
-                  disabled={(date) => !isDateValid(date)}
-                  initialFocus
-                  locale={he}
-                  dir="rtl"
-                  className="rtl"
-                  weekStartsOn={0}
-                  showOutsideDays={true}
-                  fixedWeeks
-                  classNames={{
-                    day_selected: "bg-sky-500 text-white hover:bg-sky-600 focus:bg-sky-600",
-                    day_today: "bg-sky-100 text-sky-900 !opacity-100",
-                    day_outside: "text-gray-500",
-                    day_disabled: "text-gray-500 opacity-20",
-                    day_range_middle: "bg-sky-50",
-                    nav_button: "h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
-                    nav_button_previous: "absolute right-1",
-                    nav_button_next: "absolute left-1",
-                    day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-sky-100 rounded-md",
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+          <FormItem className="flex flex-col group">
+            <FormLabel className="text-[#1A365D] font-semibold mb-3 transition-colors group-focus-within:text-sky-600">
+              תאריך תפוגת תעודה
+            </FormLabel>
+            <FormControl>
+              <DatePicker
+                value={field.value}
+                onChange={field.onChange}
+                disabled={(date) => !isDateValid(date)}
+                placeholder="בחר תאריך תפוגה"
+                variant="modern"
+                dir="rtl"
+                showIcons={true}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

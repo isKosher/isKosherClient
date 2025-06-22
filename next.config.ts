@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    domains: [
+      "www.google.com",
+      "www.drive.google.com",
+      "www.allrecipes.com",
+      "images.squarespace-cdn.com",
+      "cdn.britannica.com",
+      "example.com",
+    ],
     remotePatterns: [
       {
         protocol: "https",
