@@ -8,14 +8,9 @@ import { Upload, X, FileIcon, ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadFile, deleteFile } from "@/app/actions/uploadsAction";
 import { UPLOAD_COOLDOWN, UPLOAD_DELAY } from "@/lib/constants";
-import {
-  FileUploaderProps,
-  FileUploaderType,
-  getAcceptValue,
-  isValidFileType,
-  StorageProvider,
-} from "@/types/file-upload";
+import { FileUploaderProps, FileUploaderType, StorageProvider } from "@/types/file-upload";
 import { generateFileMessages } from "@/data/file-uploader-data";
+import { compressImage, getAcceptValue, isValidFileType } from "@/utils/upload-utils";
 
 export function FileUploader({
   label,
@@ -37,6 +32,7 @@ export function FileUploader({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [fileInfo, setFileInfo] = useState(uploadedInfo);
   const [lastUploadTime, setLastUploadTime] = useState<number>(0);
   const [uploadTimeout, setUploadTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -76,7 +72,7 @@ export function FileUploader({
     return <FileIcon className="h-12 w-12 text-sky-500" />;
   };
 
-  const handleFileChange = (file: File | null) => {
+  const handleFileChange = async (file: File | null) => {
     if (uploadTimeout) {
       clearTimeout(uploadTimeout);
       setUploadTimeout(null);
@@ -87,41 +83,73 @@ export function FileUploader({
       setPreview(null);
       return;
     }
+
     if (!isValidFileType(file, uploaderType)) {
       setError(messages.invalidFileType);
       return;
     }
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(messages.fileTooLarge);
-      return;
-    }
+
     const now = Date.now();
     if (now - lastUploadTime < UPLOAD_COOLDOWN) {
       setError(messages.waitBeforeNextUpload(Math.ceil((UPLOAD_COOLDOWN - (now - lastUploadTime)) / 1000)));
       return;
     }
-    if (file.type.startsWith("image/")) {
-      const fileUrl = URL.createObjectURL(file);
+
+    if (fileInfo && !isDeleting) {
+      setError(messages.deleteExistingFirst);
+      return;
+    }
+
+    let processedFile = file;
+
+    // Check if file is too large and is an image - compress if needed
+    if (file.size > maxSizeMB * 1024 * 1024 && file.type.startsWith("image/")) {
+      try {
+        setIsCompressing(true);
+        processedFile = await compressImage(file, maxSizeMB);
+      } catch (compressionError) {
+        console.error("❌ Compression error:", compressionError);
+        setError(messages.uploadError);
+        setIsCompressing(false);
+        return;
+      } finally {
+        setIsCompressing(false);
+      }
+    } else if (file.size > maxSizeMB * 1024 * 1024) {
+      // Non-image files that are too large
+      console.error(`❌ File too large (non-image):`, {
+        fileName: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+        maxAllowed: `${maxSizeMB}MB`,
+        type: file.type,
+      });
+      setError(messages.fileTooLarge);
+      return;
+    } else {
+      console.log(`✅ File size OK:`, {
+        fileName: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+        maxAllowed: `${maxSizeMB}MB`,
+        type: file.type,
+      });
+    }
+
+    // Create preview
+    if (processedFile.type.startsWith("image/")) {
+      const fileUrl = URL.createObjectURL(processedFile);
       setPreview(fileUrl);
     } else {
       setPreview("document-preview");
     }
-    if (fileInfo && !isDeleting) {
-      setError(messages.deleteExistingFirst);
-      if (preview && preview !== "document-preview" && !preview.startsWith("http")) {
-        URL.revokeObjectURL(preview);
-      }
-      setPreview(null);
-      return;
-    }
+
     if (autoUpload) {
       const timeout = setTimeout(() => {
         setLastUploadTime(Date.now());
-        handleUpload(file);
+        handleUpload(processedFile);
       }, UPLOAD_DELAY);
       setUploadTimeout(timeout);
     } else {
-      onChange(file);
+      onChange(processedFile);
     }
   };
 
@@ -162,6 +190,7 @@ export function FileUploader({
     const file = e.target.files?.[0] || null;
     handleFileChange(file);
   };
+
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -171,19 +200,21 @@ export function FileUploader({
       setDragActive(false);
     }
   };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (isUploading || isDeleting) {
+    if (isBusy) {
       return;
     }
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileChange(e.dataTransfer.files[0]);
     }
   };
+
   const handleRemove = async () => {
-    if (isDeleting || isUploading) {
+    if (isDeleting || isUploading || isCompressing) {
       return;
     }
     if (uploadTimeout) {
@@ -207,7 +238,7 @@ export function FileUploader({
     onChange(null);
   };
 
-  const isBusy = isUploading || isDeleting;
+  const isBusy = isUploading || isDeleting || isCompressing;
 
   return (
     <div className={className} dir={direction}>
@@ -273,6 +304,14 @@ export function FileUploader({
             >
               <X className="h-4 w-4" />
             </Button>
+            {isCompressing && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className="bg-white p-3 rounded-md flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                  <span className="text-sm font-medium">מעבד תמונה...</span>
+                </div>
+              </div>
+            )}
             {isUploading && (
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 <div className="bg-white p-3 rounded-md flex items-center gap-2">
