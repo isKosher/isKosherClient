@@ -116,6 +116,16 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
     }
   };
 
+  const deleteUploadedPhoto = async () => {
+    if (uploadedInfo?.id) {
+      try {
+        await deleteFile(uploadedInfo.id, FolderType.BUSINESS_PHOTOS, StorageProvider.SUPABASE);
+      } catch (err) {
+        console.error("Failed to delete uploaded file:", err);
+      }
+    }
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -150,7 +160,7 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
                 onChange={handlePhotoFileChange}
                 uploaderType={FileUploaderType.IMAGE}
                 folderType={FolderType.BUSINESS_PHOTOS}
-                maxSizeMB={10}
+                maxSizeMB={5}
                 direction="rtl"
                 uploadedInfo={uploadedInfo}
                 provider={StorageProvider.SUPABASE}
@@ -171,6 +181,7 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    deleteUploadedPhoto();
                     setIsAdding(false);
                     setPhotoFile(null);
                     setUploadedInfo(null);
@@ -225,16 +236,7 @@ export default function PhotosForm({ business, onClose }: PhotosFormProps) {
       <div className="flex flex-col space-y-2">
         {error && <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">{error}</div>}
         <div className="flex justify-start gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onClose()}
-            className="border-gray-300"
-            disabled={isLoading}
-          >
-            ביטול
-          </Button>
-          <Button type="submit" className="bg-[#1A365D] hover:bg-[#2D4A6D]" disabled={isLoading}>
+          <Button type="submit" className="bg-[#1A365D] hover:bg-[#2D4A6D]" disabled={isLoading || isAdding}>
             {"שמור שינויים"}
           </Button>
         </div>

@@ -8,9 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileUploader } from "@/components/file-uploader";
-import { FileUploaderType, FolderType, type FileUploadResponse } from "@/types/file-upload";
+import { FileUploaderType, FolderType, StorageProvider, type FileUploadResponse } from "@/types/file-upload";
 import { addBusinessCertificate, deleteBusinessCertificate } from "@/app/actions/dashboardAction";
 import KosherCertificateViewer from "@/components/Kosher-certificate-viewer";
+import { deleteFile } from "@/app/actions/uploadsAction";
 
 type CertificatesFormProps = {
   business: UserOwnedBusinessResponse;
@@ -78,6 +79,16 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
     }
   };
 
+  const deleteUploadedCertificate = async () => {
+    if (uploadedInfo?.id) {
+      try {
+        await deleteFile(uploadedInfo.id, FolderType.CERTIFICATES);
+      } catch (err) {
+        console.error("Failed to delete uploaded file:", err);
+      }
+    }
+  };
+
   const handleAddCertificate = async () => {
     if (!newCertificate.certificate || !newCertificate.expiration_date) {
       setError("יש למלא את כל השדות");
@@ -112,6 +123,7 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
   };
 
   const handleCancelAdd = () => {
+    deleteUploadedCertificate();
     setIsAdding(false);
     setCertificateFile(null);
     setUploadedInfo(null);
@@ -144,9 +156,8 @@ export default function CertificatesForm({ business, onClose }: CertificatesForm
                 label="תעודת כשרות"
                 value={certificateFile}
                 onChange={handleCertificateFileChange}
-                uploaderType={FileUploaderType.ANY}
+                uploaderType={FileUploaderType.IMAGE}
                 folderType={FolderType.CERTIFICATES}
-                maxSizeMB={10}
                 direction="rtl"
                 uploadedInfo={uploadedInfo}
               />
