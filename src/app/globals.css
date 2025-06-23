@@ -1,9 +1,8 @@
 @import "../../node_modules/leaflet/dist/leaflet.css";
 
-/* If you are not using Tailwind CSS, comment out or remove these lines. Otherwise, ensure your build tool processes Tailwind directives. */
-/* @tailwind base; */
-/* @tailwind components; */
-/* @tailwind utilities; */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
   font-family: Arial, Helvetica, sans-serif;
