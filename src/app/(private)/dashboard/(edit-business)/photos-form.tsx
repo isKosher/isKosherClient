@@ -8,16 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "@/components/file-uploader";
-import {
-  extractFilename,
-  FileUploaderType,
-  FolderType,
-  isUnsplashImageUrl,
-  StorageProvider,
-  type FileUploadResponse,
-} from "@/types/file-upload";
+import { FileUploaderType, FolderType, StorageProvider, type FileUploadResponse } from "@/types/file-upload";
 import { createBusinessPhoto, deleteBusinessPhoto } from "@/app/actions/dashboardAction";
 import { deleteFile } from "@/app/actions/uploadsAction";
+import { extractFilename, isUnsplashImageUrl } from "@/utils/upload-utils";
 
 type PhotosFormProps = {
   business: UserOwnedBusinessResponse;
