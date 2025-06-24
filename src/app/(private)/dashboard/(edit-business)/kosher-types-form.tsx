@@ -17,7 +17,7 @@ type KosherTypesFormProps = {
 };
 
 export default function KosherTypesForm({ business, onClose }: KosherTypesFormProps) {
-  const { lookupData, kosherTypes, addCustomKosherType, foodItems, addCustomFoodItem } = useLookupData();
+  const { lookupData, kosherTypes, addCustomKosherType, foodItemTypes, addCustomFoodItem } = useLookupData();
 
   const [selectedKosherTypes, setSelectedKosherTypes] = useState([...business.kosher_types]);
   const [selectedFoodTypes, setSelectedFoodTypes] = useState([...business.food_types]);
@@ -284,7 +284,7 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
 
           {/* Add Food Item Type */}
           <SelectWithAdd
-            options={foodItems}
+            options={foodItemTypes}
             value=""
             onChange={(value) => handleAddFoodItemType(value)}
             onAddCustom={(name) => handleAddFoodItemType(name)}

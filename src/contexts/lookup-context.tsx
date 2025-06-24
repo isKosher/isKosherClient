@@ -18,7 +18,7 @@ interface LookupContextType {
   lookupData: LookupData;
   businessTypes: Option[];
   kosherTypes: Option[];
-  foodItems: Option[];
+  foodItemTypes: Option[];
 
   // State
   isLoading: boolean;
@@ -60,7 +60,7 @@ export function LookupProvider({ children, initialData }: LookupProviderProps) {
 
   const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
   const [kosherTypes, setKosherTypes] = useState<Option[]>([]);
-  const [foodItems, setFoodItems] = useState<Option[]>([]);
+  const [foodItemTypes, setFoodItemTypes] = useState<Option[]>([]);
   const [isLoading, setIsLoading] = useState(!initialData);
   const [isInitialized, setIsInitialized] = useState(!!initialData);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +83,7 @@ export function LookupProvider({ children, initialData }: LookupProviderProps) {
       }))
     );
 
-    setFoodItems(
+    setFoodItemTypes(
       data.food_item_types.map((item) => ({
         id: item.id,
         name: item.name,
@@ -146,7 +146,7 @@ export function LookupProvider({ children, initialData }: LookupProviderProps) {
       name,
       isCustom: true,
     };
-    setFoodItems((prev) => [...prev, newItem]);
+    setFoodItemTypes((prev) => [...prev, newItem]);
     return newItem;
   }, []);
 
@@ -163,7 +163,7 @@ export function LookupProvider({ children, initialData }: LookupProviderProps) {
     lookupData,
     businessTypes,
     kosherTypes,
-    foodItems,
+    foodItemTypes,
     isLoading,
     isInitialized,
     error,

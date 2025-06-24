@@ -22,7 +22,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
   const searchParams = useSearchParams();
 
   // Use the lookup context
-  const { businessTypes, kosherTypes, foodItems, isLoading: contextLoading, error: contextError } = useLookupData();
+  const { businessTypes, kosherTypes, foodItemTypes, isLoading: contextLoading, error: contextError } = useLookupData();
 
   // Component state
   const [activeTab, setActiveTab] = useState<"text" | "location" | "filter">(initialTab);
@@ -31,7 +31,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
   const [selectedFoodType, setSelectedFoodType] = useState<string[]>([]);
   const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
   const [selectedKosherTypes, setSelectedKosherTypes] = useState<string[]>([]);
-  const [selectedFoodItems, setSelectedFoodItems] = useState<string[]>([]);
+  const [selectedFoodItemTypes, setSelectedFoodItemTypes] = useState<string[]>([]);
 
   const [previewPage, setPreviewPage] = useState(2);
   const [filterPage, setFilterPage] = useState(0);
@@ -59,9 +59,9 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
       selectedFoodType.length > 0 ||
       selectedBusinessTypes.length > 0 ||
       selectedKosherTypes.length > 0 ||
-      selectedFoodItems.length > 0
+      selectedFoodItemTypes.length > 0
     );
-  }, [selectedCity, selectedFoodType, selectedBusinessTypes, selectedKosherTypes, selectedFoodItems]);
+  }, [selectedCity, selectedFoodType, selectedBusinessTypes, selectedKosherTypes, selectedFoodItemTypes]);
 
   // Initialize filters from URL and load appropriate data - only runs once
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
       const foodTypeParams = searchParams.getAll("foodTypes");
       const businessTypeParams = searchParams.getAll("businessTypes");
       const kosherTypeParams = searchParams.getAll("kosherTypes");
-      const foodItemParams = searchParams.getAll("foodItems");
+      const foodItemParams = searchParams.getAll("foodItemTypes");
 
       // Check for location parameters
       const lat = searchParams.get("lat");
@@ -83,7 +83,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
       setSelectedFoodType(foodTypeParams.filter((type) => foodTypeNames.includes(type)));
       setSelectedBusinessTypes(businessTypeParams);
       setSelectedKosherTypes(kosherTypeParams);
-      setSelectedFoodItems(foodItemParams);
+      setSelectedFoodItemTypes(foodItemParams);
 
       const hasUrlFilters =
         city ||
@@ -178,7 +178,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
     setSelectedFoodType([]);
     setSelectedBusinessTypes([]);
     setSelectedKosherTypes([]);
-    setSelectedFoodItems([]);
+    setSelectedFoodItemTypes([]);
 
     // Reset pagination states
     setPreviewPage(2);
@@ -258,8 +258,8 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
       params.append("kosherTypes", type);
     });
 
-    selectedFoodItems.forEach((item) => {
-      params.append("foodItems", item);
+    selectedFoodItemTypes.forEach((item) => {
+      params.append("foodItemTypes", item);
     });
 
     // Use Next.js router to update the URL without refreshing the page
@@ -334,8 +334,8 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
       params.append("kosherTypes", type);
     });
 
-    selectedFoodItems.forEach((item) => {
-      params.append("foodItems", item);
+    selectedFoodItemTypes.forEach((item) => {
+      params.append("foodItemTypes", item);
     });
 
     const newRestaurants = await getFilterParams(params.toString());
@@ -357,7 +357,7 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
     setSelectedFoodType([]);
     setSelectedBusinessTypes([]);
     setSelectedKosherTypes([]);
-    setSelectedFoodItems([]);
+    setSelectedFoodItemTypes([]);
 
     setRestaurants([]);
     setPreviewPage(2);
@@ -402,8 +402,8 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
         params.append("kosherTypes", type);
       });
 
-      selectedFoodItems.forEach((item) => {
-        params.append("foodItems", item);
+      selectedFoodItemTypes.forEach((item) => {
+        params.append("foodItemTypes", item);
       });
 
       const response: BusinessPreview[] = await getFilterParams(params.toString());
@@ -557,11 +557,11 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
                         selectedFilters={selectedKosherTypes}
                       />
                       <FilterDropdown
-                        filterOptions={foodItems}
+                        filterOptions={foodItemTypes}
                         loading={isLoading}
                         filterPlaceholder="סוג אוכל"
-                        onSelectFilters={(selectedFilters) => setSelectedFoodItems(selectedFilters)}
-                        selectedFilters={selectedFoodItems}
+                        onSelectFilters={(selectedFilters) => setSelectedFoodItemTypes(selectedFilters)}
+                        selectedFilters={selectedFoodItemTypes}
                       />
                       <FilterDropdown
                         filterOptions={businessTypes}

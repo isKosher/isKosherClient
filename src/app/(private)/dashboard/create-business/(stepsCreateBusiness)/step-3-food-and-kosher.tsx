@@ -14,7 +14,7 @@ export function Step3FoodAndKosher() {
   const {
     businessTypes,
     kosherTypes,
-    foodItems,
+    foodItemTypes,
     isLoading,
     addCustomBusinessType,
     addCustomKosherType,
@@ -173,7 +173,7 @@ export function Step3FoodAndKosher() {
             <FormLabel>פריטי מזון</FormLabel>
             <FormControl>
               <DynamicCombobox
-                options={foodItems}
+                options={foodItemTypes}
                 selected={(field.value || []).map((option) => ({
                   ...option,
                   id: option.id || "",
