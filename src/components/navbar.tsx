@@ -29,12 +29,12 @@ export default function Navbar() {
 
   return (
     <header
-      className={` fixed top-0 left-0 right-0 z-50 flex h-16 w-full shrink-0 items-center px-4 md:px-6 lg:justify-center lg:bg-white lg:bg-opacity-40 lg:backdrop-blur-md transition-transform duration-300 ${
+      className={` fixed top-0 left-0 right-0 z-50 flex h-16 w-full shrink-0 items-center px-4 md:px-6 justify-center bg-white bg-opacity-40 backdrop-blur-md transition-transform duration-300 ${
         isVisible ? "transform-none" : "-translate-y-full"
       }`}
     >
       <Link href="/">
-        <h1 className="hidden text-3xl is-kosher-font text-[#1A365D] font-bold lg:block">isKosher</h1>
+        <h1 className="text-3xl is-kosher-font text-[#1A365D] font-bold">isKosher</h1>
       </Link>
       <div className="absolute h-full flex right-2 top-2">
         <h1 className="text-[12px]">בס&rdquo;ד</h1>

@@ -8,7 +8,7 @@ import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { FormData } from "@/lib/schemaCreateBusiness";
-import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { getCityRegion, getCoordinates, searchCities, searchStreets } from "@/services/geoapify-service";
 
 export function Step2Location() {
