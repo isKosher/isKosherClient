@@ -221,7 +221,7 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-4 w-4 p-0 ml-2 text-red-500 hover:text-red-700"
+                    className="h-4 w-4 p-0 mr-2 text-red-500 hover:text-red-700"
                     onClick={() => handleRemoveFoodType(type)}
                   >
                     <X className="h-3 w-3" />
@@ -272,7 +272,7 @@ export default function KosherTypesForm({ business, onClose }: KosherTypesFormPr
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-4 w-4 p-0 ml-2 text-red-500 hover:text-red-700"
+                    className="h-4 w-4 p-0 mr-2 text-red-500 hover:text-red-700"
                     onClick={() => handleRemoveFoodItemType(item)}
                   >
                     <X className="h-3 w-3" />

@@ -50,13 +50,8 @@ export function Step4Supervision() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A365D] to-[#2D5A87] bg-clip-text text-transparent mb-2">
-          פיקוח וכשרות
-        </h2>
-        <div className="w-24 h-1 bg-gradient-to-r from-sky-400 to-sky-600 mx-auto rounded-full"></div>
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-[#1A365D]">פיקוח וכשרות</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
