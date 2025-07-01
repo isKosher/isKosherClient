@@ -15,7 +15,6 @@ import { Step5Summary } from "./(stepsCreateBusiness)/step-5-summary";
 import { formSchema, type FormData } from "@/lib/schemaCreateBusiness";
 import { StepIndicator } from "@/components/step-indicator";
 import { createBusiness } from "@/app/actions/dashboardAction";
-import { revalidateTag } from "next/cache";
 
 const steps = [
   { title: "פרטי העסק", component: Step1BusinessDetails },

@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { SiGooglemaps, SiWaze, SiWhatsapp } from "react-icons/si";
 import { MapPin, Star, Info, ChevronLeft } from "lucide-react";
-import { BusinessDetailsResponse, BusinessPreview, GalleryImage } from "@/types";
+import { BusinessDetailsResponse, GalleryImage } from "@/types";
 import { LatLngExpression } from "leaflet";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,8 @@ import { toast } from "sonner";
 type BusinessDetailsProps = {
   business: BusinessDetailsResponse;
   coordinates: LatLngExpression;
-  nearbyBusinesses: BusinessPreview[];
 };
-const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates, nearbyBusinesses }) => {
+const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates }) => {
   const router = useRouter();
   const Map = useMemo(
     () =>
@@ -179,7 +178,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
 
                     {business.business_details && (
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Info size={16} className="text-[#1A365D]" />
+                        <Info size={32} className="text-[#1A365D]" />
                         <p>{business.business_details}</p>
                       </div>
                     )}
@@ -239,7 +238,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({ business, coordinates
                     הצג הכל <ChevronLeft size={16} />
                   </Button>
                 </div>
-                <NearbyBusinesses businesses={nearbyBusinesses} />
+                <NearbyBusinesses coordinates={coordinates} />
               </div>
             </motion.div>
           </div>
