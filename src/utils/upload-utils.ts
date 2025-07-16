@@ -91,7 +91,7 @@ export function getAcceptValue(uploaderType: FileUploaderType, accept?: string):
 
   switch (uploaderType) {
     case FileUploaderType.IMAGE:
-      return "image/*";
+      return ".jpg,.jpeg,.png";
     case FileUploaderType.DOCUMENT:
       return ".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx";
     case FileUploaderType.ANY:
