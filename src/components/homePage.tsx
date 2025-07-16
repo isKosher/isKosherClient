@@ -589,8 +589,8 @@ export default function HomePage({ tab: initialTab }: { tab: "text" | "location"
                                 ? type === "חלבי"
                                   ? "border-blue-500 bg-blue-50"
                                   : type === "בשרי"
-                                  ? "border-red-500 bg-red-50"
-                                  : "border-green-500 bg-green-50"
+                                    ? "border-red-500 bg-red-50"
+                                    : "border-green-500 bg-green-50"
                                 : "border-sky-200 hover:bg-gray-50"
                             }`}
                             onClick={() => handleSelectFoodType(type)}
